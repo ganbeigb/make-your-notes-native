@@ -23,6 +23,7 @@ public class ListRows {
         public LinearLayout foot;
         public TextView tags;
         public TextView src;
+        public TextView pick;
     }
 
     public static NoteRow create(Context c) {
@@ -63,6 +64,13 @@ public class ListRows {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ilp.leftMargin = Ui.dp(c, 8);
         head.addView(row.imp, ilp);
+
+        row.pick = Ui.text(c, "", 12, 0xFFFFFFFF);
+        row.pick.setGravity(android.view.Gravity.CENTER);
+        LinearLayout.LayoutParams pkp = new LinearLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20));
+        pkp.leftMargin = Ui.dp(c, 8);
+        row.pick.setVisibility(View.GONE);
+        head.addView(row.pick, pkp);
 
         row.card.addView(head);
 
@@ -129,6 +137,12 @@ public class ListRows {
     public static void bind(Context c, NoteRow row, String indexLabel, String name, String preview, int lines,
                             int importance, boolean hasFormula, boolean hasFigure, String quote,
                             String tags, String srcLabel, boolean isExt) {
+        bind(c, row, indexLabel, name, preview, lines, importance, hasFormula, hasFigure, quote, tags, srcLabel, isExt, false, false);
+    }
+
+    public static void bind(Context c, NoteRow row, String indexLabel, String name, String preview, int lines,
+                            int importance, boolean hasFormula, boolean hasFigure, String quote,
+                            String tags, String srcLabel, boolean isExt, boolean picking, boolean picked) {
         android.graphics.drawable.GradientDrawable bg = Ui.card(c);
         bg.setCornerRadius(Ui.dp(c, 14));
         if (isExt) {
@@ -166,6 +180,21 @@ public class ListRows {
         }
         row.preview.setText(p);
         row.preview.setVisibility(p.isEmpty() ? View.GONE : View.VISIBLE);
+
+        if (row.pick != null) {
+            row.pick.setVisibility(picking ? View.VISIBLE : View.GONE);
+            android.graphics.drawable.GradientDrawable pb = new android.graphics.drawable.GradientDrawable();
+            pb.setCornerRadius(Ui.dp(c, 6));
+            if (picked) {
+                pb.setColor(Ui.ACCENT);
+                row.pick.setText("✓");
+            } else {
+                pb.setColor(0xFFFFFFFF);
+                pb.setStroke(Ui.dp(c, 1.5f), Ui.LINE_STRONG);
+                row.pick.setText("");
+            }
+            row.pick.setBackground(pb);
+        }
 
         StringBuilder footText = new StringBuilder();
         if (isExt) footText.append("AI 补充 · 请核对");
