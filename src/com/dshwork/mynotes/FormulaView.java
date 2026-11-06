@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
@@ -211,6 +212,98 @@ public class FormulaView extends View {
         }
     }
 
+    /** 矩阵 / 方程组：按行与列对齐，可带括号 */
+    static class MatrixBox extends Box {
+        final java.util.List<java.util.List<Box>> rows;
+        final String env;
+        final Paint paint;
+        final float[] colW;
+        final float[] rowH;
+        final float[] rowBase;
+        final float gap = 6f;
+        final float bracketW = 7f;
+
+        MatrixBox(java.util.List<java.util.List<Box>> rows, String env, Paint p) {
+            this.rows = rows;
+            this.env = env;
+            this.paint = new Paint(p);
+            int cols = 0;
+            for (java.util.List<Box> r : rows) cols = Math.max(cols, r.size());
+            colW = new float[Math.max(1, cols)];
+            for (java.util.List<Box> r : rows) {
+                for (int c = 0; c < r.size(); c++) colW[c] = Math.max(colW[c], r.get(c).w);
+            }
+            rowH = new float[rows.size()];
+            rowBase = new float[rows.size()];
+            for (int i = 0; i < rows.size(); i++) {
+                float h = 0, b = 0;
+                for (Box box : rows.get(i)) {
+                    h = Math.max(h, box.h);
+                    b = Math.max(b, box.base);
+                }
+                rowH[i] = h + 8f;
+                rowBase[i] = b + 4f;
+            }
+            float contentW = 0;
+            for (float cw : colW) contentW += cw + gap;
+            float contentH = 0;
+            for (float rh : rowH) contentH += rh;
+            boolean bracketed = !"matrix".equals(env);
+            w = contentW + (bracketed ? bracketW * 2 + 6 : 0);
+            h = contentH;
+            base = contentH / 2f;
+        }
+
+        @Override
+        void draw(Canvas c, float x, float y) {
+            float top = y - base;
+            boolean bracketed = !"matrix".equals(env);
+            float cx = x + (bracketed ? bracketW + 4 : 0);
+            Paint bp = new Paint(paint);
+            bp.setStyle(Paint.Style.STROKE);
+            bp.setStrokeWidth(Math.max(1.2f, paint.getTextSize() * 0.08f));
+
+            if (bracketed) {
+                if ("cases".equals(env)) {
+                    Path brace = new Path();
+                    brace.moveTo(x + bracketW, top);
+                    brace.cubicTo(x, top + h * 0.2f, x, top + h * 0.8f, x + bracketW, top + h);
+                    c.drawPath(brace, bp);
+                } else if ("pmatrix".equals(env)) {
+                    c.drawArc(new android.graphics.RectF(x - bracketW, top, x + bracketW, top + h), 90, 180, false, bp);
+                    c.drawArc(new android.graphics.RectF(x + w - bracketW * 3, top, x + w - bracketW, top + h), -90, 180, false, bp);
+                } else {
+                    drawBracket(c, x, top, h, false, bp);
+                    drawBracket(c, x + w - bracketW, top, h, true, bp);
+                }
+            }
+
+            float cy = top;
+            for (int r = 0; r < rows.size(); r++) {
+                float rx = cx;
+                java.util.List<Box> row = rows.get(r);
+                for (int col = 0; col < row.size(); col++) {
+                    Box box = row.get(col);
+                    float cellCx = rx + (colW[col] - box.w) / 2f;
+                    float cellBaseline = cy + rowBase[r];
+                    box.draw(c, cellCx, cellBaseline);
+                    rx += colW[col] + gap;
+                }
+                cy += rowH[r];
+            }
+        }
+
+        private void drawBracket(Canvas c, float x, float top, float h, boolean right, Paint bp) {
+            Path path = new Path();
+            float dir = right ? -1 : 1;
+            path.moveTo(x + (right ? 0 : bracketW), top);
+            path.lineTo(x + (right ? 0 : 0), top);
+            path.lineTo(x + (right ? 0 : 0), top + h);
+            path.lineTo(x + (right ? 0 : bracketW), top + h);
+            c.drawPath(path, bp);
+        }
+    }
+
     /* ---------------- 解析器 ---------------- */
 
     static class Parser {
@@ -338,6 +431,20 @@ public class FormulaView extends View {
                 Box a = readGroup();
                 return a;
             }
+            if ("begin".equals(cmd)) {
+                String env = readEnvName();
+                int endIdx = s.indexOf("\\end{" + env + "}", i);
+                if (endIdx < 0) {
+                    return new TextBox("[matrix]", sp());
+                }
+                String body = s.substring(i, endIdx);
+                i = endIdx + ("\\end{" + env + "}").length();
+                return buildMatrix(body, env);
+            }
+            if ("end".equals(cmd)) {
+                readEnvName();
+                return new TextBox("", sp());
+            }
             if ("left".equals(cmd) || "right".equals(cmd)) {
                 return new TextBox("", sp());
             }
@@ -354,6 +461,34 @@ public class FormulaView extends View {
                 return new TextBox(ch, sp());
             }
             return new TextBox(cmd, sp());
+        }
+
+        private String readEnvName() {
+            while (!end() && peek() == ' ') i++;
+            if (!end() && peek() == '{') i++;
+            StringBuilder sb = new StringBuilder();
+            while (!end() && peek() != '}') {
+                sb.append(peek());
+                i++;
+            }
+            if (!end() && peek() == '}') i++;
+            return sb.toString().trim();
+        }
+
+        private Box buildMatrix(String body, String env) {
+            java.util.List<java.util.List<Box>> rows = new java.util.ArrayList<>();
+            String[] rawRows = body.split("\\\\\\\\");
+            for (String rawRow : rawRows) {
+                if (rawRow.trim().isEmpty()) continue;
+                java.util.List<Box> cells = new java.util.ArrayList<>();
+                String[] rawCells = rawRow.split("&");
+                for (String cell : rawCells) {
+                    cells.add(new Parser(cell.trim(), p).parse());
+                }
+                rows.add(cells);
+            }
+            if (rows.isEmpty()) return new TextBox("", sp());
+            return new MatrixBox(rows, env, p);
         }
 
         private Box readGroup() {
