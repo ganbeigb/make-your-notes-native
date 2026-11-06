@@ -30,6 +30,7 @@ public class NoteActivity extends Activity {
     private FormulaView preview;
     private ImageView figureView;
     private TextView figureBtn;
+    private EditText focused;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -90,6 +91,13 @@ public class NoteActivity extends Activity {
         plp.topMargin = Ui.dp(this, 6);
         form.addView(preview, plp);
 
+        formulaInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) focused = formulaInput;
+            }
+        });
+
         formulaInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -127,6 +135,47 @@ public class NoteActivity extends Activity {
         form.addView(figureView, flp);
         showFigure();
 
+        contentInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (hasFocus) focused = contentInput;
+            }
+        });
+
+        TextView symLabel = Ui.text(this, "符号键盘", 12, Ui.INK2);
+        symLabel.setPadding(0, Ui.dp(this, 14), 0, Ui.dp(this, 6));
+        form.addView(symLabel);
+
+        android.widget.HorizontalScrollView symScroll = new android.widget.HorizontalScrollView(this);
+        symScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout symRow = new LinearLayout(this);
+        symRow.setOrientation(LinearLayout.HORIZONTAL);
+        String[] symbols = {"α", "β", "γ", "δ", "ε", "θ", "λ", "μ", "π", "ρ", "σ", "τ", "φ", "ω",
+                "Δ", "Ω", "∑", "∫", "√", "±", "×", "÷", "≠", "≤", "≥", "≈", "∞", "∂", "°",
+                "²", "³", "⁻¹", "₁", "₂", "→", "⇒", "∠", "⊥", "∥"};
+        for (final String s : symbols) {
+            TextView b = new TextView(this);
+            b.setText(s);
+            b.setTextSize(15);
+            b.setTextColor(Ui.INK);
+            b.setGravity(Gravity.CENTER);
+            b.setPadding(Ui.dp(this, 11), Ui.dp(this, 7), Ui.dp(this, 11), Ui.dp(this, 7));
+            b.setBackground(Ui.card(this));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = Ui.dp(this, 6);
+            b.setLayoutParams(lp);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    insertSymbol(s);
+                }
+            });
+            symRow.addView(b);
+        }
+        symScroll.addView(symRow);
+        form.addView(symScroll);
+
         if (note.source != null && !note.source.isEmpty()) {
             TextView src = Ui.text(this, "来源：" + note.source, 12, Ui.INK2);
             src.setPadding(0, Ui.dp(this, 10), 0, 0);
@@ -154,6 +203,14 @@ public class NoteActivity extends Activity {
         parent.addView(e, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return e;
+    }
+
+    private void insertSymbol(String s) {
+        EditText target = focused;
+        if (target == null) target = contentInput;
+        int start = Math.max(0, target.getSelectionStart());
+        int end = Math.max(start, target.getSelectionEnd());
+        target.getText().replace(start, end, s);
     }
 
     private void showFigure() {
