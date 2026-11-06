@@ -193,6 +193,16 @@ public class SettingsActivity extends BaseActivity {
             }
         });
         actions.addView(repair);
+
+        TextView relink = Ui.chip(this, "重建课件对应", false);
+        relink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int n = new Db(SettingsActivity.this).repairDeckLinks();
+                Toast.makeText(SettingsActivity.this, "已把 " + n + " 条知识点挂回课件", Toast.LENGTH_LONG).show();
+            }
+        });
+        actions.addView(relink);
         form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
