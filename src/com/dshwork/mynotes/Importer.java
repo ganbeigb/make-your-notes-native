@@ -208,6 +208,61 @@ public class Importer {
         return added;
     }
 
+    /** 从已有的课件原图重跑一页，返回识别出的 JSON 文本 */
+    public static String extractFile(Prefs prefs, String imagePath) throws Exception {
+        java.io.File f = new java.io.File(imagePath);
+        if (!f.exists()) throw new Exception("这一页的原图不在了");
+        boolean hasZhipuKey = prefs.apiKey("zhipu") != null && !prefs.apiKey("zhipu").isEmpty();
+        String provider = hasZhipuKey ? "zhipu" : prefs.provider();
+        String b64 = toBase64File(imagePath);
+        AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(provider), prefs.apiKey(provider),
+                prefs.visionModel(), Prompts.EXTRACT_SYSTEM,
+                "请识别这一页课件，输出 JSON。", b64, prefs.reasoning());
+        return reply.content;
+    }
+
+    /** 用新识别结果替换某一页的知识点，返回新增条数 */
+    public static int replaceSlide(Context ctx, Db db, Prefs prefs, String subjectId, Db.Slide slide,
+                                   String json) throws Exception {
+        for (Db.Note old : db.notesBySlide(slide.id)) db.deleteNote(old.id);
+        String saved = slide.imagePath;
+        return insertPoints(db, subjectId, json, "第 " + slide.idx + " 页", saved, slide.idx, slide.id);
+    }
+
+    /** 给某一页生成汇总 */
+    public static String digestSlide(Db db, Prefs prefs, String subjectId, Db.Slide slide) throws Exception {
+        java.util.List<Db.Note> list = db.notesBySlide(slide.id);
+        if (list.isEmpty()) throw new Exception("这一页还没有知识点");
+        StringBuilder sb = new StringBuilder();
+        for (Db.Note n : list) {
+            sb.append("- ").append(n.name);
+            if (n.formula != null && !n.formula.trim().isEmpty()) sb.append("（公式：").append(n.formula).append("）");
+            sb.append('\n');
+        }
+        AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(prefs.provider()), prefs.apiKey(),
+                prefs.textModel(), Prompts.DIGEST_SYSTEM, sb.toString(), null, "off");
+        db.logUsage(subjectId, "digest", reply.inTok, reply.outTok);
+        String digest = reply.content == null ? "" : reply.content.trim();
+        db.setSlideDigest(slide.id, digest);
+        return digest;
+    }
+
+    private static String toBase64File(String path) throws Exception {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, bounds);
+        int max = 1400;
+        int scale = 1;
+        while (bounds.outWidth / scale > max || bounds.outHeight / scale > max) scale *= 2;
+        BitmapFactory.Options opt = new BitmapFactory.Options();
+        opt.inSampleSize = Math.max(1, scale);
+        Bitmap bmp = BitmapFactory.decodeFile(path, opt);
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 82, bos);
+        bmp.recycle();
+        return Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP);
+    }
+
     private static String toBase64(Context ctx, Uri uri) {
         try {
             InputStream is = ctx.getContentResolver().openInputStream(uri);

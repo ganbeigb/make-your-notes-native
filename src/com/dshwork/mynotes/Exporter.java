@@ -241,6 +241,8 @@ public class Exporter {
 
         JSONArray subjects = new JSONArray();
         JSONArray categories = new JSONArray();
+        JSONArray decks = new JSONArray();
+        JSONArray slides = new JSONArray();
         JSONArray notes = new JSONArray();
 
         java.util.List<Db.Subject> subjectList = new java.util.ArrayList<>();
@@ -254,6 +256,25 @@ public class Exporter {
             o.put("createdAt", s.createdAt);
             subjects.put(o);
 
+            for (Db.Deck d : db.decks(s.id)) {
+                JSONObject dob = new JSONObject();
+                dob.put("id", d.id);
+                dob.put("subjectId", d.subjectId);
+                dob.put("title", d.title);
+                dob.put("createdAt", d.createdAt);
+                decks.put(dob);
+                for (Db.Slide sl : db.slides(d.id)) {
+                    JSONObject sob = new JSONObject();
+                    sob.put("id", sl.id);
+                    sob.put("subjectId", sl.subjectId);
+                    sob.put("deckId", sl.deckId);
+                    sob.put("idx", sl.idx);
+                    sob.put("imagePath", sl.imagePath);
+                    sob.put("digest", sl.digest);
+                    sob.put("createdAt", sl.createdAt);
+                    slides.put(sob);
+                }
+            }
             for (Db.Category c : db.categories(s.id)) {
                 JSONObject co = new JSONObject();
                 co.put("id", c.id);
@@ -275,6 +296,7 @@ public class Exporter {
                 no.put("source", n.source);
                 no.put("quote", n.quote);
                 no.put("figure", n.figure);
+                no.put("slideId", n.slideId);
                 no.put("slidePath", n.slidePath);
                 no.put("slidePage", n.slidePage);
                 no.put("importance", n.importance);
@@ -286,6 +308,8 @@ public class Exporter {
         root.put("settings", prefs.snapshot());
         root.put("usage", db.exportUsage());
         root.put("subjects", subjects);
+        root.put("decks", decks);
+        root.put("slides", slides);
         root.put("categories", categories);
         root.put("notes", notes);
 
