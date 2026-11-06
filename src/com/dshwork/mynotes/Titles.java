@@ -27,6 +27,11 @@ public class Titles {
     }
 
     public static Result run(Db db, Prefs prefs, String subjectId, Progress cb) {
+        return run(db, prefs, subjectId, cb, false);
+    }
+
+    /** onlyExtension=true 时只改「拓展」类型条目（对应网页 fix-ext-names） */
+    public static Result run(Db db, Prefs prefs, String subjectId, Progress cb, boolean onlyExtension) {
         Result r = new Result();
         if (!prefs.ready()) {
             r.error = "还没有填 API Key";
@@ -35,6 +40,7 @@ public class Titles {
         List<Db.Note> all = db.notes(subjectId);
         List<Db.Note> targets = new ArrayList<>();
         for (Db.Note n : all) {
+            if (onlyExtension && !"extension".equals(n.kind)) continue;
             if (needsRename(n.name)) targets.add(n);
         }
         if (targets.isEmpty()) {
