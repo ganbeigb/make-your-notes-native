@@ -96,6 +96,15 @@ public class BoardActivity extends Activity {
         tools.addView(toolButton("图形", BoardView.T_SHAPE, tools));
         tools.addView(toolButton("元件", BoardView.T_SYMBOL, tools));
         tools.addView(toolButton("连线", BoardView.T_WIRE, tools));
+
+        TextView chipTool = toolButton("芯片", BoardView.T_CHIP, tools);
+        chipTool.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                askChipSpec();
+            }
+        });
+        tools.addView(chipTool);
         toolsScroll.addView(tools);
         root.addView(toolsScroll);
 
@@ -184,6 +193,41 @@ public class BoardActivity extends Activity {
         lp.rightMargin = Ui.dp(this, 8);
         t.setLayoutParams(lp);
         return t;
+    }
+
+    private void askChipSpec() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = Ui.dp(this, 16);
+        box.setPadding(pad, Ui.dp(this, 8), pad, 0);
+
+        final EditText name = new EditText(this);
+        name.setHint("芯片名称，例如 NE555");
+        box.addView(name);
+
+        final EditText count = new EditText(this);
+        count.setHint("每边引脚数（1-6）");
+        count.setInputType(InputType.TYPE_CLASS_NUMBER);
+        count.setText("3");
+        box.addView(count);
+
+        new AlertDialog.Builder(this)
+                .setTitle("放置芯片")
+                .setView(box)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        int n = 3;
+                        try {
+                            n = Integer.parseInt(count.getText().toString().trim());
+                        } catch (Exception ignored) {
+                        }
+                        board.setChipSpec(name.getText().toString(), n);
+                        Toast.makeText(BoardActivity.this, "点画布放置芯片", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void askTextDialog(final BoardView.TextSink sink) {

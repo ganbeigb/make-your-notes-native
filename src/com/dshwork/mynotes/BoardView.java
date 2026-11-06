@@ -23,12 +23,14 @@ public class BoardView extends View {
     public static final int T_SHAPE = 3;
     public static final int T_SYMBOL = 4;
     public static final int T_WIRE = 5;
+    public static final int T_CHIP = 6;
 
     static final int K_STROKE = 0;
     static final int K_SHAPE = 1;
     static final int K_TEXT = 2;
     static final int K_SYMBOL = 3;
     static final int K_WIRE = 4;
+    static final int K_CHIP = 5;
 
     public interface OnNeedsText {
         void ask(PointF at, TextSink sink);
@@ -46,6 +48,9 @@ public class BoardView extends View {
         int shape; // 0 矩形 1 椭圆 2 直线
         int color = 0xFF243029;
         float width = 2.5f;
+        float w, h;
+        String chipName;
+        List<float[]> pins = new ArrayList<>(); // {side 0L 1R 2T 3B, t 0..1}
 
         Item copy() {
             Item it = new Item();
@@ -56,6 +61,10 @@ public class BoardView extends View {
             it.shape = shape;
             it.color = color;
             it.width = width;
+            it.w = w;
+            it.h = h;
+            it.chipName = chipName;
+            for (float[] pin : pins) it.pins.add(new float[]{pin[0], pin[1]});
             return it;
         }
 
@@ -72,6 +81,11 @@ public class BoardView extends View {
             }
             if (kind == K_TEXT && !pts.isEmpty()) {
                 r.right += 120; r.bottom += 22; r.top -= 20;
+            }
+            if (kind == K_CHIP && !pts.isEmpty()) {
+                r.left = Math.min(r.left, pts.get(0).x - 26);
+                r.right = Math.max(r.right, pts.get(0).x + w + 26);
+                r.bottom = Math.max(r.bottom, pts.get(0).y + h);
             }
             r.inset(-6, -6);
             return r;
@@ -103,6 +117,8 @@ public class BoardView extends View {
     private float pinchDist, pinchCx, pinchCy;
     private Item selected;
     private OnNeedsText textAsker;
+    private String chipName = "IC";
+    private int chipPerSide = 3;
 
     public BoardView(Context c) {
         super(c);
@@ -147,6 +163,12 @@ public class BoardView extends View {
     public void setSymbolName(String n) {
         symbolName = n;
         tool = T_SYMBOL;
+    }
+
+    public void setChipSpec(String name, int perSide) {
+        chipName = (name == null || name.trim().isEmpty()) ? "IC" : name.trim();
+        chipPerSide = Math.max(1, Math.min(6, perSide));
+        tool = T_CHIP;
     }
 
     public void setColor(int c) {
@@ -268,6 +290,39 @@ public class BoardView extends View {
                 c.drawText(it.text, it.pts.get(0).x, it.pts.get(0).y, t);
                 break;
             }
+            case K_CHIP: {
+                if (it.pts.isEmpty()) return;
+                PointF o = it.pts.get(0);
+                RectF r = new RectF(o.x, o.y, o.x + it.w, o.y + it.h);
+                c.drawRoundRect(r, 6, 6, p);
+                Paint name = new Paint(textPaint);
+                name.setColor(it.color);
+                name.setTextSize(13);
+                name.setTextAlign(Paint.Align.CENTER);
+                c.drawText(it.chipName == null ? "IC" : it.chipName, o.x + it.w / 2, o.y + it.h / 2 + 5, name);
+                name.setTextAlign(Paint.Align.LEFT);
+                int num = 0;
+                for (float[] pin : it.pins) {
+                    num++;
+                    float px = pinX(it, (int) pin[0], pin[1]);
+                    float py = pinY(it, (int) pin[0], pin[1]);
+                    float ax = pin[0] == 0 ? o.x : o.x + it.w;
+                    float ay = pin[1] * it.h + o.y;
+                    if (pin[0] >= 2) {
+                        ax = pin[1] * it.w + o.x;
+                        ay = pin[0] == 2 ? o.y : o.y + it.h;
+                    }
+                    c.drawLine(ax, ay, px, py, p);
+                    c.drawCircle(px, py, 2.2f, p);
+                    Paint small = new Paint(textPaint);
+                    small.setTextSize(8);
+                    small.setColor(0xFF6B7A72);
+                    float txPos = pin[0] == 0 ? px - 12 : pin[0] == 1 ? px + 3 : px - 3;
+                    float tyPos = pin[0] == 0 || pin[0] == 1 ? py + 3 : pin[0] == 2 ? py - 3 : py + 8;
+                    c.drawText(String.valueOf(num), txPos, tyPos, small);
+                }
+                break;
+            }
             case K_SYMBOL: {
                 if (it.pts.isEmpty()) return;
                 Paint s = new Paint(symPaint);
@@ -324,16 +379,33 @@ public class BoardView extends View {
                     draft.width = width;
                     draft.pts.add(w0);
                     draft.pts.add(new PointF(w0.x, w0.y));
+                } else if (tool == T_CHIP) {
+                    snapshot();
+                    Item it = new Item();
+                    it.kind = K_CHIP;
+                    it.chipName = chipName;
+                    it.color = color;
+                    it.w = 160;
+                    it.h = Math.max(70, 30 + chipPerSide * 26);
+                    it.pts.add(new PointF(w0.x, w0.y));
+                    for (int i = 0; i < chipPerSide; i++) {
+                        float tt = (i + 1f) / (chipPerSide + 1);
+                        it.pins.add(new float[]{0, tt});
+                        it.pins.add(new float[]{1, tt});
+                    }
+                    items.add(it);
+                    invalidate();
                 } else if (tool == T_WIRE) {
+                    PointF snapped = snapToPin(w0);
                     if (wireStart == null) {
-                        wireStart = w0;
+                        wireStart = snapped;
                     } else {
                         snapshot();
                         Item it = new Item();
                         it.kind = K_WIRE;
                         it.color = color;
                         it.width = width;
-                        it.pts.addAll(routeWire(wireStart, w0));
+                        it.pts.addAll(routeWire(wireStart, snapped));
                         items.add(it);
                         wireStart = null;
                     }
@@ -423,6 +495,45 @@ public class BoardView extends View {
         return (float) Math.hypot(e.getX(0) - e.getX(1), e.getY(0) - e.getY(1));
     }
 
+    static float pinX(Item chip, int side, float t01) {
+        PointF o = chip.pts.get(0);
+        if (side == 0) return o.x - 22;
+        if (side == 1) return o.x + chip.w + 22;
+        return o.x + t01 * chip.w;
+    }
+
+    static float pinY(Item chip, int side, float t01) {
+        PointF o = chip.pts.get(0);
+        if (side == 2) return o.y - 22;
+        if (side == 3) return o.y + chip.h + 22;
+        return o.y + t01 * chip.h;
+    }
+
+    /** 把所有芯片引脚摊平，供导线吸附 */
+    private List<PointF> allPins() {
+        List<PointF> out = new ArrayList<>();
+        for (Item it : items) {
+            if (it.kind != K_CHIP) continue;
+            for (float[] pin : it.pins) {
+                out.add(new PointF(pinX(it, (int) pin[0], pin[1]), pinY(it, (int) pin[0], pin[1])));
+            }
+        }
+        return out;
+    }
+
+    private PointF snapToPin(PointF p) {
+        PointF best = null;
+        float bestD = 18;
+        for (PointF q : allPins()) {
+            float d = (float) Math.hypot(q.x - p.x, q.y - p.y);
+            if (d < bestD) {
+                bestD = d;
+                best = q;
+            }
+        }
+        return best == null ? p : best;
+    }
+
     public PointF toWorld(float sx, float sy) {
         return new PointF((sx - tx) / scale, (sy - ty) / scale);
     }
@@ -447,6 +558,9 @@ public class BoardView extends View {
             l1.add(new PointF(a.x, b.y));
         }
         l1.add(new PointF(b.x, b.y));
+
+        List<PointF> astar = astarPath(a, b);
+        if (astar != null) return astar;
 
         if (!hitsAnything(a, l1)) {
             out.addAll(l1);
@@ -477,6 +591,141 @@ public class BoardView extends View {
         }
         l3.add(new PointF(b.x, b.y));
         out.addAll(l3);
+        return out;
+    }
+
+    private static final int STEP = 10;
+
+    private List<RectF> obstacles() {
+        List<RectF> out = new ArrayList<>();
+        for (Item it : items) {
+            if (it.kind == K_SYMBOL || it.kind == K_CHIP || it.kind == K_SHAPE) {
+                RectF r = it.bounds();
+                r.inset(-4, -4);
+                out.add(r);
+            }
+        }
+        return out;
+    }
+
+    /** 网格 A*，返回除起点外的折点；无解返回 null */
+    private List<PointF> astarPath(PointF a, PointF b) {
+        List<RectF> obs = obstacles();
+        if (obs.isEmpty()) return null;
+
+        float pad = 90;
+        int minX = (int) Math.floor((Math.min(a.x, b.x) - pad) / STEP) * STEP;
+        int minY = (int) Math.floor((Math.min(a.y, b.y) - pad) / STEP) * STEP;
+        int maxX = (int) Math.ceil((Math.max(a.x, b.x) + pad) / STEP) * STEP;
+        int maxY = (int) Math.ceil((Math.max(a.y, b.y) + pad) / STEP) * STEP;
+
+        int cols = (maxX - minX) / STEP + 1;
+        int rows = (maxY - minY) / STEP + 1;
+        if (cols < 3 || rows < 3 || cols * rows > 40000) return null;
+
+        boolean[] blocked = new boolean[cols * rows];
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                float x = minX + c * STEP;
+                float y = minY + r * STEP;
+                for (RectF o : obs) {
+                    if (x > o.left && x < o.right && y > o.top && y < o.bottom) {
+                        blocked[r * cols + c] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        int sc = Math.round((a.x - minX) / STEP), sr = Math.round((a.y - minY) / STEP);
+        int gc = Math.round((b.x - minX) / STEP), gr = Math.round((b.y - minY) / STEP);
+        sc = Math.max(0, Math.min(cols - 1, sc));
+        sr = Math.max(0, Math.min(rows - 1, sr));
+        gc = Math.max(0, Math.min(cols - 1, gc));
+        gr = Math.max(0, Math.min(rows - 1, gr));
+        // 起终点周围放开
+        for (int dr = -2; dr <= 2; dr++) {
+            for (int dc = -2; dc <= 2; dc++) {
+                int c1 = sc + dc, r1 = sr + dr, c2 = gc + dc, r2 = gr + dr;
+                if (c1 >= 0 && r1 >= 0 && c1 < cols && r1 < rows) blocked[r1 * cols + c1] = false;
+                if (c2 >= 0 && r2 >= 0 && c2 < cols && r2 < rows) blocked[r2 * cols + c2] = false;
+            }
+        }
+
+        int total = cols * rows;
+        float[] g = new float[total];
+        int[] came = new int[total];
+        boolean[] closed = new boolean[total];
+        java.util.Arrays.fill(g, Float.MAX_VALUE);
+        java.util.Arrays.fill(came, -1);
+        int start = sr * cols + sc, goal = gr * cols + gc;
+        g[start] = 0;
+
+        java.util.PriorityQueue<int[]> open = new java.util.PriorityQueue<>(64, new java.util.Comparator<int[]>() {
+            @Override
+            public int compare(int[] x, int[] y) {
+                return Integer.compare(x[1], y[1]);
+            }
+        });
+        open.add(new int[]{start, Math.abs(sc - gc) + Math.abs(sr - gr)});
+
+        int[] dcx = {1, -1, 0, 0};
+        int[] dcy = {0, 0, 1, -1};
+        boolean found = false;
+
+        while (!open.isEmpty()) {
+            int[] cur = open.poll();
+            int k = cur[0];
+            if (closed[k]) continue;
+            if (k == goal) {
+                found = true;
+                break;
+            }
+            closed[k] = true;
+            int c = k % cols, r = k / cols;
+            for (int i = 0; i < 4; i++) {
+                int nc = c + dcx[i], nr = r + dcy[i];
+                if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+                int nk = nr * cols + nc;
+                if (blocked[nk] || closed[nk]) continue;
+                float ng = g[k] + 1;
+                if (ng < g[nk]) {
+                    g[nk] = ng;
+                    came[nk] = k;
+                    int h = Math.abs(nc - gc) + Math.abs(nr - gr);
+                    open.add(new int[]{nk, (int) (ng + h)});
+                }
+            }
+        }
+        if (!found) return null;
+
+        List<int[]> cells = new ArrayList<>();
+        int cur = goal;
+        while (cur != -1) {
+            cells.add(new int[]{cur % cols, cur / cols});
+            cur = came[cur];
+        }
+        java.util.Collections.reverse(cells);
+
+        List<PointF> pts = new ArrayList<>();
+        for (int i = 0; i < cells.size(); i++) {
+            int c = cells.get(i)[0], r = cells.get(i)[1];
+            pts.add(new PointF(minX + c * STEP, minY + r * STEP));
+        }
+        pts.set(0, new PointF(a.x, a.y));
+        pts.set(pts.size() - 1, new PointF(b.x, b.y));
+
+        // 去掉共线点
+        List<PointF> out = new ArrayList<>();
+        out.add(pts.get(0));
+        for (int i = 1; i < pts.size() - 1; i++) {
+            PointF p0 = out.get(out.size() - 1), p1 = pts.get(i), p2 = pts.get(i + 1);
+            boolean sameX = Math.abs(p0.x - p1.x) < 0.5 && Math.abs(p1.x - p2.x) < 0.5;
+            boolean sameY = Math.abs(p0.y - p1.y) < 0.5 && Math.abs(p1.y - p2.y) < 0.5;
+            if (!sameX && !sameY) out.add(p1);
+        }
+        out.add(pts.get(pts.size() - 1));
+        out.remove(0);
         return out;
     }
 
