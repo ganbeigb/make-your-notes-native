@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.dshwork.mynotes"
-    android:versionCode="4"
-    android:versionName="0.4.0">
+    android:versionCode="5"
+    android:versionName="0.5.0">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -24,6 +24,7 @@
         <activity android:name=".SubjectActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" />
         <activity android:name=".MindMapActivity" android:exported="false" />
+        <activity android:name=".BoardActivity" android:exported="false" android:configChanges="orientation|screenSize" />
         <activity android:name=".NoteActivity" android:exported="false" />
     </application>
 </manifest>

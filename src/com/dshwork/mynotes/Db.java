@@ -41,11 +41,12 @@ public class Db extends SQLiteOpenHelper {
         public String tags;
         public String source;
         public int importance;
+        public String figure;
         public long createdAt;
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 2;
+    private static final int VERSION = 3;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -57,7 +58,7 @@ public class Db extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE categories (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, parent_id TEXT, " +
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
-                "name TEXT NOT NULL, content TEXT, formula TEXT, tags TEXT, source TEXT, " +
+                "name TEXT NOT NULL, content TEXT, formula TEXT, tags TEXT, source TEXT, figure TEXT, " +
                 "importance INTEGER NOT NULL DEFAULT 2, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
@@ -67,6 +68,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 3) {
+            tryAdd(db, "notes", "figure", "TEXT");
+        }
         if (oldVersion < 2) {
             db.execSQL("CREATE TABLE IF NOT EXISTS categories (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, " +
                     "parent_id TEXT, name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
@@ -246,7 +250,7 @@ public class Db extends SQLiteOpenHelper {
     public List<Note> notes(String subjectId) {
         List<Note> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
                         "FROM notes WHERE subject_id = ? ORDER BY created_at DESC", new String[]{subjectId});
         try {
             while (c.moveToNext()) out.add(readNote(c));
@@ -268,12 +272,13 @@ public class Db extends SQLiteOpenHelper {
         n.source = c.getString(7);
         n.importance = c.getInt(8);
         n.createdAt = c.getLong(9);
+        n.figure = c.getString(10);
         return n;
     }
 
     public Note note(String id) {
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
                         "FROM notes WHERE id = ?", new String[]{id});
         try {
             if (!c.moveToFirst()) return null;
@@ -305,6 +310,7 @@ public class Db extends SQLiteOpenHelper {
         v.put("formula", "");
         v.put("tags", "");
         v.put("source", "");
+        v.put("figure", (String) null);
         v.put("importance", 2);
         v.put("created_at", n.createdAt);
         getWritableDatabase().insert("notes", null, v);
@@ -319,6 +325,7 @@ public class Db extends SQLiteOpenHelper {
         v.put("tags", n.tags);
         v.put("importance", n.importance);
         v.put("category_id", n.categoryId);
+        v.put("figure", n.figure);
         getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});
     }
 
