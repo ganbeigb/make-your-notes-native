@@ -131,6 +131,7 @@ public class Importer {
             n.content = p.optString("content", "");
             n.formula = p.optString("formula", "");
             n.importance = Math.max(1, Math.min(3, p.optInt("importance", 2)));
+            n.quote = p.optString("quote", "");
             n.source = source;
             n.slidePath = slidePath;
             n.slidePage = page;

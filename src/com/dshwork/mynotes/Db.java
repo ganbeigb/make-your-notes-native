@@ -42,13 +42,14 @@ public class Db extends SQLiteOpenHelper {
         public String source;
         public int importance;
         public String figure;
+        public String quote;
         public String slidePath;
         public int slidePage;
         public long createdAt;
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 5;
+    private static final int VERSION = 6;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -61,7 +62,7 @@ public class Db extends SQLiteOpenHelper {
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
                 "name TEXT NOT NULL, content TEXT, formula TEXT, tags TEXT, source TEXT, figure TEXT, " +
-                "slide_path TEXT, slide_page INTEGER NOT NULL DEFAULT 0, " +
+                "quote TEXT, slide_path TEXT, slide_page INTEGER NOT NULL DEFAULT 0, " +
                 "importance INTEGER NOT NULL DEFAULT 2, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
@@ -71,6 +72,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 6) {
+            tryAdd(db, "notes", "quote", "TEXT");
+        }
         if (oldVersion < 5) {
             tryAdd(db, "subjects", "criteria", "TEXT");
         }
@@ -275,7 +279,7 @@ public class Db extends SQLiteOpenHelper {
     public List<Note> notes(String subjectId) {
         List<Note> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
                         "FROM notes WHERE subject_id = ? ORDER BY created_at DESC", new String[]{subjectId});
         try {
             while (c.moveToNext()) out.add(readNote(c));
@@ -288,7 +292,7 @@ public class Db extends SQLiteOpenHelper {
     /** 按标题或重要度排序 */
     public List<Note> notesSorted(String subjectId, String order) {
         List<Note> out = new ArrayList<>();
-        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
+        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
                 "FROM notes WHERE subject_id = ? ";
         if ("title".equals(order)) sql += "ORDER BY name COLLATE NOCASE ASC";
         else if ("importance".equals(order)) sql += "ORDER BY importance DESC, created_at DESC";
@@ -315,14 +319,15 @@ public class Db extends SQLiteOpenHelper {
         n.importance = c.getInt(8);
         n.createdAt = c.getLong(9);
         n.figure = c.getString(10);
-        n.slidePath = c.getString(11);
-        n.slidePage = c.getInt(12);
+        n.quote = c.getString(11);
+        n.slidePath = c.getString(12);
+        n.slidePage = c.getInt(13);
         return n;
     }
 
     public Note note(String id) {
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
                         "FROM notes WHERE id = ?", new String[]{id});
         try {
             if (!c.moveToFirst()) return null;
@@ -370,6 +375,7 @@ public class Db extends SQLiteOpenHelper {
         v.put("importance", n.importance);
         v.put("category_id", n.categoryId);
         v.put("figure", n.figure);
+        v.put("quote", n.quote);
         v.put("slide_path", n.slidePath);
         v.put("slide_page", n.slidePage);
         getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});

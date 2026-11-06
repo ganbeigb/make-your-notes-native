@@ -31,6 +31,7 @@ public class SettingsActivity extends Activity {
     private Spinner themeSpinner;
     private EditText priceInInput;
     private EditText priceOutInput;
+    private android.widget.CheckBox quoteBox;
     private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
@@ -112,6 +113,14 @@ public class SettingsActivity extends Activity {
         strictBox.setText("严格校对：每页识别完再用原图核对一次（会多花一次调用）");
         strictBox.setTextSize(13);
         strictBox.setTextColor(Ui.INK);
+        quoteBox = new android.widget.CheckBox(this);
+        quoteBox.setText("在知识点详情显示「原文摘录」");
+        quoteBox.setTextSize(13);
+        quoteBox.setTextColor(Ui.INK);
+        quoteBox.setChecked(prefs.showQuote());
+        quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
+        form.addView(quoteBox);
+
         strictBox.setChecked(prefs.strict());
         strictBox.setPadding(0, Ui.dp(this, 16), 0, 0);
         form.addView(strictBox);
@@ -182,6 +191,7 @@ public class SettingsActivity extends Activity {
         float po = parseFloat(priceOutInput.getText().toString());
         prefs.setPrice(pi, po);
         prefs.setStrict(strictBox.isChecked());
+        prefs.setShowQuote(quoteBox.isChecked());
         Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
         finish();

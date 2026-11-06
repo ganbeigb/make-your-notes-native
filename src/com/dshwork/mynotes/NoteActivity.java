@@ -22,6 +22,7 @@ import android.widget.Toast;
 public class NoteActivity extends Activity {
 
     private Db db;
+    private Prefs prefs;
     private Db.Note note;
     private EditText nameInput;
     private EditText categoryInput;
@@ -37,6 +38,7 @@ public class NoteActivity extends Activity {
         super.onCreate(state);
         Ui.apply(this);
         db = new Db(this);
+        prefs = new Prefs(this);
         note = db.note(getIntent().getStringExtra("noteId"));
         if (note == null) {
             finish();
@@ -116,6 +118,22 @@ public class NoteActivity extends Activity {
 
         contentInput = field(form, "正文", note.content == null ? "" : note.content,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
+
+        if (prefs.showQuote() && note.quote != null && !note.quote.trim().isEmpty()) {
+            LinearLayout quoteBox = new LinearLayout(this);
+            quoteBox.setOrientation(LinearLayout.VERTICAL);
+            quoteBox.setBackground(Ui.card(this));
+            quoteBox.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+            LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            qlp.topMargin = Ui.dp(this, 14);
+            TextView qLabel = Ui.text(this, "原文摘录", 11, Ui.INK2);
+            quoteBox.addView(qLabel);
+            TextView qText = Ui.text(this, "「" + note.quote.trim() + "」", 13, Ui.INK);
+            qText.setPadding(0, Ui.dp(this, 4), 0, 0);
+            quoteBox.addView(qText);
+            form.addView(quoteBox, qlp);
+        }
 
         if (note.slidePath != null && !note.slidePath.isEmpty()) {
             TextView slideBtn = Ui.text(this, "查看课件原图（第 " + note.slidePage + " 页）", 13, Ui.ACCENT);
