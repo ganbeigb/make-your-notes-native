@@ -41,7 +41,7 @@
 | open-criteria / save-criteria | 科目页「标准」 | ✅ |
 | fix-ext-names | 科目页「拓展题名」（只改拓展类型） | ✅ |
 | test-key | 设置「测试 Key」 | ✅ |
-| repair-drawings | 设置「修复配图」 | 🟡（清理失效引用，不重绘） |
+| repair-drawings | 设置「修复配图」清失效引用 + 「清理孤立图片」删无引用文件 | ✅ |
 
 ## 四、知识点
 
