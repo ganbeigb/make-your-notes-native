@@ -52,14 +52,14 @@ public class ListRows {
         klp.rightMargin = Ui.dp(c, 8);
         head.addView(row.kindex, klp);
 
-        row.name = Ui.text(c, "", 15.5f, Ui.INK);
+        row.name = Ui.text(c, "", 14f, Ui.INK);
         row.name.setTypeface(Typeface.DEFAULT_BOLD);
         head.addView(row.name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         row.badges = Ui.text(c, "", 11, Ui.MUTED);
         head.addView(row.badges);
 
-        row.imp = Ui.text(c, "", 9, Ui.MUTED);
+        row.imp = Ui.text(c, "", 9, 0xFFCFC4AB);
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         ilp.leftMargin = Ui.dp(c, 8);
@@ -72,9 +72,12 @@ public class ListRows {
         row.pick.setVisibility(View.GONE);
         head.addView(row.pick, pkp);
 
-        row.card.addView(head);
+        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        hlp.bottomMargin = Ui.dp(c, 7);
+        row.card.addView(head, hlp);
 
-        row.preview = Ui.text(c, "", 12.5f, Ui.INK2);
+        row.preview = Ui.text(c, "", 13f, Ui.INK2);
         row.preview.setPadding(0, Ui.dp(c, 6), 0, 0);
         row.card.addView(row.preview);
 
@@ -105,6 +108,7 @@ public class ListRows {
         row.tags = Ui.text(c, "", 10.5f, Ui.GOLD);
         row.foot.addView(row.tags, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
         row.src = Ui.text(c, "", 11, Ui.MUTED);
+        row.src.setMaxLines(1);
         row.foot.addView(row.src);
         row.foot.setVisibility(View.GONE);
         row.card.addView(row.foot);
