@@ -74,29 +74,15 @@ public class MainActivity extends Activity {
                 pickBackup();
             }
         });
-        TextView search = Ui.text(this, "搜索", 13, Ui.INK2);
-        search.setPadding(0, 0, Ui.dp(this, 14), 0);
-        search.setOnClickListener(new View.OnClickListener() {
+        TextView more = Ui.text(this, "⋯", 20, Ui.ACCENT);
+        more.setPadding(0, 0, Ui.dp(this, 12), 0);
+        more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, SearchActivity.class));
+                openMenu();
             }
         });
-        bar.addView(search);
-
-        bar.addView(restore);
-
-        bar.addView(usage);
-
-        TextView settings = Ui.text(this, "设置", 13, Ui.INK2);
-        settings.setPadding(0, 0, Ui.dp(this, 12), 0);
-        settings.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
-            }
-        });
-        bar.addView(settings);
+        bar.addView(more);
 
         bar.addView(add);
         root.addView(bar);
@@ -187,6 +173,38 @@ public class MainActivity extends Activity {
         adapter.notifyDataSetChanged();
         empty.setVisibility(data.isEmpty() ? View.VISIBLE : View.GONE);
         list.setVisibility(data.isEmpty() ? View.GONE : View.VISIBLE);
+    }
+
+    private void openMenu() {
+        final String[] items = {"搜索", "用量", "设置", "恢复备份", "关于"};
+        new AlertDialog.Builder(this)
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) startActivity(new Intent(MainActivity.this, SearchActivity.class));
+                        else if (which == 1) startActivity(new Intent(MainActivity.this, UsageActivity.class));
+                        else if (which == 2) startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+                        else if (which == 3) pickBackup();
+                        else showAbout();
+                    }
+                })
+                .show();
+    }
+
+    private void showAbout() {
+        String version = "0.12.0";
+        try {
+            version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception ignored) {
+        }
+        String msg = "Make Your Notes · 原生版 " + version + "\n\n"
+                + "全部数据保存在本机 SQLite，不上传服务器；只有导入课件和 AI 整理时会把图片/文字发给模型。\n\n"
+                + "功能：课件截图提取、自动分类、公式渲染、画板配图、思维导图、导出与备份、用量统计、全局搜索。";
+        new AlertDialog.Builder(this)
+                .setTitle("关于")
+                .setMessage(msg)
+                .setPositiveButton("好", null)
+                .show();
     }
 
     private void pickBackup() {

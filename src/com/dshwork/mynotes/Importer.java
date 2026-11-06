@@ -74,8 +74,7 @@ public class Importer {
                 int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1);
                 out.points += added;
             } catch (Exception e) {
-                String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
-                out.errors.add("第 " + (i + 1) + " 页失败：" + msg);
+                out.errors.add("第 " + (i + 1) + " 页失败：" + AiClient.friendly(e));
             }
         }
         if (cb != null) cb.onStep(uris.size(), uris.size(), "完成");
