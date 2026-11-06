@@ -107,7 +107,7 @@ public class BoardView extends View {
 
     private int tool = T_SELECT;
     private int shapeKind = 0;
-    private String symbolName = "resistor";
+    private String symbolName = "sym-resistor";
     private int color = 0xFF243029;
     private float width = 2.5f;
 

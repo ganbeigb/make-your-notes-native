@@ -17,6 +17,8 @@ import java.util.List;
 public class UsageActivity extends BaseActivity {
 
     private Db db;
+    private LinearLayout body;
+    private int dayRange = 30;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -47,12 +49,39 @@ public class UsageActivity extends BaseActivity {
         root.addView(bar);
 
         ScrollView scroll = new ScrollView(this);
-        LinearLayout body = new LinearLayout(this);
+        body = new LinearLayout(this);
         body.setOrientation(LinearLayout.VERTICAL);
         body.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
+        scroll.addView(body);
+        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+        render();
+    }
+
+    private void render() {
+        body.removeAllViews();
+
+        LinearLayout ranges = new LinearLayout(this);
+        ranges.setOrientation(LinearLayout.HORIZONTAL);
+        ranges.setPadding(0, 0, 0, Ui.dp(this, 10));
+        String[] rangeLabels = {"7 天", "30 天", "90 天", "全部"};
+        final int[] rangeValues = {7, 30, 90, 3650};
+        for (int i = 0; i < rangeLabels.length; i++) {
+            final int days = rangeValues[i];
+            TextView b = Ui.chip(this, rangeLabels[i], dayRange == days);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dayRange = days;
+                    render();
+                }
+            });
+            ranges.addView(b);
+        }
+        body.addView(ranges);
 
         UsageChartView chart = new UsageChartView(this);
-        chart.setRows(db.usageByDay(30));
+        chart.setRows(db.usageByDay(dayRange));
         LinearLayout chartBox = new LinearLayout(this);
         chartBox.setOrientation(LinearLayout.VERTICAL);
         chartBox.setBackground(Ui.card(this));
@@ -60,7 +89,7 @@ public class UsageActivity extends BaseActivity {
         LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 190));
         clp.bottomMargin = Ui.dp(this, 12);
-        chartBox.addView(Ui.text(this, "最近 30 天 tokens", 13, Ui.INK2));
+        chartBox.addView(Ui.text(this, dayRange >= 3650 ? "全部时间 tokens" : "最近 " + dayRange + " 天 tokens", 13, Ui.INK2));
         chartBox.addView(chart, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         body.addView(chartBox, clp);
@@ -99,14 +128,14 @@ public class UsageActivity extends BaseActivity {
             body.addView(card("按科目", lines));
         }
 
-        List<String[]> days = db.usageByDay(30);
+        List<String[]> days = db.usageByDay(dayRange);
         if (!days.isEmpty()) {
             String[] lines = new String[days.size()];
             for (int i = 0; i < days.size(); i++) {
                 String[] r = days.get(i);
                 lines[i] = r[0] + "　" + r[1] + " 次　输入 " + fmt(parse(r[2])) + "　输出 " + fmt(parse(r[3]));
             }
-            body.addView(card("最近 30 天", lines));
+            body.addView(card(dayRange >= 3650 ? "全部时间" : "最近 " + dayRange + " 天", lines));
         } else {
             TextView empty = Ui.text(this, "还没有调用记录。导入课件或做 AI 整理后会记在这里。", 13, Ui.INK2);
             empty.setPadding(0, Ui.dp(this, 20), 0, 0);
@@ -133,10 +162,6 @@ public class UsageActivity extends BaseActivity {
             }
         });
         body.addView(clear);
-
-        scroll.addView(body);
-        root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
     }
 
     private long parse(String s) {

@@ -1,6 +1,8 @@
 package com.dshwork.mynotes;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.InputType;
@@ -128,7 +130,41 @@ public class SettingsActivity extends BaseActivity {
         keepFormulaBox.setTextColor(Ui.INK);
         keepFormulaBox.setChecked(prefs.keepFormula());
         keepFormulaBox.setPadding(0, Ui.dp(this, 8), 0, 0);
-        form.addView(keepFormulaBox);
+        this.keepFormulaBox = keepFormulaBox;
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setPadding(0, Ui.dp(this, 14), 0, 0);
+
+        TextView testBtn = Ui.chip(this, "测试 Key", false);
+        testBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                testKey();
+            }
+        });
+        actions.addView(testBtn);
+
+        TextView wipeBtn = Ui.chip(this, "清空全部数据", false);
+        wipeBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(SettingsActivity.this)
+                        .setTitle("清空全部数据")
+                        .setMessage("会删除所有科目、知识点、分类与用量记录，不可恢复。\n建议先导出备份。")
+                        .setPositiveButton("清空", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                new Db(SettingsActivity.this).clearAll();
+                                Toast.makeText(SettingsActivity.this, "已清空", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        actions.addView(wipeBtn);
+        form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
         form.addView(quoteBox);
@@ -146,6 +182,45 @@ public class SettingsActivity extends BaseActivity {
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
+    }
+
+    private void testKey() {
+        final Prefs p = new Prefs(this);
+        if (!p.ready()) {
+            Toast.makeText(this, "先填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在连接 " + p.provider() + " …");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                long t0 = System.currentTimeMillis();
+                String msg;
+                try {
+                    AiClient.Reply r = AiClient.chat(Prefs.baseUrl(p.provider()), p.apiKey(), p.textModel(),
+                            "只回复 OK", "ping", null, "off");
+                    long ms = System.currentTimeMillis() - t0;
+                    msg = "连接正常（" + ms + " ms）\n模型：" + p.textModel() + "\n回复：" + r.content.trim();
+                } catch (Exception e) {
+                    msg = "失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        new AlertDialog.Builder(SettingsActivity.this)
+                                .setTitle("测试结果")
+                                .setMessage(finalMsg)
+                                .setPositiveButton("好", null)
+                                .show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private float parseFloat(String s) {

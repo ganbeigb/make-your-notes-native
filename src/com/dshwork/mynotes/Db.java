@@ -695,6 +695,16 @@ public class Db extends SQLiteOpenHelper {
         return added;
     }
 
+    /** 清空所有数据（不可恢复） */
+    public void clearAll() {
+        android.database.sqlite.SQLiteDatabase d = getWritableDatabase();
+        d.delete("notes", null, null);
+        d.delete("categories", null, null);
+        d.delete("subjects", null, null);
+        d.delete("usage_log", null, null);
+        d.delete("page_digest", null, null);
+    }
+
     public void clearUsage() {
         getWritableDatabase().delete("usage_log", null, null);
     }
