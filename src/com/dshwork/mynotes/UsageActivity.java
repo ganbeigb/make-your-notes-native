@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import java.util.List;
 
 import java.util.List;
 
@@ -50,6 +51,20 @@ public class UsageActivity extends Activity {
         body.setOrientation(LinearLayout.VERTICAL);
         body.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
 
+        UsageChartView chart = new UsageChartView(this);
+        chart.setRows(db.usageByDay(30));
+        LinearLayout chartBox = new LinearLayout(this);
+        chartBox.setOrientation(LinearLayout.VERTICAL);
+        chartBox.setBackground(Ui.card(this));
+        chartBox.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 6));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 190));
+        clp.bottomMargin = Ui.dp(this, 12);
+        chartBox.addView(Ui.text(this, "最近 30 天 tokens", 13, Ui.INK2));
+        chartBox.addView(chart, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        body.addView(chartBox, clp);
+
         long[] total = db.usageTotals();
         body.addView(card("总览", new String[]{
                 "调用次数：" + total[2] + " 次",
@@ -80,6 +95,27 @@ public class UsageActivity extends Activity {
             empty.setPadding(0, Ui.dp(this, 20), 0, 0);
             body.addView(empty);
         }
+
+        TextView clear = Ui.text(this, "清空用量记录", 13, 0xFFC0392B);
+        clear.setPadding(0, Ui.dp(this, 8), 0, 0);
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new android.app.AlertDialog.Builder(UsageActivity.this)
+                        .setTitle("清空用量")
+                        .setMessage("会删除本机所有调用记录，不影响笔记。")
+                        .setPositiveButton("清空", new android.content.DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(android.content.DialogInterface dialog, int which) {
+                                db.clearUsage();
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        body.addView(clear);
 
         scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));

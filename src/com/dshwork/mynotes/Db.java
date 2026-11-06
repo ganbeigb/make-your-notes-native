@@ -521,6 +521,27 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    /** 全局搜索：返回 {noteId, 标题, 科目名} */
+    public List<String[]> search(String query) {
+        List<String[]> out = new ArrayList<>();
+        String q = "%" + (query == null ? "" : query.trim()) + "%";
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT n.id, n.name, s.name FROM notes n JOIN subjects s ON s.id = n.subject_id " +
+                        "WHERE n.name LIKE ? OR n.content LIKE ? OR n.formula LIKE ? " +
+                        "ORDER BY n.created_at DESC LIMIT 80",
+                new String[]{q, q, q});
+        try {
+            while (c.moveToNext()) out.add(new String[]{c.getString(0), c.getString(1), c.getString(2)});
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    public void clearUsage() {
+        getWritableDatabase().delete("usage_log", null, null);
+    }
+
     public long[] usageTotals() {
         Cursor c = getReadableDatabase().rawQuery("SELECT COALESCE(SUM(in_tok),0), COALESCE(SUM(out_tok),0), COUNT(*) FROM usage_log", null);
         try {

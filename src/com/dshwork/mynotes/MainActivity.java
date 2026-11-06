@@ -74,6 +74,16 @@ public class MainActivity extends Activity {
                 pickBackup();
             }
         });
+        TextView search = Ui.text(this, "搜索", 13, Ui.INK2);
+        search.setPadding(0, 0, Ui.dp(this, 14), 0);
+        search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SearchActivity.class));
+            }
+        });
+        bar.addView(search);
+
         bar.addView(restore);
 
         bar.addView(usage);
