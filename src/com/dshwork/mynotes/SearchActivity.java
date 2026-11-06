@@ -66,6 +66,39 @@ public class SearchActivity extends BaseActivity {
         ilp.setMargins(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
         root.addView(input, ilp);
 
+        final LinearLayout recentRow = new LinearLayout(this);
+        recentRow.setOrientation(LinearLayout.HORIZONTAL);
+        recentRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
+        root.addView(recentRow);
+
+        final Runnable rebuildRecent = new Runnable() {
+            @Override
+            public void run() {
+                recentRow.removeAllViews();
+                final Prefs pf = new Prefs(SearchActivity.this);
+                java.util.List<String> recents = pf.recentSearches();
+                if (recents.isEmpty()) return;
+                TextView label = Ui.text(SearchActivity.this, "最近：", 11.5f, Ui.MUTED);
+                label.setPadding(0, 0, Ui.dp(SearchActivity.this, 6), 0);
+                recentRow.addView(label);
+                for (final String q2 : recents) {
+                    TextView chip = Ui.chip(SearchActivity.this, q2, false);
+                    chip.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            input.setText(q2);
+                            input.setSelection(q2.length());
+                        }
+                    });
+                    LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    clp.rightMargin = Ui.dp(SearchActivity.this, 6);
+                    recentRow.addView(chip, clp);
+                }
+            }
+        };
+        rebuildRecent.run();
+
         ListView list = new ListView(this);
         list.setDivider(null);
         list.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 12));
@@ -112,6 +145,22 @@ public class SearchActivity extends BaseActivity {
         });
 
         input.addTextChangedListener(new TextWatcher() {
+            private Runnable pending;
+
+            private void schedule(final String q) {
+                if (pending != null) input.removeCallbacks(pending);
+                pending = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (q != null && q.trim().length() >= 2) {
+                            new Prefs(SearchActivity.this).addSearch(q);
+                            rebuildRecent.run();
+                        }
+                    }
+                };
+                input.postDelayed(pending, 1200);
+            }
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
