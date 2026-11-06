@@ -128,9 +128,18 @@ public class MainActivity extends BaseActivity {
                     lp.bottomMargin = Ui.dp(MainActivity.this, 10);
                     row.card.setLayoutParams(lp);
 
-                    row.name = Ui.text(MainActivity.this, "", 17, Ui.INK);
+                    LinearLayout head = new LinearLayout(MainActivity.this);
+                    head.setOrientation(LinearLayout.HORIZONTAL);
+                    head.setGravity(Gravity.CENTER_VERTICAL);
+                    row.dot = new android.view.View(MainActivity.this);
+                    LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                            Ui.dp(MainActivity.this, 9), Ui.dp(MainActivity.this, 9));
+                    dlp.rightMargin = Ui.dp(MainActivity.this, 8);
+                    head.addView(row.dot, dlp);
+                    row.name = Ui.text(MainActivity.this, "", 16, Ui.INK);
                     row.name.setTypeface(Typeface.DEFAULT_BOLD);
-                    row.card.addView(row.name);
+                    head.addView(row.name);
+                    row.card.addView(head);
 
                     row.meta = Ui.text(MainActivity.this, "", 12, Ui.INK2);
                     row.meta.setPadding(0, Ui.dp(MainActivity.this, 4), 0, 0);
@@ -143,7 +152,18 @@ public class MainActivity extends BaseActivity {
                 Db.Subject s = data.get(position);
                 row.card.setBackground(Ui.card(MainActivity.this));
                 row.name.setText(s.name);
-                row.meta.setText(s.noteCount + " 个知识点");
+                int[] st = db.subjectStats(s.id);
+                row.meta.setText(st[0] + " 个课件 · " + st[1] + " 页 · " + st[2] + " 个知识点");
+                if (row.dot != null) {
+                    android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+                    g.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                    try {
+                        g.setColor(android.graphics.Color.parseColor(s.color == null ? "#2C5D4A" : s.color));
+                    } catch (Exception e) {
+                        g.setColor(Ui.ACCENT);
+                    }
+                    row.dot.setBackground(g);
+                }
                 return row.card;
             }
 
@@ -151,6 +171,7 @@ public class MainActivity extends BaseActivity {
                 LinearLayout card;
                 TextView name;
                 TextView meta;
+                View dot;
             }
         };
         list.setAdapter(adapter);

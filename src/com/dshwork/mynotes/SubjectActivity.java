@@ -84,9 +84,21 @@ public class SubjectActivity extends BaseActivity {
 
         LinearLayout titleBox = new LinearLayout(this);
         titleBox.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout titleLine = new LinearLayout(this);
+        titleLine.setOrientation(LinearLayout.HORIZONTAL);
+        titleLine.setGravity(Gravity.CENTER_VERTICAL);
+        View titleDot = new View(this);
+        android.graphics.drawable.GradientDrawable dg = new android.graphics.drawable.GradientDrawable();
+        dg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        dg.setColor(Ui.ACCENT);
+        titleDot.setBackground(dg);
+        LinearLayout.LayoutParams tdlp = new LinearLayout.LayoutParams(Ui.dp(this, 9), Ui.dp(this, 9));
+        tdlp.rightMargin = Ui.dp(this, 8);
+        titleLine.addView(titleDot, tdlp);
         TextView title = Ui.text(this, subjectName == null ? "科目" : subjectName, 18, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        titleBox.addView(title);
+        titleLine.addView(title);
+        titleBox.addView(titleLine);
         statsView = Ui.text(this, "", 11.5f, Ui.MUTED);
         statsView.setPadding(0, Ui.dp(this, 1), 0, 0);
         titleBox.addView(statsView);
