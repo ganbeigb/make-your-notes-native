@@ -88,6 +88,36 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(del);
 
+        TextView zoomOutBtn = Ui.text(this, "－", 17, Ui.ACCENT);
+        zoomOutBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        zoomOutBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                board.zoomBy(0.8f);
+            }
+        });
+        bar.addView(zoomOutBtn);
+
+        TextView zoomInBtn = Ui.text(this, "＋", 17, Ui.ACCENT);
+        zoomInBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        zoomInBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                board.zoomBy(1.25f);
+            }
+        });
+        bar.addView(zoomInBtn);
+
+        TextView resetBtn = Ui.text(this, "复位", 13, Ui.ACCENT);
+        resetBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        resetBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                board.resetView();
+            }
+        });
+        bar.addView(resetBtn);
+
         TextView clear = Ui.text(this, "清空", 14, 0xFFC0392B);
         clear.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
         clear.setOnClickListener(new View.OnClickListener() {
