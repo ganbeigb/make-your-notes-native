@@ -194,7 +194,7 @@ public class MainActivity extends BaseActivity {
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                confirmDelete(data.get(position));
+                subjectMenu(data.get(position));
                 return true;
             }
         });
@@ -206,6 +206,39 @@ public class MainActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         reload();
+    }
+
+    /** 长按科目：重命名 / 删除（网页 rename-subject、delete-subject） */
+    private void subjectMenu(final Db.Subject s) {
+        final String[] ops = {"重命名科目", "删除科目"};
+        new AlertDialog.Builder(this)
+                .setItems(ops, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            final EditText input = new EditText(MainActivity.this);
+                            input.setText(s.name);
+                            new AlertDialog.Builder(MainActivity.this)
+                                    .setTitle("重命名科目")
+                                    .setView(input)
+                                    .setPositiveButton("保存", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dlg, int w) {
+                                            String name = input.getText().toString().trim();
+                                            if (!name.isEmpty()) {
+                                                db.renameSubject(s.id, name);
+                                                reload();
+                                            }
+                                        }
+                                    })
+                                    .setNegativeButton("取消", null)
+                                    .show();
+                        } else {
+                            confirmDelete(s);
+                        }
+                    }
+                })
+                .show();
     }
 
     private void reload() {

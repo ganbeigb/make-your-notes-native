@@ -455,6 +455,12 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    public void renameSubject(String id, String name) {
+        ContentValues v = new ContentValues();
+        v.put("name", name);
+        getWritableDatabase().update("subjects", v, "id = ?", new String[]{id});
+    }
+
     public void setPageDigest(String subjectId, int page, String text) {
         ContentValues v = new ContentValues();
         v.put("subject_id", subjectId);
