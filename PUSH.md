@@ -44,7 +44,7 @@ git push origin --all
 - Choose a tag：`v0.18.0`
 - Title：`Make Your Notes 原生版 v0.18.0`
 - 描述：直接粘贴 `RELEASE_NOTES.md` 的内容
-- 附件：上传 `D:\dshwork\MakeYourNotes-native-v0.18.0.apk`
+- 附件：上传仓库里的 `dist\MakeYourNotes-native-v<版本>.apk`
 - **Publish release**
 
 ## 5. 常见问题

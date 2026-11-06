@@ -146,7 +146,7 @@ cd D:\dshwork\MyNotesNative
 powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
 ```
 
-产物：`D:\dshwork\MakeYourNotes-native-v0.2.0.apk`
+产物：`dist\MakeYourNotes-native-v<版本>.apk`（所有历史版本都留在 `dist/`）
 
 ## 开发约定
 
@@ -174,7 +174,7 @@ git tag -a vX.Y.Z -m "说明"
 
 ## 安装
 
-1. 把 `MakeYourNotes-native-v*.apk` 传到手机
+1. 把 `dist\MakeYourNotes-native-v*.apk` 传到手机
 2. 点击安装，允许「未知来源」
 3. 打开后「⋯ → 设置」填 API Key（识图选 zhipu，默认 glm-4.6v-flash 免费）
 
