@@ -96,14 +96,15 @@ public class Importer {
             if (cb != null) cb.onStep(i, uris.size(), "正在识别第 " + (i + 1) + " / " + uris.size() + " 页");
             try {
                 if (prefs.mock()) {
-                String json = mockJson(i + 1);
-                String savedMock = saveSlide(ctx, uri, pageNo);
-                Db.Slide mockSlide = db.addSlide(subjectId, deck.id, pageNo, savedMock);
-                out.points += insertPoints(db, subjectId, json, "第 " + pageNo + " 页", savedMock, pageNo, mockSlide.id);
-                cb.onStep(i + 1, uris.size(), "演示模式：第 " + (i + 1) + " 页");
-                continue;
-            }
-            String b64 = toBase64(ctx, uri);
+                    String json = mockJson(pageNo);
+                    String savedMock = saveSlide(ctx, uri, pageNo);
+                    Db.Slide mockSlide = db.addSlide(subjectId, deck.id, pageNo, savedMock);
+                    out.points += insertPoints(db, subjectId, json, "第 " + pageNo + " 页",
+                            savedMock, pageNo, mockSlide.id);
+                    if (cb != null) cb.onStep(i + 1, uris.size(), "演示模式：第 " + pageNo + " 页");
+                    continue;
+                }
+                String b64 = toBase64(ctx, uri);
                 if (b64 == null) {
                     out.errors.add("第 " + (i + 1) + " 页读取失败");
                     continue;
@@ -135,14 +136,14 @@ public class Importer {
                     java.io.File dupFile = new java.io.File(saved);
                     if (dupFile.exists()) dupFile.delete();
                     out.skipped++;
-                    cb.onStep(i + 1, uris.size(), "第 " + (i + 1) + " 页已存在，跳过");
+                    if (cb != null) cb.onStep(i + 1, uris.size(), "第 " + pageNo + " 页已存在，跳过");
                     continue;
                 }
                 if (db.slideIndexExists(deck.id, pageNo)) {
                     java.io.File dup2 = new java.io.File(saved);
                     if (dup2.exists()) dup2.delete();
                     out.skipped++;
-                    cb.onStep(i + 1, uris.size(), "第 " + pageNo + " 页已存在，跳过");
+                    if (cb != null) cb.onStep(i + 1, uris.size(), "第 " + pageNo + " 页已存在，跳过");
                     continue;
                 }
                 Db.Slide slide = db.addSlide(subjectId, deck.id, pageNo, saved, hash);
