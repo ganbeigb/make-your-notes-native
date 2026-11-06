@@ -49,7 +49,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 6;
+    private static final int VERSION = 7;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -66,12 +66,18 @@ public class Db extends SQLiteOpenHelper {
                 "importance INTEGER NOT NULL DEFAULT 2, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
+        db.execSQL("CREATE TABLE page_digest (subject_id TEXT NOT NULL, page INTEGER NOT NULL, " +
+                "text TEXT, updated_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(subject_id, page))");
         db.execSQL("CREATE INDEX idx_notes_subject ON notes(subject_id)");
         db.execSQL("CREATE INDEX idx_cat_subject ON categories(subject_id)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 7) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS page_digest (subject_id TEXT NOT NULL, page INTEGER NOT NULL, " +
+                    "text TEXT, updated_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(subject_id, page))");
+        }
         if (oldVersion < 6) {
             tryAdd(db, "notes", "quote", "TEXT");
         }
@@ -147,6 +153,26 @@ public class Db extends SQLiteOpenHelper {
 
     public String subjectCriteria(String subjectId) {
         Cursor c = getReadableDatabase().rawQuery("SELECT criteria FROM subjects WHERE id = ?", new String[]{subjectId});
+        try {
+            return c.moveToFirst() ? c.getString(0) : null;
+        } finally {
+            c.close();
+        }
+    }
+
+    public void setPageDigest(String subjectId, int page, String text) {
+        ContentValues v = new ContentValues();
+        v.put("subject_id", subjectId);
+        v.put("page", page);
+        v.put("text", text);
+        v.put("updated_at", System.currentTimeMillis());
+        getWritableDatabase().insertWithOnConflict("page_digest", null, v, SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public String pageDigest(String subjectId, int page) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT text FROM page_digest WHERE subject_id = ? AND page = ?",
+                new String[]{subjectId, String.valueOf(page)});
         try {
             return c.moveToFirst() ? c.getString(0) : null;
         } finally {

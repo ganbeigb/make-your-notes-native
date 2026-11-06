@@ -197,3 +197,8 @@ git tag -a vX.Y.Z -m "说明"
 ## 版本历史
 
 见 [CHANGELOG.md](CHANGELOG.md)，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+
+
+## 发布
+
+推送到 GitHub、打 Release 的完整命令见 [PUSH.md](PUSH.md)。
