@@ -52,6 +52,9 @@ public class Importer {
             return out;
         }
 
+        Db.Deck deck = db.addDeck(subjectId, "课件 " + new java.text.SimpleDateFormat("MM-dd HH:mm",
+                java.util.Locale.CHINA).format(new java.util.Date()));
+
         for (int i = 0; i < uris.size(); i++) {
             if (cb != null && cb.cancelled()) break;
             Uri uri = uris.get(i);
@@ -83,7 +86,8 @@ public class Importer {
                 }
 
                 String saved = saveSlide(ctx, uri, i + 1);
-                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1);
+                Db.Slide slide = db.addSlide(subjectId, deck.id, i + 1, saved);
+                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1, slide.id);
                 out.points += added;
 
                 if (added >= 2) {
@@ -91,6 +95,7 @@ public class Importer {
                         String digest = summarize(db, prefs, subjectId, json);
                         if (digest != null && !digest.trim().isEmpty()) {
                             db.setPageDigest(subjectId, i + 1, digest.trim());
+                            db.setSlideDigest(slide.id, digest.trim());
                         }
                     } catch (Exception ignored) {
                     }
@@ -165,7 +170,7 @@ public class Importer {
     }
 
     private static int insertPoints(Db db, String subjectId, String content, String source,
-                                    String slidePath, int page) throws Exception {
+                                    String slidePath, int page, String slideId) throws Exception {
         String json = AiClient.pickJson(content);
         JSONObject obj = new JSONObject(json);
         JSONArray points = obj.optJSONArray("points");
@@ -185,6 +190,7 @@ public class Importer {
             n.source = source;
             n.slidePath = slidePath;
             n.slidePage = page;
+            n.slideId = slideId;
             String cat = p.optString("category", "");
             if (!cat.trim().isEmpty()) n.categoryId = db.ensureCategoryPath(subjectId, cat);
             JSONArray tags = p.optJSONArray("tags");
