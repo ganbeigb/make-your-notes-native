@@ -393,6 +393,12 @@ public class NoteActivity extends BaseActivity {
         form.addView(actionRow);
 
         figureView = new ImageView(this);
+        figureView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                figureMenu();
+            }
+        });
         figureView.setAdjustViewBounds(true);
         figureView.setBackground(Ui.card(this));
         LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(
@@ -532,6 +538,44 @@ public class NoteActivity extends BaseActivity {
         parent.addView(e, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return e;
+    }
+
+    /** 配图菜单：查看大图 / 删除 */
+    private void figureMenu() {
+        if (note.figure == null || note.figure.isEmpty()) {
+            Toast.makeText(this, "还没有配图，先点「画配图」", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String[] ops = {"查看大图", "删除配图"};
+        new AlertDialog.Builder(this)
+                .setItems(ops, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            showFigureFull();
+                        } else {
+                            note.figure = null;
+                            db.saveNote(note);
+                            showFigure();
+                            Toast.makeText(NoteActivity.this, "已删除配图", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .show();
+    }
+
+    private void showFigureFull() {
+        ImageView big = new ImageView(this);
+        big.setAdjustViewBounds(true);
+        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.figure);
+        if (bmp == null) {
+            Toast.makeText(this, "配图文件找不到了", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        big.setImageBitmap(bmp);
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(big);
+        new AlertDialog.Builder(this).setView(sc).setPositiveButton("关闭", null).show();
     }
 
     private void showSlide() {
