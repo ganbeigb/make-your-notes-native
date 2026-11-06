@@ -114,6 +114,24 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(exp, elp);
+
+        TextView map = Ui.text(this, "  导图  ", 14, Ui.INK);
+        map.setBackground(Ui.card(this));
+        map.setGravity(Gravity.CENTER);
+        map.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        mlp.leftMargin = Ui.dp(this, 8);
+        map.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(SubjectActivity.this, MindMapActivity.class);
+                i.putExtra("subjectId", subjectId);
+                i.putExtra("subjectName", subjectName);
+                startActivity(i);
+            }
+        });
+        tools.addView(map, mlp);
         root.addView(tools);
 
         list = new ListView(this);
