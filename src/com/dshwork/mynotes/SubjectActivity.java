@@ -332,7 +332,7 @@ public class SubjectActivity extends BaseActivity {
                 Db.Note n = (Db.Note) o;
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
                 if ("extension".equals(n.kind)) path = path.isEmpty() ? "拓展" : path + " · 拓展";
-                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines());
+                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines(), n.importance);
                 if (selecting && picked.contains(n.id)) {
                     row.card.setBackground(Ui.cardSelected(SubjectActivity.this));
                 }

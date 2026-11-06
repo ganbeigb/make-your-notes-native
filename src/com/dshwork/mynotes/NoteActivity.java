@@ -130,6 +130,26 @@ public class NoteActivity extends BaseActivity {
         aiRow.addView(kindPoint);
         aiRow.addView(kindExt);
 
+        final java.util.List<TextView> impChips = new java.util.ArrayList<>();
+        for (int k = 1; k <= 5; k++) {
+            final int level = k;
+            final TextView chipImp = Ui.chip(this, k == 5 ? "★★★" : (k == 4 ? "★★" : (k >= 2 ? "★" : "·")), note.importance == k);
+            chipImp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    note.importance = level;
+                    for (int i = 0; i < impChips.size(); i++) {
+                        boolean on = i + 1 == level;
+                        impChips.get(i).setBackground(Ui.chip(NoteActivity.this, "x", on).getBackground());
+                        impChips.get(i).setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                    }
+                    save(false);
+                }
+            });
+            impChips.add(chipImp);
+            aiRow.addView(chipImp);
+        }
+
         TextView copy = Ui.chip(this, "复制", false);
         copy.setOnClickListener(new View.OnClickListener() {
             @Override
