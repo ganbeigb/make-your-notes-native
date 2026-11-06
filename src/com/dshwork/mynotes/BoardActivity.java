@@ -159,7 +159,14 @@ public class BoardActivity extends BaseActivity {
         tools.addView(toolButton("画笔", BoardView.T_PEN, tools));
         tools.addView(toolButton("文字", BoardView.T_TEXT, tools));
         tools.addView(toolButton("图形", BoardView.T_SHAPE, tools));
-        tools.addView(toolButton("元件", BoardView.T_SYMBOL, tools));
+        TextView symTool = toolButton("元件", BoardView.T_SYMBOL, tools);
+        symTool.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showSymbolPicker();
+            }
+        });
+        tools.addView(symTool);
         tools.addView(toolButton("连线", BoardView.T_WIRE, tools));
 
         TextView chipTool = toolButton("芯片", BoardView.T_CHIP, tools);
@@ -490,6 +497,47 @@ public class BoardActivity extends BaseActivity {
     }
 
     /** 画板设置：引脚吸附 / 显示网格 / 拖动对齐网格 */
+    /** 元件选择：网格面板（一行 4 个） */
+    private void showSymbolPicker() {
+        LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        grid.setPadding(Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 8));
+
+        LinearLayout row = null;
+        final java.util.List<SymbolCell> cells = new java.util.ArrayList<>();
+        for (int i = 0; i < Symbols.NAMES.length; i++) {
+            if (i % 4 == 0) {
+                row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                grid.addView(row);
+            }
+            final String id = Symbols.NAMES[i];
+            final SymbolCell cell = new SymbolCell(this, id, Symbols.LABELS[i]);
+            cells.add(cell);
+            cell.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    board.setSymbolName(id);
+                    for (SymbolCell c2 : cells) c2.setSelected(c2 == cell);
+                    Toast.makeText(BoardActivity.this, "已选：" + Symbols.LABELS[java.util.Arrays.asList(Symbols.NAMES).indexOf(id)],
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = Ui.dp(this, 4);
+            row.addView(cell, lp);
+        }
+
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(grid);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("选择元件（点一下后到画布上放置）")
+                .setView(sc)
+                .setNegativeButton("关闭", null)
+                .show();
+    }
+
     private void showBoardSettings() {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
