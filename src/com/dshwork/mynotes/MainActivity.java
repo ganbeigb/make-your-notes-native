@@ -119,26 +119,41 @@ public class MainActivity extends Activity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                Row row;
+                if (convertView == null) {
+                    row = new Row();
+                    row.card = new LinearLayout(MainActivity.this);
+                    row.card.setOrientation(LinearLayout.VERTICAL);
+                    row.card.setPadding(Ui.dp(MainActivity.this, 16), Ui.dp(MainActivity.this, 14),
+                            Ui.dp(MainActivity.this, 16), Ui.dp(MainActivity.this, 14));
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    lp.bottomMargin = Ui.dp(MainActivity.this, 10);
+                    row.card.setLayoutParams(lp);
+
+                    row.name = Ui.text(MainActivity.this, "", 17, Ui.INK);
+                    row.name.setTypeface(Typeface.DEFAULT_BOLD);
+                    row.card.addView(row.name);
+
+                    row.meta = Ui.text(MainActivity.this, "", 12, Ui.INK2);
+                    row.meta.setPadding(0, Ui.dp(MainActivity.this, 4), 0, 0);
+                    row.card.addView(row.meta);
+
+                    row.card.setTag(row);
+                } else {
+                    row = (Row) convertView.getTag();
+                }
                 Db.Subject s = data.get(position);
-                LinearLayout card = new LinearLayout(MainActivity.this);
-                card.setOrientation(LinearLayout.VERTICAL);
-                card.setBackground(Ui.card(MainActivity.this));
-                card.setPadding(Ui.dp(MainActivity.this, 16), Ui.dp(MainActivity.this, 14),
-                        Ui.dp(MainActivity.this, 16), Ui.dp(MainActivity.this, 14));
+                row.card.setBackground(Ui.card(MainActivity.this));
+                row.name.setText(s.name);
+                row.meta.setText(s.noteCount + " 个知识点");
+                return row.card;
+            }
 
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.bottomMargin = Ui.dp(MainActivity.this, 10);
-                card.setLayoutParams(lp);
-
-                TextView name = Ui.text(MainActivity.this, s.name, 17, Ui.INK);
-                name.setTypeface(Typeface.DEFAULT_BOLD);
-                card.addView(name);
-
-                TextView meta = Ui.text(MainActivity.this, s.noteCount + " 个知识点", 12, Ui.INK2);
-                meta.setPadding(0, Ui.dp(MainActivity.this, 4), 0, 0);
-                card.addView(meta);
-                return card;
+            class Row {
+                LinearLayout card;
+                TextView name;
+                TextView meta;
             }
         };
         list.setAdapter(adapter);
@@ -165,6 +180,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (Ui.themeChanged(this)) {
+            recreate();
+            return;
+        }
         reload();
     }
 
