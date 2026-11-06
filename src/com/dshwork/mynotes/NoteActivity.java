@@ -342,6 +342,27 @@ public class NoteActivity extends BaseActivity {
         input.setMinLines(2);
         box.addView(input);
 
+        String[] suggests = {"更易背诵", "补充适用条件", "精简到两句", "加上易错点", "换成公式推导"};
+        LinearLayout sugRow = new LinearLayout(this);
+        sugRow.setOrientation(LinearLayout.HORIZONTAL);
+        sugRow.setPadding(0, Ui.dp(this, 6), 0, 0);
+        for (final String s : suggests) {
+            TextView chip = Ui.chip(this, s, false);
+            chip.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String old = input.getText().toString().trim();
+                    input.setText(old.isEmpty() ? s : old + "；" + s);
+                    input.setSelection(input.getText().length());
+                }
+            });
+            sugRow.addView(chip);
+        }
+        android.widget.HorizontalScrollView sugScroll = new android.widget.HorizontalScrollView(this);
+        sugScroll.setHorizontalScrollBarEnabled(false);
+        sugScroll.addView(sugRow);
+        box.addView(sugScroll);
+
         final android.widget.CheckBox append = new android.widget.CheckBox(this);
         append.setText("在原内容后面追加（不覆盖）");
         append.setTextSize(13);

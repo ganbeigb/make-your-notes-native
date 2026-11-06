@@ -48,6 +48,10 @@ public class Prompts {
             "只输出 JSON，不要解释：{\"name\":\"标题\",\"content\":\"正文 3-6 句\"," +
             "\"formula\":\"LaTeX，没有就空\",\"tags\":[\"标签\"]}。";
 
+    public static final String DECK_SYSTEM =
+            "你是课件归纳助手。用户给出一整份课件的知识点清单，请输出 5-8 条要点，" +
+            "每条一行、以「- 」开头，概括脉络与关键结论。只输出这些行，不要标题和解释。";
+
     private Prompts() {
     }
 }

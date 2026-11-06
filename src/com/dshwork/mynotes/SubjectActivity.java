@@ -183,6 +183,21 @@ public class SubjectActivity extends BaseActivity {
         });
         tools.addView(rename);
 
+        TextView foldAll = Ui.chip(this, "折叠", false);
+        foldAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (collapsedDecks.isEmpty()) {
+                    for (Db.Deck d : db.decks(subjectId)) collapsedDecks.add(d.id);
+                } else {
+                    collapsedDecks.clear();
+                }
+                buildRows();
+                adapter.notifyDataSetChanged();
+            }
+        });
+        tools.addView(foldAll);
+
         TextView rule = Ui.chip(this, "标准", false);
         rule.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -421,13 +436,15 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void deckMenu(final Db.Deck d) {
-        final String[] items = {"重命名课件", "查看页面", "删除课件"};
+        final String[] items = {"本节总结（AI）", "重命名课件", "查看页面", "删除课件"};
         new AlertDialog.Builder(this)
                 .setTitle(d.title)
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == 0) {
+                            deckSummary(d);
+                        } else if (which == 1) {
                             final EditText input = new EditText(SubjectActivity.this);
                             input.setText(d.title);
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -442,7 +459,7 @@ public class SubjectActivity extends BaseActivity {
                                     })
                                     .setNegativeButton("取消", null)
                                     .show();
-                        } else if (which == 1) {
+                        } else if (which == 2) {
                             showSlides(d);
                         } else {
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -481,6 +498,40 @@ public class SubjectActivity extends BaseActivity {
                 })
                 .setNegativeButton("关闭", null)
                 .show();
+    }
+
+    private void deckSummary(final Db.Deck d) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在总结整份课件…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    msg = Importer.summarizeDeck(db, prefs, subjectId, d);
+                } catch (final Exception e) {
+                    msg = "失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        new AlertDialog.Builder(SubjectActivity.this)
+                                .setTitle(d.title + " · 本节总结")
+                                .setMessage(finalMsg)
+                                .setPositiveButton("好", null)
+                                .show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void slideMenu(final Db.Slide s) {

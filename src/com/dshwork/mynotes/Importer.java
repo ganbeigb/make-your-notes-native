@@ -208,6 +208,29 @@ public class Importer {
         return added;
     }
 
+    /** 整份课件的要点总结 */
+    public static String summarizeDeck(Db db, Prefs prefs, String subjectId, Db.Deck deck) throws Exception {
+        java.util.List<Db.Note> list = db.notes(subjectId);
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        java.util.Set<String> slideIds = new java.util.HashSet<>();
+        for (Db.Slide s : db.slides(deck.id)) slideIds.add(s.id);
+        for (Db.Note n : list) {
+            if (n.slideId == null || !slideIds.contains(n.slideId)) continue;
+            sb.append("- ").append(n.name);
+            if (n.formula != null && !n.formula.trim().isEmpty()) sb.append("（").append(n.formula).append("）");
+            sb.append('\n');
+            if (++count >= 400) break;
+        }
+        if (count == 0) throw new Exception("这份课件还没有知识点");
+        AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(prefs.provider()), prefs.apiKey(),
+                prefs.textModel(), Prompts.DECK_SYSTEM, sb.toString(), null, "off");
+        db.logUsage(subjectId, "digest", reply.inTok, reply.outTok);
+        String summary = reply.content == null ? "" : reply.content.trim();
+        db.setDeckSummary(deck.id, summary);
+        return summary;
+    }
+
     /** 从已有的课件原图重跑一页，返回识别出的 JSON 文本 */
     public static String extractFile(Prefs prefs, String imagePath) throws Exception {
         java.io.File f = new java.io.File(imagePath);

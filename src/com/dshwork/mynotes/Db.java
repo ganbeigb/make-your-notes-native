@@ -50,7 +50,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 8;
+    private static final int VERSION = 9;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -68,7 +68,7 @@ public class Db extends SQLiteOpenHelper {
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
         db.execSQL("CREATE TABLE decks (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, title TEXT, " +
-                "created_at INTEGER NOT NULL)");
+                "summary TEXT, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE slides (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, deck_id TEXT, " +
                 "idx INTEGER NOT NULL DEFAULT 0, title TEXT, image_path TEXT, digest TEXT, " +
                 "created_at INTEGER NOT NULL)");
@@ -80,6 +80,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 9) {
+            tryAdd(db, "decks", "summary", "TEXT");
+        }
         if (oldVersion < 8) {
             db.execSQL("CREATE TABLE IF NOT EXISTS decks (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, " +
                     "title TEXT, created_at INTEGER NOT NULL)");
@@ -175,6 +178,7 @@ public class Db extends SQLiteOpenHelper {
         public long createdAt;
         public int slideCount;
         public int noteCount;
+        public String summary;
         public boolean collapsed;
     }
 
@@ -203,6 +207,12 @@ public class Db extends SQLiteOpenHelper {
         v.put("created_at", d.createdAt);
         getWritableDatabase().insert("decks", null, v);
         return d;
+    }
+
+    public void setDeckSummary(String deckId, String summary) {
+        android.content.ContentValues v = new android.content.ContentValues();
+        v.put("summary", summary);
+        getWritableDatabase().update("decks", v, "id = ?", new String[]{deckId});
     }
 
     public void renameDeck(String id, String title) {
@@ -926,6 +936,39 @@ public class Db extends SQLiteOpenHelper {
     }
 
     /** 清空所有数据（不可恢复） */
+    /** 清掉指向已不存在文件的配图/原图引用 */
+    public int repairImages() {
+        int fixed = 0;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id, figure, slide_path FROM notes WHERE figure IS NOT NULL OR slide_path IS NOT NULL", null);
+        java.util.List<String> badFig = new java.util.ArrayList<>();
+        java.util.List<String> badSlide = new java.util.ArrayList<>();
+        try {
+            while (c.moveToNext()) {
+                String id = c.getString(0);
+                String fig = c.getString(1);
+                String sp = c.getString(2);
+                if (fig != null && !fig.isEmpty() && !new java.io.File(fig).exists()) badFig.add(id);
+                if (sp != null && !sp.isEmpty() && !new java.io.File(sp).exists()) badSlide.add(id);
+            }
+        } finally {
+            c.close();
+        }
+        for (String id : badFig) {
+            ContentValues v = new ContentValues();
+            v.putNull("figure");
+            getWritableDatabase().update("notes", v, "id = ?", new String[]{id});
+            fixed++;
+        }
+        for (String id : badSlide) {
+            ContentValues v = new ContentValues();
+            v.putNull("slide_path");
+            getWritableDatabase().update("notes", v, "id = ?", new String[]{id});
+            fixed++;
+        }
+        return fixed;
+    }
+
     public void clearAll() {
         android.database.sqlite.SQLiteDatabase d = getWritableDatabase();
         d.delete("notes", null, null);

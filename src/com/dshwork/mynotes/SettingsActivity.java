@@ -164,6 +164,16 @@ public class SettingsActivity extends BaseActivity {
             }
         });
         actions.addView(wipeBtn);
+
+        TextView repair = Ui.chip(this, "修复配图", false);
+        repair.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int fixed = new Db(SettingsActivity.this).repairImages();
+                Toast.makeText(SettingsActivity.this, "已清理 " + fixed + " 条失效引用", Toast.LENGTH_SHORT).show();
+            }
+        });
+        actions.addView(repair);
         form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
