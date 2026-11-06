@@ -47,6 +47,22 @@ public class Prefs {
         sp.edit().putString("textModel", v.trim()).apply();
     }
 
+    public boolean mock() {
+        return sp.getBoolean("mock", false);
+    }
+
+    public void setMock(boolean v) {
+        sp.edit().putBoolean("mock", v).apply();
+    }
+
+    public boolean autoOrganize() {
+        return sp.getBoolean("autoOrganize", false);
+    }
+
+    public void setAutoOrganize(boolean v) {
+        sp.edit().putBoolean("autoOrganize", v).apply();
+    }
+
     public boolean keepFormula() {
         return sp.getBoolean("keepFormula", false);
     }

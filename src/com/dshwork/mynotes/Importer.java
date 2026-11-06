@@ -30,6 +30,13 @@ public class Importer {
         public final List<Uri> failed = new ArrayList<>();
     }
 
+    private static String mockJson(int page) {
+        return "{\"points\":[{\"name\":\"演示知识点 A（第 " + page + " 页）\","
+                + "\"content\":\"这是演示模式下生成的示例内容，不会调用任何接口。\","
+                + "\"formula\":\"E=mc^2\",\"quote\":\"演示原文\","
+                + "\"category\":\"演示/示例\",\"importance\":2}]}";
+    }
+
     public static Outcome run(Context ctx, Db db, Prefs prefs, String subjectId,
                               List<Uri> uris, Progress cb) {
         Outcome out = new Outcome();
@@ -60,7 +67,15 @@ public class Importer {
             Uri uri = uris.get(i);
             if (cb != null) cb.onStep(i, uris.size(), "正在识别第 " + (i + 1) + " / " + uris.size() + " 页");
             try {
-                String b64 = toBase64(ctx, uri);
+                if (prefs.mock()) {
+                String json = mockJson(i + 1);
+                String savedMock = saveSlide(ctx, uri, i + 1);
+                Db.Slide mockSlide = db.addSlide(subjectId, deck.id, i + 1, savedMock);
+                out.points += insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", savedMock, i + 1, mockSlide.id);
+                cb.onStep(i + 1, uris.size(), "演示模式：第 " + (i + 1) + " 页");
+                continue;
+            }
+            String b64 = toBase64(ctx, uri);
                 if (b64 == null) {
                     out.errors.add("第 " + (i + 1) + " 页读取失败");
                     continue;

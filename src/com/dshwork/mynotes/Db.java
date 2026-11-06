@@ -214,6 +214,26 @@ public class Db extends SQLiteOpenHelper {
         return d;
     }
 
+    /** {课件数, 页数, 知识点数} */
+    public int[] subjectStats(String subjectId) {
+        int decks = 0, slides = 0, notes = 0;
+        android.database.Cursor c = getReadableDatabase().rawQuery(
+                "SELECT (SELECT COUNT(*) FROM decks WHERE subject_id = ?), " +
+                        "(SELECT COUNT(*) FROM slides WHERE subject_id = ?), " +
+                        "(SELECT COUNT(*) FROM notes WHERE subject_id = ?)",
+                new String[]{subjectId, subjectId, subjectId});
+        try {
+            if (c.moveToFirst()) {
+                decks = c.getInt(0);
+                slides = c.getInt(1);
+                notes = c.getInt(2);
+            }
+        } finally {
+            c.close();
+        }
+        return new int[]{decks, slides, notes};
+    }
+
     public void setDeckSummary(String deckId, String summary) {
         android.content.ContentValues v = new android.content.ContentValues();
         v.put("summary", summary);

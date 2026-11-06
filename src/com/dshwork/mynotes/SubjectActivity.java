@@ -38,6 +38,7 @@ public class SubjectActivity extends BaseActivity {
     private Prefs prefs;
     private String subjectId;
     private String subjectName;
+    private TextView statsView;
     private List<Db.Note> data;
     private final List<Object> rows = new ArrayList<>();
     private final java.util.Set<String> collapsedDecks = new java.util.HashSet<>();
@@ -81,9 +82,15 @@ public class SubjectActivity extends BaseActivity {
         });
         bar.addView(back);
 
-        TextView title = Ui.text(this, subjectName == null ? "科目" : subjectName, 19, Ui.INK);
+        LinearLayout titleBox = new LinearLayout(this);
+        titleBox.setOrientation(LinearLayout.VERTICAL);
+        TextView title = Ui.text(this, subjectName == null ? "科目" : subjectName, 18, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        titleBox.addView(title);
+        statsView = Ui.text(this, "", 11.5f, Ui.MUTED);
+        statsView.setPadding(0, Ui.dp(this, 1), 0, 0);
+        titleBox.addView(statsView);
+        bar.addView(titleBox, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         TextView add = Ui.button(this, "＋ 知识点");
         add.setOnClickListener(new View.OnClickListener() {
@@ -380,6 +387,10 @@ public class SubjectActivity extends BaseActivity {
 
     private void reload() {
         data = db.notesSorted(subjectId, prefs.sort());
+        if (statsView != null) {
+            int[] st = db.subjectStats(subjectId);
+            statsView.setText(st[0] + " 个课件 · " + st[1] + " 页 · " + st[2] + " 个知识点");
+        }
         buildRows();
         adapter.notifyDataSetChanged();
         boolean isEmpty = data.isEmpty();
@@ -1003,6 +1014,9 @@ private void openExportMenu() {
                             retryBtn.setText("  重试失败（" + failedUris.size() + "）  ");
                         }
                         Toast.makeText(SubjectActivity.this, sb.toString(), Toast.LENGTH_LONG).show();
+                        if (prefs.autoOrganize() && out.points > 0 && prefs.ready()) {
+                            runOrganize();
+                        }
                     }
                 });
             }
