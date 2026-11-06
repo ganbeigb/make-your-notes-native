@@ -288,6 +288,7 @@ public class Exporter {
                     sob.put("idx", sl.idx);
                     sob.put("imagePath", sl.imagePath);
                     sob.put("digest", sl.digest);
+                    sob.put("hash", sl.hash);
                     sob.put("createdAt", sl.createdAt);
                     slides.put(sob);
                 }

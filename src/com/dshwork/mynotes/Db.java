@@ -209,6 +209,7 @@ public class Db extends SQLiteOpenHelper {
         public String title;
         public String imagePath;
         public String digest;
+        public String hash;
         public long createdAt;
         public int noteCount;
     }
@@ -363,7 +364,7 @@ public class Db extends SQLiteOpenHelper {
     public List<Slide> slides(String deckId) {
         List<Slide> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT s.id, s.subject_id, s.deck_id, s.idx, s.title, s.image_path, s.digest, s.created_at, " +
+                "SELECT s.id, s.subject_id, s.deck_id, s.idx, s.title, s.image_path, s.digest, s.created_at, s.hash, " +
                         "(SELECT COUNT(*) FROM notes n WHERE n.slide_id = s.id) " +
                         "FROM slides s WHERE s.deck_id = ? ORDER BY s.idx ASC",
                 new String[]{deckId});
@@ -379,6 +380,7 @@ public class Db extends SQLiteOpenHelper {
                 s.digest = c.getString(6);
                 s.createdAt = c.getLong(7);
                 s.noteCount = c.getInt(8);
+                s.hash = c.getString(9);
                 out.add(s);
             }
         } finally {
@@ -896,6 +898,7 @@ public class Db extends SQLiteOpenHelper {
                     Slide created = addSlide(newSubj, newDeck, o.optInt("idx", i + 1), null);
                     ContentValues sv = new ContentValues();
                     if (o.has("digest")) sv.put("digest", o.optString("digest", ""));
+                    if (o.has("hash")) sv.put("hash", o.optString("hash", ""));
                     if (sv.size() > 0) getWritableDatabase().update("slides", sv, "id = ?", new String[]{created.id});
                     slideMap.put(o.optString("id"), created.id);
                 }
