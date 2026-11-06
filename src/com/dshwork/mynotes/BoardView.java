@@ -535,6 +535,40 @@ public class BoardView extends View {
     }
 
     /** 组合选中项 */
+    /** 以选中内容包围盒中心为基准缩放（网页版 scale-up / scale-down） */
+    public boolean scaleSelected(float factor) {
+        java.util.List<Item> all = new java.util.ArrayList<>();
+        if (selected != null) all.add(selected);
+        all.addAll(extraSel);
+        if (all.isEmpty()) return false;
+
+        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+        for (Item it : all) {
+            for (PointF p : it.pts) {
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y);
+                maxY = Math.max(maxY, p.y);
+            }
+        }
+        if (minX > maxX) return false;
+        float cx = (minX + maxX) / 2f, cy = (minY + maxY) / 2f;
+
+        snapshot();
+        for (Item it : all) {
+            for (PointF p : it.pts) {
+                p.x = cx + (p.x - cx) * factor;
+                p.y = cy + (p.y - cy) * factor;
+            }
+            if (it.kind == K_CHIP) {
+                it.w = Math.max(60, it.w * factor);
+                it.h = Math.max(40, it.h * factor);
+            }
+        }
+        invalidate();
+        return true;
+    }
+
     public boolean groupSelected() {
         java.util.List<Item> all = new java.util.ArrayList<>();
         if (selected != null) all.add(selected);
