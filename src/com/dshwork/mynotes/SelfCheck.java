@@ -64,6 +64,23 @@ public class SelfCheck {
             out.add(new Item("知识点读写", false, String.valueOf(e.getMessage())));
         }
 
+        // 3.5 课件与页面
+        try {
+            Db.Deck deck = db.addDeck(tempSubjectId, "自检课件");
+            Db.Slide slide = db.addSlide(tempSubjectId, deck.id, 1, null, "selfcheckhash");
+            boolean hashOk = db.slideHashExists(tempSubjectId, "selfcheckhash");
+            boolean idxOk = db.slideIndexExists(deck.id, 1);
+            int slideCount = db.slides(deck.id).size();
+            db.deleteDeck(deck.id);
+            boolean gone = db.slides(deck.id).isEmpty();
+            boolean ok = hashOk && idxOk && slideCount == 1 && gone && slide != null;
+            out.add(new Item("课件与页面", ok,
+                    "页数 " + slideCount + "，指纹/页码查重 " + (hashOk && idxOk ? "正常" : "异常")
+                            + "，删除后清理 " + (gone ? "正常" : "残留")));
+        } catch (Exception e) {
+            out.add(new Item("课件与页面", false, String.valueOf(e.getMessage())));
+        }
+
         // 4. 公式渲染
         try {
             FormulaView v = new FormulaView(ctx);
