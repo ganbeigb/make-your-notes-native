@@ -1222,6 +1222,9 @@ public class SubjectActivity extends BaseActivity {
                         reload();
                         StringBuilder sb = new StringBuilder();
                         sb.append("识别 ").append(out.pages).append(" 页，新增 ").append(out.points).append(" 个知识点");
+                        if (out.skipped > 0) {
+                            sb.append("，跳过 ").append(out.skipped).append(" 页重复");
+                        }
                         if (!out.errors.isEmpty()) {
                             sb.append("\n").append(out.errors.get(0));
                             if (out.errors.size() > 1) sb.append("（共 ").append(out.errors.size()).append(" 个错误）");
