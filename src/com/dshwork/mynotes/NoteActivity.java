@@ -117,6 +117,18 @@ public class NoteActivity extends Activity {
         contentInput = field(form, "正文", note.content == null ? "" : note.content,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
 
+        if (note.slidePath != null && !note.slidePath.isEmpty()) {
+            TextView slideBtn = Ui.text(this, "查看课件原图（第 " + note.slidePage + " 页）", 13, Ui.ACCENT);
+            slideBtn.setPadding(0, Ui.dp(this, 14), 0, 0);
+            slideBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showSlide();
+                }
+            });
+            form.addView(slideBtn);
+        }
+
         figureBtn = Ui.text(this, note.figure == null ? "＋ 画配图" : "重新画配图", 13, Ui.ACCENT);
         figureBtn.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 8));
         figureBtn.setOnClickListener(new View.OnClickListener() {
@@ -204,6 +216,26 @@ public class NoteActivity extends Activity {
         parent.addView(e, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return e;
+    }
+
+    private void showSlide() {
+        if (note.slidePath == null) return;
+        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.slidePath);
+        if (bmp == null) {
+            Toast.makeText(this, "原图不存在了", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        ImageView view = new ImageView(this);
+        view.setImageBitmap(bmp);
+        view.setAdjustViewBounds(true);
+        view.setBackgroundColor(0xFFF2EEE3);
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.addView(view);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("第 " + note.slidePage + " 页")
+                .setView(scroll)
+                .setPositiveButton("关闭", null)
+                .show();
     }
 
     private void insertSymbol(String s) {

@@ -70,7 +70,8 @@ public class Importer {
                     }
                 }
 
-                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页");
+                String saved = saveSlide(ctx, uri, i + 1);
+                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1);
                 out.points += added;
             } catch (Exception e) {
                 String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
@@ -81,7 +82,41 @@ public class Importer {
         return out;
     }
 
-    private static int insertPoints(Db db, String subjectId, String content, String source) throws Exception {
+    /** 把这一页压缩后存到私有目录，供「查看原图」用 */
+    private static String saveSlide(Context ctx, Uri uri, int page) {
+        try {
+            InputStream is = ctx.getContentResolver().openInputStream(uri);
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            BitmapFactory.decodeStream(is, null, bounds);
+            if (is != null) is.close();
+
+            int sample = 1;
+            int longer = Math.max(bounds.outWidth, bounds.outHeight);
+            while (longer / sample > 1200) sample *= 2;
+
+            BitmapFactory.Options opt = new BitmapFactory.Options();
+            opt.inSampleSize = sample;
+            InputStream is2 = ctx.getContentResolver().openInputStream(uri);
+            Bitmap bmp = BitmapFactory.decodeStream(is2, null, opt);
+            if (is2 != null) is2.close();
+            if (bmp == null) return null;
+
+            java.io.File dir = new java.io.File(ctx.getFilesDir(), "slides");
+            if (!dir.exists()) dir.mkdirs();
+            java.io.File out = new java.io.File(dir, "p" + page + "_" + System.currentTimeMillis() + ".jpg");
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 78, fos);
+            fos.close();
+            bmp.recycle();
+            return out.getAbsolutePath();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static int insertPoints(Db db, String subjectId, String content, String source,
+                                    String slidePath, int page) throws Exception {
         String json = AiClient.pickJson(content);
         JSONObject obj = new JSONObject(json);
         JSONArray points = obj.optJSONArray("points");
@@ -98,6 +133,8 @@ public class Importer {
             n.formula = p.optString("formula", "");
             n.importance = Math.max(1, Math.min(3, p.optInt("importance", 2)));
             n.source = source;
+            n.slidePath = slidePath;
+            n.slidePage = page;
             String cat = p.optString("category", "");
             if (!cat.trim().isEmpty()) n.categoryId = db.ensureCategoryPath(subjectId, cat);
             JSONArray tags = p.optJSONArray("tags");
