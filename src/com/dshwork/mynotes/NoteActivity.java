@@ -456,6 +456,47 @@ public class NoteActivity extends BaseActivity {
 
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
+        // 底部固定操作条：删除 / 保存并返回
+        LinearLayout bottomBar = new LinearLayout(this);
+        bottomBar.setOrientation(LinearLayout.HORIZONTAL);
+        bottomBar.setGravity(Gravity.CENTER_VERTICAL);
+        bottomBar.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 12));
+        bottomBar.setBackground(Ui.card(this));
+
+        TextView del = Ui.text(this, "删除这条", 13, Ui.RED);
+        del.setPadding(Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8));
+        del.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(NoteActivity.this)
+                        .setTitle("删除知识点")
+                        .setMessage(note.name == null ? "这条笔记" : note.name)
+                        .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                db.deleteNote(note.id);
+                                finish();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        bottomBar.addView(del, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView done = Ui.button(this, "保存并返回");
+        done.setPadding(Ui.dp(this, 20), Ui.dp(this, 9), Ui.dp(this, 20), Ui.dp(this, 9));
+        done.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                save(true);
+                finish();
+            }
+        });
+        bottomBar.addView(done);
+
+        root.addView(bottomBar);
         setContentView(root);
     }
 
