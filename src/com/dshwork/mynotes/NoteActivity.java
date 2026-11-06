@@ -365,27 +365,32 @@ public class NoteActivity extends BaseActivity {
             form.addView(quoteBox, qlp);
         }
 
+        LinearLayout actionRow = new LinearLayout(this);
+        actionRow.setOrientation(LinearLayout.HORIZONTAL);
+        actionRow.setPadding(0, Ui.dp(this, 14), 0, 0);
         if (note.slidePath != null && !note.slidePath.isEmpty()) {
-            TextView slideBtn = Ui.text(this, "查看课件原图（第 " + note.slidePage + " 页）", 13, Ui.ACCENT);
-            slideBtn.setPadding(0, Ui.dp(this, 14), 0, 0);
+            TextView slideBtn = Ui.chip(this, "查看课件原图 · 第 " + note.slidePage + " 页", false);
             slideBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     showSlide();
                 }
             });
-            form.addView(slideBtn);
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            slp.rightMargin = Ui.dp(this, 8);
+            actionRow.addView(slideBtn, slp);
         }
 
-        figureBtn = Ui.text(this, note.figure == null ? "＋ 画配图" : "重新画配图", 13, Ui.ACCENT);
-        figureBtn.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 8));
+        figureBtn = Ui.chip(this, note.figure == null ? "画配图" : "重画配图", false);
         figureBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivityForResult(new Intent(NoteActivity.this, BoardActivity.class), 2001);
             }
         });
-        form.addView(figureBtn);
+        actionRow.addView(figureBtn);
+        form.addView(actionRow);
 
         figureView = new ImageView(this);
         figureView.setAdjustViewBounds(true);
