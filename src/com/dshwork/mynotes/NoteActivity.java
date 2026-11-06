@@ -69,7 +69,15 @@ public class NoteActivity extends BaseActivity {
             }
         });
         bar.addView(back);
-        TextView title = Ui.text(this, "知识点", 19, Ui.INK);
+        String headerTitle;
+        if (note.slidePage > 0) {
+            Db.Subject sub = db.subject(note.subjectId);
+            String subName = sub == null ? "" : sub.name;
+            headerTitle = (subName.isEmpty() ? "" : subName + " · ") + "第 " + note.slidePage + " 页";
+        } else {
+            headerTitle = "手动笔记";
+        }
+        TextView title = Ui.text(this, headerTitle, 16, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         TextView saveBtn = Ui.button(this, "保存");
