@@ -47,6 +47,8 @@ public class SubjectActivity extends BaseActivity {
     private ListView list;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Uri> failedUris = new ArrayList<>();
+    private final List<Integer> failedPages = new ArrayList<>();
+    private String lastDeckId;
     private TextView retryBtn;
     private boolean selecting = false;
     private String viewMode = "decks";
@@ -136,9 +138,11 @@ public class SubjectActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 List<Uri> again = new ArrayList<>(failedUris);
+                final List<Integer> againPages = new ArrayList<>(failedPages);
                 failedUris.clear();
+                failedPages.clear();
                 retryBtn.setVisibility(View.GONE);
-                runImport(again);
+                runImport(again, againPages, lastDeckId);
             }
         });
         tools.addView(retryBtn);
@@ -1177,6 +1181,10 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void runImport(final List<Uri> uris) {
+        runImport(uris, null, null);
+    }
+
+    private void runImport(final List<Uri> uris, final List<Integer> pageNos, final String deckId) {
         final ProgressDialog dlg = new ProgressDialog(this);
         dlg.setTitle("正在解析课件");
         dlg.setMessage("准备中…");
@@ -1196,7 +1204,7 @@ public class SubjectActivity extends BaseActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Importer.Outcome out = Importer.run(SubjectActivity.this, db, prefs, subjectId, uris,
+                Importer.Outcome out = Importer.run(SubjectActivity.this, db, prefs, subjectId, uris, pageNos, deckId,
                         new Importer.Progress() {
                             @Override
                             public void onStep(final int done, final int total, final String message) {
@@ -1230,7 +1238,10 @@ public class SubjectActivity extends BaseActivity {
                             if (out.errors.size() > 1) sb.append("（共 ").append(out.errors.size()).append(" 个错误）");
                         }
                         failedUris.clear();
+                        failedPages.clear();
                         failedUris.addAll(out.failed);
+                        failedPages.addAll(out.failedPages);
+                        if (out.deckId != null) lastDeckId = out.deckId;
                         retryBtn.setVisibility(failedUris.isEmpty() ? View.GONE : View.VISIBLE);
                         if (!failedUris.isEmpty()) {
                             retryBtn.setText("  重试失败（" + failedUris.size() + "）  ");

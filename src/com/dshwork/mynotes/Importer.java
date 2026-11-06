@@ -29,6 +29,8 @@ public class Importer {
         public int skipped;
         public final List<String> errors = new ArrayList<>();
         public final List<Uri> failed = new ArrayList<>();
+        public final List<Integer> failedPages = new ArrayList<>();
+        public String deckId;
     }
 
     private static String mockJson(int page) {
@@ -40,6 +42,13 @@ public class Importer {
 
     public static Outcome run(Context ctx, Db db, Prefs prefs, String subjectId,
                               List<Uri> uris, Progress cb) {
+        return run(ctx, db, prefs, subjectId, uris, null, null, cb);
+    }
+
+    /** 重试用：复用已有课件，并指定每张图原来的页码 */
+    public static Outcome run(Context ctx, Db db, Prefs prefs, String subjectId,
+                              List<Uri> uris, List<Integer> pageNos, String existingDeckId,
+                              Progress cb) {
         Outcome out = new Outcome();
         out.pages = uris.size();
         if (!prefs.ready()) {
@@ -60,19 +69,37 @@ public class Importer {
             return out;
         }
 
-        Db.Deck deck = db.addDeck(subjectId, "课件 " + new java.text.SimpleDateFormat("MM-dd HH:mm",
-                java.util.Locale.CHINA).format(new java.util.Date()));
+        Db.Deck deck;
+        if (existingDeckId != null && !existingDeckId.isEmpty()) {
+            java.util.List<Db.Deck> decks = db.decks(subjectId);
+            Db.Deck found = null;
+            for (Db.Deck d : decks) {
+                if (existingDeckId.equals(d.id)) {
+                    found = d;
+                    break;
+                }
+            }
+            deck = found != null ? found
+                    : db.addDeck(subjectId, "课件 " + new java.text.SimpleDateFormat("MM-dd HH:mm",
+                    java.util.Locale.CHINA).format(new java.util.Date()));
+        } else {
+            deck = db.addDeck(subjectId, "课件 " + new java.text.SimpleDateFormat("MM-dd HH:mm",
+                    java.util.Locale.CHINA).format(new java.util.Date()));
+        }
+        out.deckId = deck.id;
 
         for (int i = 0; i < uris.size(); i++) {
             if (cb != null && cb.cancelled()) break;
             Uri uri = uris.get(i);
+            final int pageNo = (pageNos != null && i < pageNos.size() && pageNos.get(i) != null)
+                    ? pageNos.get(i) : (i + 1);
             if (cb != null) cb.onStep(i, uris.size(), "正在识别第 " + (i + 1) + " / " + uris.size() + " 页");
             try {
                 if (prefs.mock()) {
                 String json = mockJson(i + 1);
-                String savedMock = saveSlide(ctx, uri, i + 1);
-                Db.Slide mockSlide = db.addSlide(subjectId, deck.id, i + 1, savedMock);
-                out.points += insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", savedMock, i + 1, mockSlide.id);
+                String savedMock = saveSlide(ctx, uri, pageNo);
+                Db.Slide mockSlide = db.addSlide(subjectId, deck.id, pageNo, savedMock);
+                out.points += insertPoints(db, subjectId, json, "第 " + pageNo + " 页", savedMock, pageNo, mockSlide.id);
                 cb.onStep(i + 1, uris.size(), "演示模式：第 " + (i + 1) + " 页");
                 continue;
             }
@@ -101,7 +128,7 @@ public class Importer {
                     }
                 }
 
-                String saved = saveSlide(ctx, uri, i + 1);
+                String saved = saveSlide(ctx, uri, pageNo);
                 String hash = sha1OfFile(saved);
                 if (db.slideHashExists(subjectId, hash)) {
                     // 同一个科目里已经有这一页（图片完全相同），跳过不重复建
@@ -111,23 +138,24 @@ public class Importer {
                     cb.onStep(i + 1, uris.size(), "第 " + (i + 1) + " 页已存在，跳过");
                     continue;
                 }
-                Db.Slide slide = db.addSlide(subjectId, deck.id, i + 1, saved, hash);
-                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1, slide.id);
+                Db.Slide slide = db.addSlide(subjectId, deck.id, pageNo, saved, hash);
+                int added = insertPoints(db, subjectId, json, "第 " + pageNo + " 页", saved, pageNo, slide.id);
                 out.points += added;
 
                 if (added >= 2) {
                     try {
                         String digest = summarize(db, prefs, subjectId, json);
                         if (digest != null && !digest.trim().isEmpty()) {
-                            db.setPageDigest(subjectId, i + 1, digest.trim());
+                            db.setPageDigest(subjectId, pageNo, digest.trim());
                             db.setSlideDigest(slide.id, digest.trim());
                         }
                     } catch (Exception ignored) {
                     }
                 }
             } catch (Exception e) {
-                out.errors.add("第 " + (i + 1) + " 页失败：" + AiClient.friendly(e));
+                out.errors.add("第 " + pageNo + " 页失败：" + AiClient.friendly(e));
                 out.failed.add(uri);
+                    out.failedPages.add(pageNo);
             }
         }
         if (cb != null) cb.onStep(uris.size(), uris.size(), "完成");
