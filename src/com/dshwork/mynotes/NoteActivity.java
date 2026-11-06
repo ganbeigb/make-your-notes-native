@@ -1,6 +1,8 @@
 package com.dshwork.mynotes;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.Editable;
@@ -10,6 +12,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -25,6 +28,8 @@ public class NoteActivity extends Activity {
     private EditText formulaInput;
     private EditText contentInput;
     private FormulaView preview;
+    private ImageView figureView;
+    private TextView figureBtn;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -103,6 +108,25 @@ public class NoteActivity extends Activity {
         contentInput = field(form, "正文", note.content == null ? "" : note.content,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
 
+        figureBtn = Ui.text(this, note.figure == null ? "＋ 画配图" : "重新画配图", 13, Ui.ACCENT);
+        figureBtn.setPadding(0, Ui.dp(this, 16), 0, Ui.dp(this, 8));
+        figureBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent(NoteActivity.this, BoardActivity.class), 2001);
+            }
+        });
+        form.addView(figureBtn);
+
+        figureView = new ImageView(this);
+        figureView.setAdjustViewBounds(true);
+        figureView.setBackground(Ui.card(this));
+        LinearLayout.LayoutParams flp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        flp.topMargin = Ui.dp(this, 6);
+        form.addView(figureView, flp);
+        showFigure();
+
         if (note.source != null && !note.source.isEmpty()) {
             TextView src = Ui.text(this, "来源：" + note.source, 12, Ui.INK2);
             src.setPadding(0, Ui.dp(this, 10), 0, 0);
@@ -130,6 +154,48 @@ public class NoteActivity extends Activity {
         parent.addView(e, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return e;
+    }
+
+    private void showFigure() {
+        if (note.figure == null || note.figure.isEmpty()) {
+            figureView.setVisibility(View.GONE);
+            return;
+        }
+        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.figure);
+        if (bmp == null) {
+            figureView.setVisibility(View.GONE);
+            return;
+        }
+        figureView.setImageBitmap(bmp);
+        figureView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != 2001 || resultCode != RESULT_OK || data == null) return;
+        String path = data.getStringExtra("path");
+        if (path == null) return;
+        try {
+            java.io.File src = new java.io.File(path);
+            java.io.File dir = new java.io.File(getFilesDir(), "figures");
+            if (!dir.exists()) dir.mkdirs();
+            java.io.File dst = new java.io.File(dir, note.id + ".png");
+            java.io.InputStream is = new java.io.FileInputStream(src);
+            java.io.OutputStream os = new java.io.FileOutputStream(dst);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = is.read(buf)) > 0) os.write(buf, 0, n);
+            is.close();
+            os.close();
+            src.delete();
+            note.figure = dst.getAbsolutePath();
+            db.saveNote(note);
+            showFigure();
+            Toast.makeText(this, "配图已保存", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "保存配图失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void save(boolean toast) {
