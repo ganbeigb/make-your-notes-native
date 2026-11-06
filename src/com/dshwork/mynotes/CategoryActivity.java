@@ -31,6 +31,7 @@ public class CategoryActivity extends BaseActivity {
     private String filterId = null; // null = 全部
     private BaseAdapter adapter;
     private LinearLayout chipRow;
+    private TextView statText;
     private TextView empty;
     private TextView emptyTitle;
     private TextView emptyHint;
@@ -62,9 +63,16 @@ public class CategoryActivity extends BaseActivity {
             }
         });
         bar.addView(back);
-        TextView title = Ui.text(this, (subjectName == null ? "科目" : subjectName) + " · 分类", 17, Ui.INK);
+        LinearLayout titleBox = new LinearLayout(this);
+        titleBox.setOrientation(LinearLayout.VERTICAL);
+        TextView title = Ui.text(this, subjectName == null ? "分类" : subjectName + " · 分类", 17, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        titleBox.addView(title);
+        TextView sub = Ui.text(this, "", 11.5f, Ui.MUTED);
+        sub.setPadding(0, Ui.dp(this, 1), 0, 0);
+        titleBox.addView(sub);
+        statText = sub;
+        bar.addView(titleBox, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(bar);
 
         LinearLayout modes = new LinearLayout(this);
@@ -172,6 +180,7 @@ public class CategoryActivity extends BaseActivity {
 
     private void buildChips() {
         chipRow.removeAllViews();
+        refreshStats();
         chipRow.addView(chip("全部 (" + all.size() + ")", null));
         List<Db.Category> cats = db.categories(subjectId);
         Map<String, Integer> counts = new HashMap<>();
@@ -194,6 +203,12 @@ public class CategoryActivity extends BaseActivity {
             if (cnt == 0) continue;
             chipRow.addView(chip(path + " (" + cnt + ")", c.id));
         }
+    }
+
+    private void refreshStats() {
+        if (statText == null) return;
+        int cats = db.categories(subjectId == null ? "" : subjectId).size();
+        statText.setText(cats + " 个分类 · " + all.size() + " 条知识点");
     }
 
     private Db.Category findCat(List<Db.Category> cats, String id) {
