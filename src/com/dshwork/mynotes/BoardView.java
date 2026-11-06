@@ -116,6 +116,9 @@ public class BoardView extends View {
     private float downX, downY, lastX, lastY;
     private float pinchDist, pinchCx, pinchCy;
     private Item selected;
+    private int selSeg = -1;
+    private int dragMode = 0; // 0 无 1 整体 2 段 3 顶点
+    private int dragIndex = -1;
     private OnNeedsText textAsker;
     private String chipName = "IC";
     private int chipPerSide = 3;
@@ -219,6 +222,36 @@ public class BoardView extends View {
         return true;
     }
 
+    /** 删除：选中段只删这一段，剩下的拆成两条导线 */
+    public boolean deleteSelected() {
+        if (selected == null) return false;
+        snapshot();
+        if (selected.kind == K_WIRE && selSeg >= 0 && selected.pts.size() > 2) {
+            List<PointF> left = new ArrayList<>(selected.pts.subList(0, selSeg + 1));
+            List<PointF> right = new ArrayList<>(selected.pts.subList(selSeg + 1, selected.pts.size()));
+            int idx = items.indexOf(selected);
+            if (idx >= 0) items.remove(idx);
+            if (left.size() >= 2) items.add(makeWire(left));
+            if (right.size() >= 2) items.add(makeWire(right));
+        } else {
+            items.remove(selected);
+        }
+        selected = null;
+        selSeg = -1;
+        dragMode = 0;
+        invalidate();
+        return true;
+    }
+
+    private Item makeWire(List<PointF> pts) {
+        Item w = new Item();
+        w.kind = K_WIRE;
+        w.color = color;
+        w.width = width;
+        for (PointF p : pts) w.pts.add(new PointF(p.x, p.y));
+        return w;
+    }
+
     public void clearAll() {
         snapshot();
         items.clear();
@@ -240,8 +273,19 @@ public class BoardView extends View {
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
             p.setStyle(Paint.Style.STROKE);
             p.setColor(0xFF3D7A61);
-            p.setStrokeWidth(1.5f / scale);
-            c.drawRect(selected.bounds(), p);
+            if (selSeg >= 0 && selSeg + 1 < selected.pts.size()) {
+                PointF a = selected.pts.get(selSeg), b = selected.pts.get(selSeg + 1);
+                p.setStrokeWidth((selected.width + 5) / Math.max(0.4f, scale * 0.9f));
+                p.setAlpha(90);
+                c.drawLine(a.x, a.y, b.x, b.y, p);
+                p.setAlpha(255);
+                p.setStyle(Paint.Style.FILL);
+                c.drawCircle(a.x, a.y, 4 / scale, p);
+                c.drawCircle(b.x, b.y, 4 / scale, p);
+            } else {
+                p.setStrokeWidth(1.5f / scale);
+                c.drawRect(selected.bounds(), p);
+            }
         }
         c.restore();
     }
@@ -412,6 +456,21 @@ public class BoardView extends View {
                     invalidate();
                 } else {
                     selected = hitTest(w0);
+                    selSeg = -1;
+                    dragMode = 0;
+                    dragIndex = -1;
+                    if (selected != null && selected.kind == K_WIRE) {
+                        float tol = Math.max(8, selected.width + 5) / 1f;
+                        int seg = hitSegment(selected, w0, tol);
+                        int vtx = hitVertex(selected, w0, 10);
+                        if (seg >= 0) {
+                            selSeg = seg;
+                            dragMode = vtx >= 0 ? 3 : 2;
+                            dragIndex = vtx >= 0 ? vtx : seg;
+                        }
+                    } else if (selected != null) {
+                        dragMode = 1;
+                    }
                     invalidate();
                 }
                 return true;
@@ -453,9 +512,40 @@ public class BoardView extends View {
                 if (tool == T_SELECT && selected != null) {
                     float dx = (e.getX() - lastX) / scale;
                     float dy = (e.getY() - lastY) / scale;
-                    for (PointF p : selected.pts) {
-                        p.x += dx;
-                        p.y += dy;
+                    if (dragMode == 2 && dragIndex >= 0 && dragIndex + 1 < selected.pts.size()) {
+                        PointF a = selected.pts.get(dragIndex), b = selected.pts.get(dragIndex + 1);
+                        boolean horizontal = Math.abs(a.y - b.y) < 0.01;
+                        if (horizontal) {
+                            a.y += dy;
+                            b.y += dy;
+                        } else {
+                            a.x += dx;
+                            b.x += dx;
+                        }
+                    } else if (dragMode == 3 && dragIndex >= 0 && dragIndex < selected.pts.size()) {
+                        PointF v = selected.pts.get(dragIndex);
+                        PointF prev = dragIndex > 0 ? selected.pts.get(dragIndex - 1) : null;
+                        PointF next = dragIndex + 1 < selected.pts.size() ? selected.pts.get(dragIndex + 1) : null;
+                        v.x += dx;
+                        v.y += dy;
+                        // 相邻段保持直角：把原来同坐标的那一维跟着改
+                        if (prev != null) {
+                            boolean wasH = Math.abs(prev.y - v.y + dy) < 0.01;
+                            boolean wasV = Math.abs(prev.x - v.x + dx) < 0.01;
+                            if (wasH && !wasV) prev.y = v.y;
+                            else if (wasV && !wasH) prev.x = v.x;
+                        }
+                        if (next != null) {
+                            boolean wasH = Math.abs(next.y - v.y + dy) < 0.01;
+                            boolean wasV = Math.abs(next.x - v.x + dx) < 0.01;
+                            if (wasH && !wasV) next.y = v.y;
+                            else if (wasV && !wasH) next.x = v.x;
+                        }
+                    } else {
+                        for (PointF p : selected.pts) {
+                            p.x += dx;
+                            p.y += dy;
+                        }
                     }
                     dragging = true;
                     invalidate();
@@ -536,6 +626,40 @@ public class BoardView extends View {
 
     public PointF toWorld(float sx, float sy) {
         return new PointF((sx - tx) / scale, (sy - ty) / scale);
+    }
+
+    /** 点到折线的最短距离与所在段 */
+    private int hitSegment(Item it, PointF p, float tol) {
+        int best = -1;
+        float bestD = tol;
+        for (int i = 0; i + 1 < it.pts.size(); i++) {
+            PointF a = it.pts.get(i), b = it.pts.get(i + 1);
+            float dx = b.x - a.x, dy = b.y - a.y;
+            float len2 = dx * dx + dy * dy;
+            float t01 = len2 == 0 ? 0 : ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+            t01 = Math.max(0, Math.min(1, t01));
+            float px = a.x + dx * t01, py = a.y + dy * t01;
+            float d = (float) Math.hypot(p.x - px, p.y - py);
+            if (d < bestD) {
+                bestD = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    private int hitVertex(Item it, PointF p, float tol) {
+        int best = -1;
+        float bestD = tol;
+        for (int i = 0; i < it.pts.size(); i++) {
+            PointF q = it.pts.get(i);
+            float d = (float) Math.hypot(q.x - p.x, q.y - p.y);
+            if (d < bestD) {
+                bestD = d;
+                best = i;
+            }
+        }
+        return best;
     }
 
     private Item hitTest(PointF p) {
