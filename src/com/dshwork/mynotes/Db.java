@@ -39,6 +39,7 @@ public class Db extends SQLiteOpenHelper {
         public String formula;
         public String content;
         public String tags;
+        public String slideId;
         public String source;
         public int importance;
         public String figure;
@@ -49,7 +50,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 7;
+    private static final int VERSION = 8;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -62,10 +63,15 @@ public class Db extends SQLiteOpenHelper {
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
                 "name TEXT NOT NULL, content TEXT, formula TEXT, tags TEXT, source TEXT, figure TEXT, " +
-                "quote TEXT, slide_path TEXT, slide_page INTEGER NOT NULL DEFAULT 0, " +
+                "quote TEXT, slide_path TEXT, slide_id TEXT, slide_page INTEGER NOT NULL DEFAULT 0, " +
                 "importance INTEGER NOT NULL DEFAULT 2, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
+        db.execSQL("CREATE TABLE decks (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, title TEXT, " +
+                "created_at INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE slides (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, deck_id TEXT, " +
+                "idx INTEGER NOT NULL DEFAULT 0, title TEXT, image_path TEXT, digest TEXT, " +
+                "created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE page_digest (subject_id TEXT NOT NULL, page INTEGER NOT NULL, " +
                 "text TEXT, updated_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(subject_id, page))");
         db.execSQL("CREATE INDEX idx_notes_subject ON notes(subject_id)");
@@ -74,6 +80,14 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 8) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS decks (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, " +
+                    "title TEXT, created_at INTEGER NOT NULL)");
+            db.execSQL("CREATE TABLE IF NOT EXISTS slides (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, " +
+                    "deck_id TEXT, idx INTEGER NOT NULL DEFAULT 0, title TEXT, image_path TEXT, digest TEXT, " +
+                    "created_at INTEGER NOT NULL)");
+            tryAdd(db, "notes", "slide_id", "TEXT");
+        }
         if (oldVersion < 7) {
             db.execSQL("CREATE TABLE IF NOT EXISTS page_digest (subject_id TEXT NOT NULL, page INTEGER NOT NULL, " +
                     "text TEXT, updated_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(subject_id, page))");
@@ -149,6 +163,177 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().delete("notes", "subject_id = ?", new String[]{id});
         getWritableDatabase().delete("categories", "subject_id = ?", new String[]{id});
         getWritableDatabase().delete("subjects", "id = ?", new String[]{id});
+    }
+
+
+    /* ---------------- 课件 / 页面 ---------------- */
+
+    public static class Deck {
+        public String id;
+        public String subjectId;
+        public String title;
+        public long createdAt;
+        public int slideCount;
+        public int noteCount;
+        public boolean collapsed;
+    }
+
+    public static class Slide {
+        public String id;
+        public String subjectId;
+        public String deckId;
+        public int idx;
+        public String title;
+        public String imagePath;
+        public String digest;
+        public long createdAt;
+        public int noteCount;
+    }
+
+    public Deck addDeck(String subjectId, String title) {
+        Deck d = new Deck();
+        d.id = UUID.randomUUID().toString();
+        d.subjectId = subjectId;
+        d.title = title;
+        d.createdAt = System.currentTimeMillis();
+        ContentValues v = new ContentValues();
+        v.put("id", d.id);
+        v.put("subject_id", subjectId);
+        v.put("title", title == null ? "" : title);
+        v.put("created_at", d.createdAt);
+        getWritableDatabase().insert("decks", null, v);
+        return d;
+    }
+
+    public void renameDeck(String id, String title) {
+        ContentValues v = new ContentValues();
+        v.put("title", title == null ? "" : title);
+        getWritableDatabase().update("decks", v, "id = ?", new String[]{id});
+    }
+
+    public void deleteDeck(String id) {
+        android.database.sqlite.SQLiteDatabase d = getWritableDatabase();
+        d.delete("notes", "slide_id IN (SELECT id FROM slides WHERE deck_id = ?)", new String[]{id});
+        d.delete("slides", "deck_id = ?", new String[]{id});
+        d.delete("decks", "id = ?", new String[]{id});
+    }
+
+    public List<Deck> decks(String subjectId) {
+        List<Deck> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT d.id, d.subject_id, d.title, d.created_at, " +
+                        "(SELECT COUNT(*) FROM slides s WHERE s.deck_id = d.id), " +
+                        "(SELECT COUNT(*) FROM notes n WHERE n.slide_id IN (SELECT s2.id FROM slides s2 WHERE s2.deck_id = d.id)) " +
+                        "FROM decks d WHERE d.subject_id = ? ORDER BY d.created_at DESC",
+                new String[]{subjectId});
+        try {
+            while (c.moveToNext()) {
+                Deck d = new Deck();
+                d.id = c.getString(0);
+                d.subjectId = c.getString(1);
+                d.title = c.getString(2);
+                d.createdAt = c.getLong(3);
+                d.slideCount = c.getInt(4);
+                d.noteCount = c.getInt(5);
+                out.add(d);
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    public Slide addSlide(String subjectId, String deckId, int idx, String imagePath) {
+        Slide s = new Slide();
+        s.id = UUID.randomUUID().toString();
+        s.subjectId = subjectId;
+        s.deckId = deckId;
+        s.idx = idx;
+        s.imagePath = imagePath;
+        s.createdAt = System.currentTimeMillis();
+        ContentValues v = new ContentValues();
+        v.put("id", s.id);
+        v.put("subject_id", subjectId);
+        v.put("deck_id", deckId);
+        v.put("idx", idx);
+        v.put("image_path", imagePath);
+        v.put("created_at", s.createdAt);
+        getWritableDatabase().insert("slides", null, v);
+        return s;
+    }
+
+    public List<Slide> slides(String deckId) {
+        List<Slide> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT s.id, s.subject_id, s.deck_id, s.idx, s.title, s.image_path, s.digest, s.created_at, " +
+                        "(SELECT COUNT(*) FROM notes n WHERE n.slide_id = s.id) " +
+                        "FROM slides s WHERE s.deck_id = ? ORDER BY s.idx ASC",
+                new String[]{deckId});
+        try {
+            while (c.moveToNext()) {
+                Slide s = new Slide();
+                s.id = c.getString(0);
+                s.subjectId = c.getString(1);
+                s.deckId = c.getString(2);
+                s.idx = c.getInt(3);
+                s.title = c.getString(4);
+                s.imagePath = c.getString(5);
+                s.digest = c.getString(6);
+                s.createdAt = c.getLong(7);
+                s.noteCount = c.getInt(8);
+                out.add(s);
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    public Slide slide(String id) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT s.id, s.subject_id, s.deck_id, s.idx, s.title, s.image_path, s.digest, s.created_at " +
+                        "FROM slides s WHERE s.id = ?", new String[]{id});
+        try {
+            if (!c.moveToFirst()) return null;
+            Slide s = new Slide();
+            s.id = c.getString(0);
+            s.subjectId = c.getString(1);
+            s.deckId = c.getString(2);
+            s.idx = c.getInt(3);
+            s.title = c.getString(4);
+            s.imagePath = c.getString(5);
+            s.digest = c.getString(6);
+            s.createdAt = c.getLong(7);
+            return s;
+        } finally {
+            c.close();
+        }
+    }
+
+    public void setSlideDigest(String slideId, String digest) {
+        ContentValues v = new ContentValues();
+        v.put("digest", digest);
+        getWritableDatabase().update("slides", v, "id = ?", new String[]{slideId});
+    }
+
+    public void deleteSlide(String id) {
+        android.database.sqlite.SQLiteDatabase d = getWritableDatabase();
+        d.delete("notes", "slide_id = ?", new String[]{id});
+        d.delete("slides", "id = ?", new String[]{id});
+    }
+
+    public List<Note> notesBySlide(String slideId) {
+        List<Note> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, " +
+                        "figure, quote, slide_path, slide_page, slide_id FROM notes WHERE slide_id = ? " +
+                        "ORDER BY created_at ASC", new String[]{slideId});
+        try {
+            while (c.moveToNext()) out.add(readNote(c));
+        } finally {
+            c.close();
+        }
+        return out;
     }
 
     public String subjectCriteria(String subjectId) {
@@ -309,7 +494,7 @@ public class Db extends SQLiteOpenHelper {
     public List<Note> notes(String subjectId) {
         List<Note> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page, slide_id " +
                         "FROM notes WHERE subject_id = ? ORDER BY created_at DESC", new String[]{subjectId});
         try {
             while (c.moveToNext()) out.add(readNote(c));
@@ -322,7 +507,7 @@ public class Db extends SQLiteOpenHelper {
     /** 按标题或重要度排序 */
     public List<Note> notesSorted(String subjectId, String order) {
         List<Note> out = new ArrayList<>();
-        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
+        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page, slide_id " +
                 "FROM notes WHERE subject_id = ? ";
         if ("title".equals(order)) sql += "ORDER BY name COLLATE NOCASE ASC";
         else if ("importance".equals(order)) sql += "ORDER BY importance DESC, created_at DESC";
@@ -352,12 +537,13 @@ public class Db extends SQLiteOpenHelper {
         n.quote = c.getString(11);
         n.slidePath = c.getString(12);
         n.slidePage = c.getInt(13);
+        n.slideId = c.getString(14);
         return n;
     }
 
     public Note note(String id) {
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, quote, slide_path, slide_page, slide_id " +
                         "FROM notes WHERE id = ?", new String[]{id});
         try {
             if (!c.moveToFirst()) return null;
@@ -406,6 +592,7 @@ public class Db extends SQLiteOpenHelper {
         v.put("category_id", n.categoryId);
         v.put("figure", n.figure);
         v.put("quote", n.quote);
+        v.put("slide_id", n.slideId);
         v.put("slide_path", n.slidePath);
         v.put("slide_page", n.slidePage);
         getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});

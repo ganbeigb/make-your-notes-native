@@ -39,6 +39,8 @@ public class SubjectActivity extends BaseActivity {
     private String subjectId;
     private String subjectName;
     private List<Db.Note> data;
+    private final List<Object> rows = new ArrayList<>();
+    private final java.util.Set<String> collapsedDecks = new java.util.HashSet<>();
     private BaseAdapter adapter;
     private TextView empty;
     private ListView list;
@@ -273,12 +275,12 @@ public class SubjectActivity extends BaseActivity {
         adapter = new BaseAdapter() {
             @Override
             public int getCount() {
-                return data == null ? 0 : data.size();
+                return rows.size();
             }
 
             @Override
             public Object getItem(int position) {
-                return data.get(position);
+                return rows.get(position);
             }
 
             @Override
@@ -288,8 +290,12 @@ public class SubjectActivity extends BaseActivity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                Object o = rows.get(position);
+                if (o instanceof Db.Deck) {
+                    return deckHeader((Db.Deck) o);
+                }
                 ListRows.NoteRow row = ListRows.obtain(SubjectActivity.this, convertView);
-                Db.Note n = data.get(position);
+                Db.Note n = (Db.Note) o;
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
                 ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines());
                 if (selecting && picked.contains(n.id)) {
@@ -302,7 +308,16 @@ public class SubjectActivity extends BaseActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Db.Note n = data.get(position);
+                Object clicked = rows.get(position);
+                if (clicked instanceof Db.Deck) {
+                    Db.Deck d = (Db.Deck) clicked;
+                    if (collapsedDecks.contains(d.id)) collapsedDecks.remove(d.id);
+                    else collapsedDecks.add(d.id);
+                    buildRows();
+                    adapter.notifyDataSetChanged();
+                    return;
+                }
+                Db.Note n = (Db.Note) clicked;
                 if (selecting) {
                     if (picked.contains(n.id)) picked.remove(n.id);
                     else picked.add(n.id);
@@ -316,7 +331,12 @@ public class SubjectActivity extends BaseActivity {
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                final Db.Note n = data.get(position);
+                Object raw = rows.get(position);
+                if (raw instanceof Db.Deck) {
+                    deckMenu((Db.Deck) raw);
+                    return true;
+                }
+                final Db.Note n = (Db.Note) raw;
                 new AlertDialog.Builder(SubjectActivity.this)
                         .setTitle("删除知识点")
                         .setMessage(n.name)
@@ -344,10 +364,129 @@ public class SubjectActivity extends BaseActivity {
 
     private void reload() {
         data = db.notesSorted(subjectId, prefs.sort());
+        buildRows();
         adapter.notifyDataSetChanged();
         boolean isEmpty = data.isEmpty();
         empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         list.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+
+    /** 把「课件 → 其下知识点」摊平成行；没有课件的归到「未分组」 */
+    private void buildRows() {
+        rows.clear();
+        java.util.List<Db.Deck> decks = db.decks(subjectId);
+        java.util.Map<String, java.util.List<Db.Note>> byDeck = new java.util.HashMap<>();
+        java.util.List<Db.Note> loose = new ArrayList<>();
+        java.util.Set<String> slideToDeck = new java.util.HashMap<String, String>().keySet();
+        java.util.Map<String, String> slideDeck = new java.util.HashMap<>();
+        for (Db.Deck d : decks) {
+            for (Db.Slide s : db.slides(d.id)) slideDeck.put(s.id, d.id);
+        }
+        for (Db.Note n : data) {
+            String deckId = n.slideId == null ? null : slideDeck.get(n.slideId);
+            if (deckId == null) {
+                loose.add(n);
+            } else {
+                if (!byDeck.containsKey(deckId)) byDeck.put(deckId, new ArrayList<Db.Note>());
+                byDeck.get(deckId).add(n);
+            }
+        }
+        for (Db.Deck d : decks) {
+            java.util.List<Db.Note> list = byDeck.get(d.id);
+            if (list == null || list.isEmpty()) continue;
+            rows.add(d);
+            if (!collapsedDecks.contains(d.id)) rows.addAll(list);
+        }
+        for (Db.Note n : loose) rows.add(n);
+    }
+
+    private View deckHeader(final Db.Deck d) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        box.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+
+        boolean open = !collapsedDecks.contains(d.id);
+        TextView arrow = Ui.text(this, open ? "▾" : "▸", 14, Ui.ACCENT);
+        arrow.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 6), 0);
+        box.addView(arrow);
+
+        TextView title = Ui.text(this, d.title == null ? "课件" : d.title, 13.5f, Ui.INK);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        box.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+
+        TextView meta = Ui.text(this, d.slideCount + " 页 · " + d.noteCount + " 条", 11.5f, Ui.INK2);
+        box.addView(meta);
+        return box;
+    }
+
+    private void deckMenu(final Db.Deck d) {
+        final String[] items = {"重命名课件", "查看页面", "删除课件"};
+        new AlertDialog.Builder(this)
+                .setTitle(d.title)
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            final EditText input = new EditText(SubjectActivity.this);
+                            input.setText(d.title);
+                            new AlertDialog.Builder(SubjectActivity.this)
+                                    .setTitle("重命名课件")
+                                    .setView(input)
+                                    .setPositiveButton("保存", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dlg, int w) {
+                                            db.renameDeck(d.id, input.getText().toString().trim());
+                                            reload();
+                                        }
+                                    })
+                                    .setNegativeButton("取消", null)
+                                    .show();
+                        } else if (which == 1) {
+                            showSlides(d);
+                        } else {
+                            new AlertDialog.Builder(SubjectActivity.this)
+                                    .setTitle("删除课件")
+                                    .setMessage("会删除该课件下的所有页面与知识点，不可恢复。")
+                                    .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dlg, int w) {
+                                            db.deleteDeck(d.id);
+                                            reload();
+                                        }
+                                    })
+                                    .setNegativeButton("取消", null)
+                                    .show();
+                        }
+                    }
+                })
+                .show();
+    }
+
+    private void showSlides(Db.Deck d) {
+        java.util.List<Db.Slide> slides = db.slides(d.id);
+        String[] labels = new String[slides.size()];
+        for (int i = 0; i < slides.size(); i++) {
+            Db.Slide s = slides.get(i);
+            labels[i] = "第 " + s.idx + " 页 · " + s.noteCount + " 条"
+                    + (s.digest != null && !s.digest.isEmpty() ? " · 有汇总" : "");
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(d.title + "（" + slides.size() + " 页）")
+                .setItems(labels, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Db.Slide s = slides.get(which);
+                        java.util.List<Db.Note> list = db.notesBySlide(s.id);
+                        if (list.isEmpty()) {
+                            Toast.makeText(SubjectActivity.this, "这一页没有知识点", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        openNote(list.get(0).id);
+                    }
+                })
+                .setNegativeButton("关闭", null)
+                .show();
     }
 
     private TextView batchChip(String label) {
