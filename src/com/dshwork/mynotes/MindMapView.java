@@ -148,6 +148,15 @@ public class MindMapView extends View {
         c.drawRoundRect(r, rad, rad, fill);
         if (n.kind != 0) c.drawRoundRect(r, rad, rad, nodePaint);
 
+        if (flashNode == n) {
+            Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
+            glow.setStyle(Paint.Style.STROKE);
+            glow.setStrokeWidth(Ui.dp(getContext(), 2));
+            glow.setColor(Ui.ACCENT);
+            c.drawRoundRect(new RectF(r.left - 3, r.top - 3, r.right + 3, r.bottom + 3),
+                    rad + 3, rad + 3, glow);
+        }
+
         TextPaint tp = new TextPaint(textPaint);
         tp.setColor(n.kind == 0 ? Color.WHITE : Ui.INK);
         tp.setTextSize(n.kind == 0 ? Ui.dp(getContext(), 14) : Ui.dp(getContext(), 12.5f));
@@ -288,6 +297,7 @@ public class MindMapView extends View {
         float wy = (sy - ty) / scale;
         Node hit = hit(rootNode, wx, wy);
         if (hit == null) return;
+        flash(hit);
         if (hit.kind == 2) {
             if (listener != null) listener.onClick(hit.id);
             return;
@@ -298,6 +308,14 @@ public class MindMapView extends View {
             requestLayout();
             invalidate();
         }
+    }
+
+    private Node flashNode;
+
+    private void flash(Node n) {
+        flashNode = n;
+        invalidate();
+        postInvalidateDelayed(180);
     }
 
     private Node hit(Node n, float x, float y) {
