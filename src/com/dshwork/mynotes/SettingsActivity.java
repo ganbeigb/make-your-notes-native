@@ -25,13 +25,24 @@ public class SettingsActivity extends Activity {
     private EditText textInput;
     private Spinner providerSpinner;
     private Spinner reasoningSpinner;
+    private Spinner scaleSpinner;
+    private Spinner linesSpinner;
+    private Spinner sortSpinner;
+    private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
+    private final String[] scales = {"小", "标准", "大", "特大"};
+    private final float[] scaleValues = {0.9f, 1f, 1.15f, 1.3f};
+    private final String[] lineOptions = {"不显示正文", "1 行", "2 行", "3 行", "4 行", "6 行"};
+    private final int[] lineValues = {0, 1, 2, 3, 4, 6};
+    private final String[] sorts = {"最近创建", "标题", "重要度"};
+    private final String[] sortKeys = {"recent", "title", "importance"};
     private final String[] reasonings = {"off", "low", "high", "max"};
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        Ui.setScale(new Prefs(this).uiScale());
         prefs = new Prefs(this);
 
         LinearLayout root = new LinearLayout(this);
@@ -74,6 +85,24 @@ public class SettingsActivity extends Activity {
         visionInput = edit(form, "识图模型", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
         textInput = edit(form, "文本模型", prefs.textModel(), InputType.TYPE_CLASS_TEXT);
         reasoningSpinner = spinner(form, "推理档位", reasonings, indexOf(reasonings, prefs.reasoning()));
+
+        int si = 1;
+        for (int i = 0; i < scaleValues.length; i++) if (Math.abs(scaleValues[i] - prefs.uiScale()) < 0.01f) si = i;
+        scaleSpinner = spinner(form, "界面字号", scales, si);
+
+        int li = 3;
+        for (int i = 0; i < lineValues.length; i++) if (lineValues[i] == prefs.cardLines()) li = i;
+        linesSpinner = spinner(form, "卡片正文行数", lineOptions, li);
+
+        sortSpinner = spinner(form, "知识点排序", sorts, Math.max(0, indexOf(sortKeys, prefs.sort())));
+
+        strictBox = new android.widget.CheckBox(this);
+        strictBox.setText("严格校对：每页识别完再用原图核对一次（会多花一次调用）");
+        strictBox.setTextSize(13);
+        strictBox.setTextColor(Ui.INK);
+        strictBox.setChecked(prefs.strict());
+        strictBox.setPadding(0, Ui.dp(this, 16), 0, 0);
+        form.addView(strictBox);
 
         TextView hint = Ui.text(this,
                 "DeepSeek 不支持图片识图，识图默认用智谱 glm-4.6v-flash（免费）；" +
@@ -125,6 +154,11 @@ public class SettingsActivity extends Activity {
         prefs.setVisionModel(visionInput.getText().toString());
         prefs.setTextModel(textInput.getText().toString());
         prefs.setReasoning(reasoningSpinner.getSelectedItem().toString());
+        prefs.setUiScale(scaleValues[scaleSpinner.getSelectedItemPosition()]);
+        prefs.setCardLines(lineValues[linesSpinner.getSelectedItemPosition()]);
+        prefs.setSort(sortKeys[sortSpinner.getSelectedItemPosition()]);
+        prefs.setStrict(strictBox.isChecked());
+        Ui.setScale(prefs.uiScale());
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
         finish();
     }

@@ -46,6 +46,7 @@ public class SubjectActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        Ui.setScale(new Prefs(this).uiScale());
         db = new Db(this);
         prefs = new Prefs(this);
         subjectId = getIntent().getStringExtra("subjectId");
@@ -214,8 +215,11 @@ public class SubjectActivity extends Activity {
                 name.setTypeface(Typeface.DEFAULT_BOLD);
                 card.addView(name);
 
+                int lines = prefs.cardLines();
                 String preview = n.content == null ? "" : n.content.replace("\n", " ").trim();
-                if (preview.length() > 42) preview = preview.substring(0, 42) + "…";
+                int limit = lines <= 0 ? 0 : lines * 24;
+                if (limit == 0) preview = "";
+                else if (preview.length() > limit) preview = preview.substring(0, limit) + "…";
                 if (!preview.isEmpty()) {
                     TextView pv = Ui.text(SubjectActivity.this, preview, 12, Ui.INK2);
                     pv.setPadding(0, Ui.dp(SubjectActivity.this, 4), 0, 0);
@@ -261,7 +265,7 @@ public class SubjectActivity extends Activity {
     }
 
     private void reload() {
-        data = db.notes(subjectId);
+        data = db.notesSorted(subjectId, prefs.sort());
         adapter.notifyDataSetChanged();
         boolean isEmpty = data.isEmpty();
         empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);

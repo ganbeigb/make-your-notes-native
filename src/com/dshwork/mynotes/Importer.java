@@ -53,7 +53,24 @@ public class Importer {
                 AiClient.Reply reply = AiClient.chat(base, key, model,
                         Prompts.EXTRACT_SYSTEM, Prompts.EXTRACT_USER, b64, reasoning);
                 db.logUsage(subjectId, "extract", reply.inTok, reply.outTok);
-                int added = insertPoints(db, subjectId, reply.content, "第 " + (i + 1) + " 页");
+                String json = reply.content;
+
+                if (prefs.strict()) {
+                    if (cb != null) cb.onStep(i, uris.size(), "正在核对第 " + (i + 1) + " / " + uris.size() + " 页");
+                    try {
+                        AiClient.Reply check = AiClient.chat(base, key, model,
+                                Prompts.VERIFY_SYSTEM,
+                                AiClient.pickJson(json),
+                                b64, "off");
+                        db.logUsage(subjectId, "verify", check.inTok, check.outTok);
+                        String fixed = AiClient.pickJson(check.content);
+                        if (fixed.startsWith("{")) json = fixed;
+                    } catch (Exception ignored) {
+                        // 校对失败就保留原始结果
+                    }
+                }
+
+                int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页");
                 out.points += added;
             } catch (Exception e) {
                 String msg = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
