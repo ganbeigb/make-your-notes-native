@@ -524,6 +524,10 @@ public class MainActivity extends BaseActivity {
     private void startRestore(final byte[] data) {
         final String[] holder = new String[]{null};
         final boolean[] done = new boolean[]{false};
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在恢复备份…");
+        dlg.setCancelable(false);
+        dlg.show();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -580,6 +584,7 @@ public class MainActivity extends BaseActivity {
                     ui.post(new Runnable() {
                         @Override
                         public void run() {
+                            dlg.dismiss();
                             Toast.makeText(MainActivity.this, "恢复失败：" + ex.getMessage(), Toast.LENGTH_LONG).show();
                         }
                     });
@@ -589,6 +594,7 @@ public class MainActivity extends BaseActivity {
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
+                        dlg.dismiss();
                         reload();
                         Toast.makeText(MainActivity.this, finalMsg, Toast.LENGTH_LONG).show();
                     }
