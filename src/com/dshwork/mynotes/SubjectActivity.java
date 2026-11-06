@@ -240,16 +240,6 @@ public class SubjectActivity extends BaseActivity {
         tabHolder.addView(segContainer);
         tools.addView(tabHolder);
 
-        TextView bulk = Ui.chip(this, "批量", false);
-        bulk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (selecting) exitSelect();
-                else enterSelect();
-            }
-        });
-        tools.addView(bulk);
-
         TextView tidy = Ui.chip(this, "整理", false);
         tidy.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -362,6 +352,19 @@ public class SubjectActivity extends BaseActivity {
                 Ui.dp(this, 120), ViewGroup.LayoutParams.WRAP_CONTENT);
         sortLp.leftMargin = Ui.dp(this, 8);
         filterRow.addView(inlineSort, sortLp);
+
+        final TextView bulkChip = Ui.chip(this, "批量", false);
+        bulkChip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selecting) exitSelect();
+                else enterSelect();
+            }
+        });
+        LinearLayout.LayoutParams blp3 = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        blp3.leftMargin = Ui.dp(this, 8);
+        filterRow.addView(bulkChip, blp3);
 
         root.addView(filterRow);
 
