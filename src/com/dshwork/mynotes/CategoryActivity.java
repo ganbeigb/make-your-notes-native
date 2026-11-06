@@ -97,8 +97,11 @@ public class CategoryActivity extends BaseActivity {
         scroll.setHorizontalScrollBarEnabled(false);
         chipRow = new LinearLayout(this);
         chipRow.setOrientation(LinearLayout.HORIZONTAL);
-        chipRow.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 8));
-        scroll.addView(chipRow);
+        chipRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
+        android.widget.HorizontalScrollView chipScroll = new android.widget.HorizontalScrollView(this);
+        chipScroll.setHorizontalScrollBarEnabled(false);
+        chipScroll.addView(chipRow);
+        scroll.addView(chipScroll);
         root.addView(scroll);
 
         ListView list = new ListView(this);
