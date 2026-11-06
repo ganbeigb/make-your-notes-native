@@ -22,7 +22,7 @@
 | rename-subject / delete-subject | 长按科目行菜单 | ✅ |
 | toggle-subject-menu | 主页「⋯」 | ✅ |
 | view（课件/知识点 tab） | 科目页「课件 / 知识点」切换 | ✅ |
-| filter | 分类页胶囊筛选 | ✅ |
+| filter | 分类页胶囊筛选 + 科目页「全部/知识点/拓展」 | ✅ |
 
 ## 二、导入与识别
 
