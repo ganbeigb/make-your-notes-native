@@ -103,6 +103,33 @@ public class NoteActivity extends BaseActivity {
         });
         aiRow.addView(aiDraft);
 
+        final TextView kindPoint = Ui.chip(this, "知识点", note.kind == null || "point".equals(note.kind));
+        final TextView kindExt = Ui.chip(this, "拓展", "extension".equals(note.kind));
+        kindPoint.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                note.kind = "point";
+                kindPoint.setBackground(Ui.chip(NoteActivity.this, "x", true).getBackground());
+                kindPoint.setTextColor(0xFFFFFFFF);
+                kindExt.setBackground(Ui.chip(NoteActivity.this, "x", false).getBackground());
+                kindExt.setTextColor(Ui.INK);
+                save(false);
+            }
+        });
+        kindExt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                note.kind = "extension";
+                kindExt.setBackground(Ui.chip(NoteActivity.this, "x", true).getBackground());
+                kindExt.setTextColor(0xFFFFFFFF);
+                kindPoint.setBackground(Ui.chip(NoteActivity.this, "x", false).getBackground());
+                kindPoint.setTextColor(Ui.INK);
+                save(false);
+            }
+        });
+        aiRow.addView(kindPoint);
+        aiRow.addView(kindExt);
+
         TextView copy = Ui.chip(this, "复制", false);
         copy.setOnClickListener(new View.OnClickListener() {
             @Override
