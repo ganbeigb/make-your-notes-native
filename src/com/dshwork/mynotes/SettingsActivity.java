@@ -117,38 +117,39 @@ public class SettingsActivity extends BaseActivity {
                 prefs.priceOut() > 0 ? String.valueOf(prefs.priceOut()) : "", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         strictBox = new android.widget.CheckBox(this);
-        strictBox.setText("严格校对：每页识别完再用原图核对一次（会多花一次调用）");
+        strictBox.setText("严格校对");
         strictBox.setTextSize(13);
         strictBox.setTextColor(Ui.INK);
         quoteBox = new android.widget.CheckBox(this);
-        quoteBox.setText("在知识点详情显示「原文摘录」");
+        quoteBox.setText("显示原文摘录");
         quoteBox.setTextSize(13);
         quoteBox.setTextColor(Ui.INK);
         quoteBox.setChecked(prefs.showQuote());
 
         final android.widget.CheckBox keepFormulaBox = new android.widget.CheckBox(this);
-        keepFormulaBox.setText("保留原公式写法（整理/改写时不重写公式）");
+        keepFormulaBox.setText("保留原公式");
         keepFormulaBox.setTextSize(13);
         keepFormulaBox.setTextColor(Ui.INK);
         keepFormulaBox.setChecked(prefs.keepFormula());
         keepFormulaBox.setPadding(0, Ui.dp(this, 8), 0, 0);
+        form.addView(Ui.settingRow(this, keepFormulaBox.getText().toString(), null, keepFormulaBox));
         this.keepFormulaBox = keepFormulaBox;
 
         mockBox = new android.widget.CheckBox(this);
-        mockBox.setText("演示模式（不调用 API，返回示例数据）");
+        mockBox.setText("演示模式");
         mockBox.setTextSize(13);
         mockBox.setTextColor(Ui.INK);
         mockBox.setChecked(prefs.mock());
         mockBox.setPadding(0, Ui.dp(this, 10), 0, 0);
-        form.addView(mockBox);
+        form.addView(Ui.settingRow(this, mockBox.getText().toString(), null, mockBox));
 
         autoOrgBox = new android.widget.CheckBox(this);
-        autoOrgBox.setText("导入后自动整理目录");
+        autoOrgBox.setText("导入后自动整理");
         autoOrgBox.setTextSize(13);
         autoOrgBox.setTextColor(Ui.INK);
         autoOrgBox.setChecked(prefs.autoOrganize());
         autoOrgBox.setPadding(0, Ui.dp(this, 8), 0, 0);
-        form.addView(autoOrgBox);
+        form.addView(Ui.settingRow(this, autoOrgBox.getText().toString(), null, autoOrgBox));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -195,11 +196,11 @@ public class SettingsActivity extends BaseActivity {
         form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
-        form.addView(quoteBox);
+        form.addView(Ui.settingRow(this, quoteBox.getText().toString(), null, quoteBox));
 
         strictBox.setChecked(prefs.strict());
         strictBox.setPadding(0, Ui.dp(this, 16), 0, 0);
-        form.addView(strictBox);
+        form.addView(Ui.settingRow(this, strictBox.getText().toString(), null, strictBox));
 
         TextView hint = Ui.text(this,
                 "识图会自动用智谱（glm-4.6v-flash 免费），所以哪怕主服务商选 DeepSeek，也建议把智谱 Key 填上。" +
@@ -265,30 +266,27 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private EditText edit(LinearLayout parent, String label, String value, int type) {
-        TextView l = Ui.text(this, label, 12, Ui.INK2);
-        l.setPadding(0, Ui.dp(this, 14), 0, Ui.dp(this, 6));
-        parent.addView(l);
         EditText e = new EditText(this);
         e.setText(value == null ? "" : value);
         e.setInputType(type);
-        e.setTextSize(15);
+        e.setTextSize(13.5f);
         e.setTextColor(Ui.INK);
         e.setBackground(Ui.card(this));
-        e.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
-        parent.addView(e, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        e.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT);
+        e.setLayoutParams(lp);
+        parent.addView(Ui.settingRow(this, label, null, e));
         return e;
     }
 
     private Spinner spinner(LinearLayout parent, String label, String[] values, int selected) {
-        TextView l = Ui.text(this, label, 12, Ui.INK2);
-        l.setPadding(0, Ui.dp(this, 14), 0, Ui.dp(this, 6));
-        parent.addView(l);
-        Spinner s = new Spinner(this);
+        Spinner sp = new Spinner(this);
         ArrayAdapter<String> ad = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, values);
-        s.setAdapter(ad);
-        s.setSelection(selected);
-        parent.addView(s, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        return s;
+        sp.setAdapter(ad);
+        sp.setSelection(selected);
+        sp.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT));
+        parent.addView(Ui.settingRow(this, label, null, sp));
+        return sp;
     }
 
     private void saveSettings() {
