@@ -425,7 +425,7 @@ public class SubjectActivity extends BaseActivity {
                         n.formula != null && !n.formula.trim().isEmpty(),
                         n.figure != null && !n.figure.isEmpty(),
                         prefs.showQuote() ? n.quote : null,
-                        n.tags, srcLabel, isExt);
+                        n.tags, srcLabel, isExt, selecting, selecting && picked.contains(n.id));
                 boolean longContent = prefs.cardLines() > 0 && n.content != null
                         && n.content.length() > prefs.cardLines() * 24;
                 if (row.more != null) {

@@ -98,15 +98,37 @@ public class UsageActivity extends BaseActivity {
         Prefs prefs = new Prefs(this);
         float priceIn = prefs.priceIn();
         float priceOut = prefs.priceOut();
-        java.util.List<String> overview = new java.util.ArrayList<>();
-        overview.add("调用次数：" + total[2] + " 次");
-        overview.add("输入 tokens：" + fmt(total[0]));
-        overview.add("输出 tokens：" + fmt(total[1]));
+
+        // 总览卡：大数字 + 一行小字（对照网页版侧栏「累计消耗」）
+        LinearLayout overview = new LinearLayout(this);
+        overview.setOrientation(LinearLayout.VERTICAL);
+        overview.setBackground(Ui.card(this));
+        overview.setPadding(Ui.dp(this, 17), Ui.dp(this, 16), Ui.dp(this, 17), Ui.dp(this, 14));
+        LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        olp.bottomMargin = Ui.dp(this, 14);
+        overview.setLayoutParams(olp);
+
+        overview.addView(Ui.text(this, "累计消耗", 11.5f, Ui.MUTED));
+
+        String big;
         if (priceIn > 0 || priceOut > 0) {
             double cost = total[0] / 1000000.0 * priceIn + total[1] / 1000000.0 * priceOut;
-            overview.add(String.format(java.util.Locale.CHINA, "预估费用：¥%.4f", cost));
+            big = String.format(java.util.Locale.CHINA, "¥%.4f", cost);
+        } else {
+            big = total[2] + " 次";
         }
-        body.addView(card("总览", overview.toArray(new String[0])));
+        TextView bigView = Ui.text(this, big, 26, Ui.ACCENT);
+        bigView.setTypeface(Typeface.DEFAULT_BOLD);
+        bigView.setPadding(0, Ui.dp(this, 2), 0, 0);
+        overview.addView(bigView);
+
+        String sub = total[2] + " 次调用 · " + fmt(total[0] + total[1]) + " tokens";
+        TextView subView = Ui.text(this, sub, 11.5f, Ui.MUTED);
+        subView.setPadding(0, Ui.dp(this, 4), 0, 0);
+        overview.addView(subView);
+
+        body.addView(overview);
 
         List<String[]> kinds = db.usageByKind();
         if (!kinds.isEmpty()) {
