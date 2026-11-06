@@ -13,11 +13,16 @@ import java.util.UUID;
 /** 本地存储：科目 / 分类 / 知识点 / 用量。 */
 public class Db extends SQLiteOpenHelper {
 
+    public static final String[] SUBJECT_COLORS = {
+            "#2C5D4A", "#A9762A", "#1F6FB2", "#A2453A", "#6B4E9E", "#2C7A7B"
+    };
+
     public static class Subject {
         public String id;
         public String name;
         public long createdAt;
         public int noteCount;
+        public String color;
     }
 
     public static class Category {
@@ -51,7 +56,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 10;
+    private static final int VERSION = 11;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -59,7 +64,7 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE subjects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, criteria TEXT)");
+        db.execSQL("CREATE TABLE subjects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, criteria TEXT, color TEXT)");
         db.execSQL("CREATE TABLE categories (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, parent_id TEXT, " +
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
@@ -81,6 +86,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 11) {
+            tryAdd(db, "subjects", "color", "TEXT");
+        }
         if (oldVersion < 10) {
             tryAdd(db, "notes", "kind", "TEXT");
             tryAdd(db, "slides", "title", "TEXT");
@@ -145,6 +153,7 @@ public class Db extends SQLiteOpenHelper {
                 s.id = c.getString(0);
                 s.name = c.getString(1);
                 s.createdAt = c.getLong(2);
+                s.color = c.getString(3);
                 s.noteCount = c.getInt(3);
                 out.add(s);
             }
@@ -156,12 +165,14 @@ public class Db extends SQLiteOpenHelper {
 
     public Subject addSubject(String name) {
         Subject s = new Subject();
+        s.color = SUBJECT_COLORS[subjects().size() % SUBJECT_COLORS.length];
         s.id = UUID.randomUUID().toString();
         s.name = name.trim();
         s.createdAt = System.currentTimeMillis();
         ContentValues v = new ContentValues();
         v.put("id", s.id);
         v.put("name", s.name);
+        v.put("color", s.color);
         v.put("created_at", s.createdAt);
         getWritableDatabase().insert("subjects", null, v);
         return s;
@@ -413,7 +424,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     public Subject subject(String id) {
-        Cursor c = getReadableDatabase().rawQuery("SELECT id, name, created_at FROM subjects WHERE id = ?", new String[]{id});
+        Cursor c = getReadableDatabase().rawQuery("SELECT id, name, created_at, color FROM subjects WHERE id = ?", new String[]{id});
         try {
             if (!c.moveToFirst()) return null;
             Subject s = new Subject();
