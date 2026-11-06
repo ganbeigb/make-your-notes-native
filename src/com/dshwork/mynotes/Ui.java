@@ -23,7 +23,7 @@ public class Ui {
 
     public static boolean dark = false;
 
-    private static float scale = 1f;
+    static float scale = 1f;
 
     /** 读设置，应用字号与主题（每个 Activity 的 onCreate 先调这个） */
     public static void apply(Context c) {

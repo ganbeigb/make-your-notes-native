@@ -8,6 +8,7 @@ import android.view.View;
 public class BaseActivity extends Activity {
 
     private boolean builtDark;
+    private float builtScale;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -19,6 +20,7 @@ public class BaseActivity extends Activity {
         super.setContentView(view);
         Ui.padForInsets(view);
         builtDark = Ui.dark;
+        builtScale = Ui.scale;
         Ui.tintSystemBars(this);
     }
 
@@ -26,6 +28,13 @@ public class BaseActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (Ui.resolvedDark(this) != builtDark) {
+            recreate();
+            return;
+        }
+        // 界面字号改了也要重建，否则复用的行还留着旧字号
+        float prefScale = new Prefs(this).uiScale();
+        if (Math.abs(prefScale - builtScale) > 0.001f) {
+            Ui.setScale(prefScale);
             recreate();
             return;
         }
