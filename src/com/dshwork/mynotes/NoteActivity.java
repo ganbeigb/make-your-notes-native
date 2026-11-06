@@ -449,9 +449,19 @@ public class NoteActivity extends BaseActivity {
         fillSymbols(symRow, groups[0][1]);
 
         if (note.source != null && !note.source.isEmpty()) {
-            TextView src = Ui.text(this, "来源：" + note.source, 12, Ui.INK2);
-            src.setPadding(0, Ui.dp(this, 10), 0, 0);
-            form.addView(src);
+            LinearLayout srcBox = new LinearLayout(this);
+            srcBox.setOrientation(LinearLayout.VERTICAL);
+            srcBox.setBackground(Ui.card(this));
+            srcBox.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            slp.topMargin = Ui.dp(this, 14);
+            srcBox.setLayoutParams(slp);
+            srcBox.addView(Ui.text(this, "来源", 11, Ui.MUTED));
+            TextView srcValue = Ui.text(this, note.source, 13, Ui.INK);
+            srcValue.setPadding(0, Ui.dp(this, 2), 0, 0);
+            srcBox.addView(srcValue);
+            form.addView(srcBox);
         }
 
         scroll.addView(form);
