@@ -34,6 +34,20 @@ public class Ui {
         applyTheme(d);
     }
 
+    /** 当设置里的主题与当前渲染用的主题不一致时返回 true */
+    public static boolean themeChanged(Context c) {
+        return resolvedDark(c) != dark;
+    }
+
+    public static boolean resolvedDark(Context c) {
+        Prefs p = new Prefs(c);
+        String t = p.theme();
+        if ("dark".equals(t)) return true;
+        if ("light".equals(t)) return false;
+        int mode = c.getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
     public static void applyTheme(boolean useDark) {
         dark = useDark;
         if (useDark) {

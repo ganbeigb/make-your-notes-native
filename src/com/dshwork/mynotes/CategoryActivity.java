@@ -145,6 +145,10 @@ public class CategoryActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (Ui.themeChanged(this)) {
+            recreate();
+            return;
+        }
         reload();
     }
 
