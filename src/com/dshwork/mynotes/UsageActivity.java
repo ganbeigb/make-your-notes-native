@@ -108,6 +108,7 @@ public class UsageActivity extends BaseActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         olp.bottomMargin = Ui.dp(this, 14);
         overview.setLayoutParams(olp);
+        overview.setElevation(Ui.dp(this, 1));
 
         overview.addView(Ui.text(this, "累计消耗", 11.5f, Ui.MUTED));
 
@@ -220,6 +221,7 @@ public class UsageActivity extends BaseActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = Ui.dp(this, 12);
         box.setLayoutParams(lp);
+        box.setElevation(Ui.dp(this, 1));
         TextView t = Ui.text(this, title, 11.5f, Ui.MUTED);
         t.setPadding(0, 0, 0, Ui.dp(this, 6));
         box.addView(t);
