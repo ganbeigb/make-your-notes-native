@@ -179,6 +179,21 @@ public class MindMapView extends View {
         return acc;
     }
 
+    public android.graphics.Bitmap renderToBitmap() {
+        if (rootNode == null) return null;
+        RectF b = bounds(rootNode, new RectF(Float.MAX_VALUE, Float.MAX_VALUE, -1, -1));
+        b.inset(-40, -40);
+        int w = (int) Math.min(2400, Math.max(320, b.width()));
+        int h = (int) Math.min(2400, Math.max(240, b.height()));
+        android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmp);
+        c.drawColor(Ui.BG);
+        c.translate(-b.left, -b.top);
+        drawEdges(c, rootNode);
+        drawNodes(c, rootNode);
+        return bmp;
+    }
+
     public void zoomBy(float factor) {
         scale = Math.max(0.25f, Math.min(3f, scale * factor));
         invalidate();
