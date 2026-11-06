@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -181,6 +182,21 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(cat, clp);
+
+        TextView rule = Ui.text(this, "  标准  ", 14, Ui.INK);
+        rule.setBackground(Ui.card(this));
+        rule.setGravity(Gravity.CENTER);
+        rule.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp.leftMargin = Ui.dp(this, 8);
+        rule.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editCriteria();
+            }
+        });
+        tools.addView(rule, rlp);
         root.addView(tools);
 
         list = new ListView(this);
@@ -322,6 +338,27 @@ private void openExportMenu() {
         startActivityForResult(i, REQ_SAVE);
     }
 
+    private void editCriteria() {
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        input.setMinLines(4);
+        input.setText(db.subjectCriteria(subjectId) == null ? "" : db.subjectCriteria(subjectId));
+        input.setHint("例如：按「电路/模电/数电」三大块分；公式题单独归到「计算」；不要出现「其他」");
+        new AlertDialog.Builder(this)
+                .setTitle("本学科的整理标准")
+                .setMessage("会自动拼进「整理」的提示词里，让分类更贴合你的习惯。")
+                .setView(input)
+                .setPositiveButton("保存", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        db.setSubjectCriteria(subjectId, input.getText().toString());
+                        Toast.makeText(SubjectActivity.this, "已保存", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
     private void confirmOrganize() {
         if (!prefs.ready()) {
             Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
@@ -424,7 +461,8 @@ private void openExportMenu() {
                         if (r.error != null) {
                             Toast.makeText(SubjectActivity.this, "整理失败：" + r.error, Toast.LENGTH_LONG).show();
                         } else {
-                            Toast.makeText(SubjectActivity.this, "已更新 " + r.updated + " 条分类", Toast.LENGTH_SHORT).show();
+                            String extra = r.merged > 0 ? "，合并 " + r.merged + " 条重复" : "";
+                            Toast.makeText(SubjectActivity.this, "已更新 " + r.updated + " 条分类" + extra, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

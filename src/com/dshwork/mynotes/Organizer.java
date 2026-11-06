@@ -14,7 +14,41 @@ public class Organizer {
 
     public static class Result {
         public int updated;
+        public int merged;
         public String error;
+    }
+
+    /** 同名（忽略大小写与空白）的知识点合并：保留内容最长的那条，其余删除 */
+    public static int dedupe(Db db, String subjectId) {
+        java.util.List<Db.Note> notes = db.notes(subjectId);
+        java.util.Map<String, Db.Note> best = new java.util.HashMap<>();
+        java.util.List<Db.Note> drop = new java.util.ArrayList<>();
+        for (Db.Note n : notes) {
+            String key = normalize(n.name);
+            if (key.isEmpty()) continue;
+            Db.Note cur = best.get(key);
+            if (cur == null) {
+                best.put(key, n);
+            } else {
+                Db.Note keep = contentLen(n) > contentLen(cur) ? n : cur;
+                Db.Note lose = keep == n ? cur : n;
+                best.put(key, keep);
+                drop.add(lose);
+            }
+        }
+        for (Db.Note n : drop) db.deleteNote(n.id);
+        return drop.size();
+    }
+
+    private static int contentLen(Db.Note n) {
+        int len = n.content == null ? 0 : n.content.length();
+        if (n.formula != null && !n.formula.trim().isEmpty()) len += 40;
+        return len;
+    }
+
+    private static String normalize(String s) {
+        if (s == null) return "";
+        return s.replaceAll("[\\s\\p{Punct}，。、；：（）【】《》]", "").toLowerCase();
     }
 
     public static Result run(Db db, Prefs prefs, String subjectId, Progress cb) {
@@ -29,7 +63,11 @@ public class Organizer {
             return r;
         }
 
+        String criteria = db.subjectCriteria(subjectId);
         StringBuilder sb = new StringBuilder();
+        if (criteria != null && !criteria.trim().isEmpty()) {
+            sb.append("本科目的整理标准：").append(criteria.trim()).append("\n\n");
+        }
         for (int i = 0; i < notes.size(); i++) {
             Db.Note n = notes.get(i);
             String cur = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
@@ -69,6 +107,7 @@ public class Organizer {
                 db.saveNote(n);
                 r.updated++;
             }
+            r.merged = dedupe(db, subjectId);
         } catch (Exception e) {
             r.error = AiClient.friendly(e);
         }
