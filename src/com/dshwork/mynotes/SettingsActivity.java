@@ -21,6 +21,7 @@ public class SettingsActivity extends Activity {
 
     private Prefs prefs;
     private EditText keyInput;
+    private EditText zhipuKeyInput;
     private EditText visionInput;
     private EditText textInput;
     private Spinner providerSpinner;
@@ -87,7 +88,8 @@ public class SettingsActivity extends Activity {
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 30));
 
         providerSpinner = spinner(form, "服务商", providers, indexOf(providers, prefs.provider()));
-        keyInput = edit(form, "API Key", prefs.apiKey(), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        keyInput = edit(form, "DeepSeek API Key", prefs.apiKey("deepseek"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        zhipuKeyInput = edit(form, "智谱 API Key（识图用，免费）", prefs.apiKey("zhipu"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         visionInput = edit(form, "识图模型", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
         textInput = edit(form, "文本模型", prefs.textModel(), InputType.TYPE_CLASS_TEXT);
         reasoningSpinner = spinner(form, "推理档位", reasonings, indexOf(reasonings, prefs.reasoning()));
@@ -126,8 +128,8 @@ public class SettingsActivity extends Activity {
         form.addView(strictBox);
 
         TextView hint = Ui.text(this,
-                "DeepSeek 不支持图片识图，识图默认用智谱 glm-4.6v-flash（免费）；" +
-                        "也可以在服务商里切到 zhipu，识图和整理都走智谱。", 12, Ui.INK2);
+                "识图会自动用智谱（glm-4.6v-flash 免费），所以哪怕主服务商选 DeepSeek，也建议把智谱 Key 填上。" +
+                        "两个 Key 分开保存，互不覆盖。", 12, Ui.INK2);
         hint.setPadding(0, Ui.dp(this, 14), 0, 0);
         form.addView(hint);
 
@@ -179,7 +181,8 @@ public class SettingsActivity extends Activity {
     private void saveSettings() {
         String provider = providerSpinner.getSelectedItem().toString();
         prefs.setProvider(provider);
-        prefs.setApiKey(provider, keyInput.getText().toString());
+        prefs.setApiKey("deepseek", keyInput.getText().toString());
+        prefs.setApiKey("zhipu", zhipuKeyInput.getText().toString());
         prefs.setVisionModel(visionInput.getText().toString());
         prefs.setTextModel(textInput.getText().toString());
         prefs.setReasoning(reasoningSpinner.getSelectedItem().toString());

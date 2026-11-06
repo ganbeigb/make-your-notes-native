@@ -36,10 +36,18 @@ public class Importer {
             return out;
         }
 
-        String base = Prefs.baseUrl(prefs.provider());
-        String key = prefs.apiKey();
+        // 识图必须用支持图片的模型：优先智谱（免费），没有智谱 Key 才用当前服务商
+        boolean hasZhipuKey = prefs.apiKey("zhipu") != null && !prefs.apiKey("zhipu").isEmpty();
+        String vProvider = hasZhipuKey ? "zhipu" : prefs.provider();
+        String base = Prefs.baseUrl(vProvider);
+        String key = prefs.apiKey(vProvider);
         String model = prefs.visionModel();
         String reasoning = prefs.reasoning();
+
+        if (!hasZhipuKey && !"zhipu".equals(prefs.provider())) {
+            out.errors.add("识图需要视觉模型：请到设置里填「智谱 Key」（免费），或把服务商切成 zhipu");
+            return out;
+        }
 
         for (int i = 0; i < uris.size(); i++) {
             Uri uri = uris.get(i);
