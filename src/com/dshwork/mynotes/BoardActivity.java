@@ -155,11 +155,11 @@ public class BoardActivity extends BaseActivity {
         tools.setOrientation(LinearLayout.HORIZONTAL);
         tools.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 6));
 
-        tools.addView(toolButton("选择", BoardView.T_SELECT, tools));
-        tools.addView(toolButton("画笔", BoardView.T_PEN, tools));
-        tools.addView(toolButton("文字", BoardView.T_TEXT, tools));
-        tools.addView(toolButton("图形", BoardView.T_SHAPE, tools));
-        TextView symTool = toolButton("元件", BoardView.T_SYMBOL, tools);
+        tools.addView(toolButton("↖ 选择", BoardView.T_SELECT, tools));
+        tools.addView(toolButton("✎ 画笔", BoardView.T_PEN, tools));
+        tools.addView(toolButton("T 文字", BoardView.T_TEXT, tools));
+        tools.addView(toolButton("▭ 图形", BoardView.T_SHAPE, tools));
+        TextView symTool = toolButton("◫ 元件", BoardView.T_SYMBOL, tools);
         symTool.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -167,9 +167,9 @@ public class BoardActivity extends BaseActivity {
             }
         });
         tools.addView(symTool);
-        tools.addView(toolButton("连线", BoardView.T_WIRE, tools));
+        tools.addView(toolButton("⌐ 连线", BoardView.T_WIRE, tools));
 
-        TextView chipTool = toolButton("芯片", BoardView.T_CHIP, tools);
+        TextView chipTool = toolButton("▣ 芯片", BoardView.T_CHIP, tools);
         chipTool.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
