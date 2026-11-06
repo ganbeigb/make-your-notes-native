@@ -502,6 +502,7 @@ public class NoteActivity extends BaseActivity {
 
     private EditText field(LinearLayout parent, String label, String value, int inputType, int lines) {
         TextView l = Ui.text(this, label, 12, Ui.INK2);
+        l.setTypeface(Typeface.DEFAULT_BOLD);
         l.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 6));
         parent.addView(l);
 
@@ -509,10 +510,10 @@ public class NoteActivity extends BaseActivity {
         e.setText(value);
         e.setInputType(inputType);
         e.setMinLines(lines);
-        e.setTextSize(15);
+        e.setTextSize(14);
         e.setTextColor(Ui.INK);
         e.setBackground(Ui.card(this));
-        e.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+        e.setPadding(Ui.dp(this, 11), Ui.dp(this, 9), Ui.dp(this, 11), Ui.dp(this, 9));
         parent.addView(e, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         return e;
