@@ -854,16 +854,52 @@ public class SubjectActivity extends BaseActivity {
         startActivity(i);
     }
 
-private void openExportMenu() {
-        final String[] items = {"Markdown 笔记", "HTML 笔记（含公式图片）", "公式合集（HTML）", "JSON（仅文字）", "完整备份（zip）"};
+    private void openExportMenu() {
+        final String[] titles = {"Markdown 笔记", "HTML 笔记", "公式合集", "JSON（仅文字）", "完整备份（zip）"};
+        final String[] hints = {
+                "纯文本公式写成 $$…$$，适合粘到别的笔记软件",
+                "公式与配图内嵌，双击就能在浏览器里看",
+                "只挑带公式的条目，A4 打印样式",
+                "结构化文本，方便脚本处理",
+                "含课件、设置与用量，换机可整包恢复"
+        };
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 8));
+        for (int i = 0; i < titles.length; i++) {
+            final int kind = i;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(Ui.CARD);
+            bg.setCornerRadius(Ui.dp(this, 10));
+            row.setBackground(bg);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = Ui.dp(this, 6);
+            row.setLayoutParams(lp);
+
+            TextView title = Ui.text(this, titles[i], 14, Ui.INK);
+            title.setTypeface(Typeface.DEFAULT_BOLD);
+            row.addView(title);
+            TextView hint = Ui.text(this, hints[i], 11.5f, Ui.MUTED);
+            hint.setPadding(0, Ui.dp(this, 2), 0, 0);
+            row.addView(hint);
+
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startExport(kind);
+                }
+            });
+            box.addView(row);
+        }
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(box);
         new AlertDialog.Builder(this)
                 .setTitle("导出")
-                .setItems(items, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        startExport(which);
-                    }
-                })
+                .setView(sc)
                 .setNegativeButton("取消", null)
                 .show();
     }
