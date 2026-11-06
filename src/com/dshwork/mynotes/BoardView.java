@@ -108,6 +108,8 @@ public class BoardView extends View {
     private int tool = T_SELECT;
     private int shapeKind = 0;
     private String symbolName = "sym-resistor";
+    private int baseColor = 0xFF243029;
+    private int penAlpha = 255;
     private int color = 0xFF243029;
     private float width = 2.5f;
 
@@ -172,6 +174,40 @@ public class BoardView extends View {
         tool = T_SHAPE;
     }
 
+    public void setPenColor(int c) {
+        baseColor = c;
+        applyStyle();
+    }
+
+    public int penColor() {
+        return baseColor;
+    }
+
+    public void setPenWidth(float w) {
+        width = w;
+        invalidate();
+    }
+
+    public float penWidth() {
+        return width;
+    }
+
+    public void setPenAlpha(int a) {
+        penAlpha = Math.max(30, Math.min(255, a));
+        applyStyle();
+    }
+
+    public int penAlpha() {
+        return penAlpha;
+    }
+
+    private void applyStyle() {
+        color = (penAlpha << 24) | (baseColor & 0x00FFFFFF);
+        textPaint.setColor(color);
+        symPaint.setColor(color);
+        invalidate();
+    }
+
     public void setSymbolName(String n) {
         symbolName = n;
         tool = T_SYMBOL;
@@ -215,6 +251,34 @@ public class BoardView extends View {
         redo.add(cur);
         items.clear();
         items.addAll(prev);
+        invalidate();
+        return true;
+    }
+
+    /** 选中内容整体顺时针旋转 90° */
+    public boolean rotateSelected90() {
+        if (selected == null) return false;
+        snapshot();
+        java.util.List<PointF> pts = new java.util.ArrayList<>(selected.pts);
+        if (pts.isEmpty()) return false;
+        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+        for (PointF p : pts) {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y);
+            maxY = Math.max(maxY, p.y);
+        }
+        float cx = (minX + maxX) / 2f, cy = (minY + maxY) / 2f;
+        selected.pts.clear();
+        for (int i = 0; i < pts.size(); i++) {
+            PointF p = pts.get(i);
+            selected.pts.add(new PointF(cx + (p.y - cy), cy - (p.x - cx)));
+        }
+        if (selected.kind == K_CHIP) {
+            float w = selected.w;
+            selected.w = selected.h;
+            selected.h = w;
+        }
         invalidate();
         return true;
     }
@@ -277,6 +341,7 @@ public class BoardView extends View {
         c.translate(tx, ty);
         c.scale(scale, scale);
         for (Item it : items) drawItem(c, it);
+        drawJunctions(c);
         if (draft != null) drawItem(c, draft);
         if (selected != null) {
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -306,6 +371,39 @@ public class BoardView extends View {
         float oy = ty % step;
         for (float x = ox; x < getWidth(); x += step) c.drawLine(x, 0, x, getHeight(), gridPaint);
         for (float y = oy; y < getHeight(); y += step) c.drawLine(0, y, getWidth(), y, gridPaint);
+    }
+
+    /** 导线交叉处画结点 */
+    private void drawJunctions(Canvas c) {
+        Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
+        for (int i = 0; i < items.size(); i++) {
+            Item a = items.get(i);
+            if (a.kind != K_WIRE || a.pts.size() < 2) continue;
+            for (int j = i + 1; j < items.size(); j++) {
+                Item b = items.get(j);
+                if (b.kind != K_WIRE || b.pts.size() < 2) continue;
+                for (int x1 = 0; x1 + 1 < a.pts.size(); x1++) {
+                    boolean aVert = Math.abs(a.pts.get(x1).x - a.pts.get(x1 + 1).x) < 0.5f;
+                    for (int y1 = 0; y1 + 1 < b.pts.size(); y1++) {
+                        boolean bVert = Math.abs(b.pts.get(y1).x - b.pts.get(y1 + 1).x) < 0.5f;
+                        if (aVert == bVert) continue;
+                        float x = aVert ? a.pts.get(x1).x : b.pts.get(y1).x;
+                        float y = aVert ? b.pts.get(y1).y : a.pts.get(x1).y;
+                        if (onSeg(a, x1, x, y) && onSeg(b, y1, x, y)) {
+                            dot.setColor(a.color);
+                            c.drawCircle(x, y, Math.max(Ui.dp(getContext(), 2.4f), a.width * 0.6f), dot);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean onSeg(Item w, int idx, float x, float y) {
+        PointF p1 = w.pts.get(idx), p2 = w.pts.get(idx + 1);
+        float minX = Math.min(p1.x, p2.x) - 0.6f, maxX = Math.max(p1.x, p2.x) + 0.6f;
+        float minY = Math.min(p1.y, p2.y) - 0.6f, maxY = Math.max(p1.y, p2.y) + 0.6f;
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
     }
 
     private void drawItem(Canvas c, Item it) {

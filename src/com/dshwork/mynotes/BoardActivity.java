@@ -142,6 +142,93 @@ public class BoardActivity extends BaseActivity {
         toolsScroll.addView(tools);
         root.addView(toolsScroll);
 
+        // 样式面板：颜色 / 粗细 / 透明度 / 旋转
+        LinearLayout styleRow = new LinearLayout(this);
+        styleRow.setOrientation(LinearLayout.HORIZONTAL);
+        styleRow.setGravity(Gravity.CENTER_VERTICAL);
+        styleRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
+
+        final int[] colors = {0xFF243029, 0xFF000000, 0xFFC0392B, 0xFF1F6FB2, 0xFFD68910, 0xFF7A7A7A};
+        for (final int col : colors) {
+            View sw = new View(this);
+            android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+            g.setColor(col);
+            g.setCornerRadius(Ui.dp(this, 8));
+            g.setStroke(Ui.dp(this, 1), 0x33000000);
+            sw.setBackground(g);
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(Ui.dp(this, 24), Ui.dp(this, 24));
+            slp.rightMargin = Ui.dp(this, 8);
+            sw.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    board.setPenColor(col);
+                }
+            });
+            styleRow.addView(sw, slp);
+        }
+
+        final TextView widthLabel = Ui.text(this, "2", 13, Ui.INK);
+        widthLabel.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+        TextView minus = Ui.text(this, "－", 16, Ui.ACCENT);
+        minus.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        minus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                float w = Math.max(1f, board.penWidth() - 1f);
+                board.setPenWidth(w);
+                widthLabel.setText(String.valueOf((int) w));
+            }
+        });
+        TextView plus = Ui.text(this, "＋", 16, Ui.ACCENT);
+        plus.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        plus.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                float w = Math.min(12f, board.penWidth() + 1f);
+                board.setPenWidth(w);
+                widthLabel.setText(String.valueOf((int) w));
+            }
+        });
+        styleRow.addView(minus);
+        styleRow.addView(widthLabel);
+        styleRow.addView(plus);
+
+        final int[] alphas = {255, 180, 110};
+        final String[] alphaLabels = {"不透明", "70%", "43%"};
+        final int[] alphaIdx = {0};
+        final TextView alphaBtn = Ui.chip(this, "不透明", false);
+        alphaBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alphaIdx[0] = (alphaIdx[0] + 1) % alphas.length;
+                board.setPenAlpha(alphas[alphaIdx[0]]);
+                alphaBtn.setText(alphaLabels[alphaIdx[0]]);
+            }
+        });
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        alp.leftMargin = Ui.dp(this, 10);
+        styleRow.addView(alphaBtn, alp);
+
+        TextView rot = Ui.chip(this, "旋转 90°", false);
+        rot.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.rotateSelected90()) {
+                    Toast.makeText(BoardActivity.this, "先用选择工具点中一个元素", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        LinearLayout.LayoutParams rlp2 = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp2.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(rot, rlp2);
+
+        android.widget.HorizontalScrollView styleScroll = new android.widget.HorizontalScrollView(this);
+        styleScroll.setHorizontalScrollBarEnabled(false);
+        styleScroll.addView(styleRow);
+        root.addView(styleScroll);
+
         // 图形 / 元件 选择行
         shapeRow = new LinearLayout(this);
         shapeRow.setOrientation(LinearLayout.HORIZONTAL);
