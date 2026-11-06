@@ -76,7 +76,7 @@ public class MindMapActivity extends BaseActivity {
         });
         bar.addView(zoomOut);
 
-        TextView export = Ui.text(this, "导出", 14, Ui.ACCENT);
+        TextView export = Ui.chip(this, "导出 PNG", false);
         export.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 10), 0);
         export.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -90,7 +90,7 @@ public class MindMapActivity extends BaseActivity {
         });
         bar.addView(export);
 
-        TextView reset = Ui.text(this, "适应", 14, Ui.ACCENT);
+        TextView reset = Ui.chip(this, "适应视图", false);
         reset.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
         reset.setOnClickListener(new View.OnClickListener() {
             @Override
