@@ -159,6 +159,8 @@ public class Importer {
             }
         }
         if (cb != null) cb.onStep(uris.size(), uris.size(), "完成");
+        // 取消 / 全部失败 / 全部重复时，不留下空课件
+        db.deleteDeckIfEmpty(deck.id);
         return out;
     }
 

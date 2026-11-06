@@ -260,6 +260,20 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().update("decks", v, "id = ?", new String[]{id});
     }
 
+    /** 课件里一页都没有时删掉，避免取消导入留下空课件 */
+    public void deleteDeckIfEmpty(String id) {
+        if (id == null || id.isEmpty()) return;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT COUNT(*) FROM slides WHERE deck_id = ?", new String[]{id});
+        int n = 0;
+        try {
+            if (c.moveToFirst()) n = c.getInt(0);
+        } finally {
+            c.close();
+        }
+        if (n == 0) deleteDeck(id);
+    }
+
     public void deleteDeck(String id) {
         android.database.sqlite.SQLiteDatabase d = getWritableDatabase();
         d.delete("notes", "slide_id IN (SELECT id FROM slides WHERE deck_id = ?)", new String[]{id});
