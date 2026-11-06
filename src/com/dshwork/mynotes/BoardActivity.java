@@ -73,6 +73,18 @@ public class BoardActivity extends Activity {
         });
         bar.addView(redo);
 
+        TextView del = Ui.text(this, "删除", 14, 0xFFC0392B);
+        del.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        del.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.deleteSelected()) {
+                    Toast.makeText(BoardActivity.this, "先用「选择」点中要删的东西", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        bar.addView(del);
+
         TextView done = Ui.button(this, "完成");
         done.setOnClickListener(new View.OnClickListener() {
             @Override
