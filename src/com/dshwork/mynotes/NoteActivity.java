@@ -150,6 +150,15 @@ public class NoteActivity extends BaseActivity {
             aiRow.addView(chipImp);
         }
 
+        TextView pickCat = Ui.chip(this, "选分类", false);
+        pickCat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickCategory();
+            }
+        });
+        aiRow.addView(pickCat);
+
         TextView copy = Ui.chip(this, "复制", false);
         copy.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -472,6 +481,26 @@ public class NoteActivity extends BaseActivity {
     }
 
     /** 复制这条知识点 */
+    /** 从已有分类里挑一个，省得手打路径 */
+    private void pickCategory() {
+        final java.util.List<String> paths = db.categoryPaths(note.subjectId);
+        if (paths.isEmpty()) {
+            Toast.makeText(this, "这个科目还没有分类，直接在输入框里写，例如 力学/运动学", Toast.LENGTH_LONG).show();
+            return;
+        }
+        paths.add(0, "（不分类）");
+        new AlertDialog.Builder(this)
+                .setTitle("选择分类")
+                .setItems(paths.toArray(new String[0]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        categoryInput.setText(which == 0 ? "" : paths.get(which));
+                        save(false);
+                    }
+                })
+                .show();
+    }
+
     private void duplicate() {
         save(false);
         Db.Note copy = db.createNote(note.subjectId);
