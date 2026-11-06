@@ -25,6 +25,7 @@ public class Importer {
         public int pages;
         public int points;
         public final List<String> errors = new ArrayList<>();
+        public final List<Uri> failed = new ArrayList<>();
     }
 
     public static Outcome run(Context ctx, Db db, Prefs prefs, String subjectId,
@@ -93,6 +94,7 @@ public class Importer {
                 }
             } catch (Exception e) {
                 out.errors.add("第 " + (i + 1) + " 页失败：" + AiClient.friendly(e));
+                out.failed.add(uri);
             }
         }
         if (cb != null) cb.onStep(uris.size(), uris.size(), "完成");

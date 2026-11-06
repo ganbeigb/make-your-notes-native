@@ -43,6 +43,8 @@ public class SubjectActivity extends Activity {
     private TextView empty;
     private ListView list;
     private final Handler ui = new Handler(Looper.getMainLooper());
+    private final List<Uri> failedUris = new ArrayList<>();
+    private TextView retryBtn;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -101,6 +103,25 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(imp);
+
+        retryBtn = Ui.text(this, "  重试失败  ", 14, 0xFFFFFFFF);
+        retryBtn.setBackground(Ui.button(this, "").getBackground());
+        retryBtn.setGravity(Gravity.CENTER);
+        retryBtn.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        retryBtn.setVisibility(View.GONE);
+        LinearLayout.LayoutParams rlbp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlbp.leftMargin = Ui.dp(this, 8);
+        retryBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<Uri> again = new ArrayList<>(failedUris);
+                failedUris.clear();
+                retryBtn.setVisibility(View.GONE);
+                runImport(again);
+            }
+        });
+        tools.addView(retryBtn, rlbp);
 
         TextView exp = Ui.text(this, "  导出  ", 14, Ui.INK);
         exp.setBackground(Ui.card(this));
@@ -540,6 +561,12 @@ private void openExportMenu() {
                         if (!out.errors.isEmpty()) {
                             sb.append("\n").append(out.errors.get(0));
                             if (out.errors.size() > 1) sb.append("（共 ").append(out.errors.size()).append(" 个错误）");
+                        }
+                        failedUris.clear();
+                        failedUris.addAll(out.failed);
+                        retryBtn.setVisibility(failedUris.isEmpty() ? View.GONE : View.VISIBLE);
+                        if (!failedUris.isEmpty()) {
+                            retryBtn.setText("  重试失败（" + failedUris.size() + "）  ");
                         }
                         Toast.makeText(SubjectActivity.this, sb.toString(), Toast.LENGTH_LONG).show();
                     }
