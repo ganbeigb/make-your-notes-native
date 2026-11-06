@@ -523,6 +523,17 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    /** 该科目下所有分类的完整路径，按字典序 */
+    public List<String> categoryPaths(String subjectId) {
+        List<String> out = new ArrayList<>();
+        for (Category k : categories(subjectId)) {
+            String path = categoryPath(k.id);
+            if (path != null && !path.isEmpty() && !out.contains(path)) out.add(path);
+        }
+        java.util.Collections.sort(out);
+        return out;
+    }
+
     public String categoryPath(String categoryId) {
         if (categoryId == null) return "";
         String path = "";

@@ -127,6 +127,7 @@ public class WebBackup {
             }
 
             // 4) 知识点（items）
+            // 网页版画图字段：svg（手绘/画板导出的 SVG 文本）
             Map<String, String> pageImagePath = new HashMap<>();
             JSONArray items = m.optJSONArray("items");
             if (items != null) {
@@ -176,6 +177,14 @@ public class WebBackup {
                             n.slidePath = path;
                         }
                     }
+                    String svg = it.optString("svg", "");
+                    if (!svg.trim().isEmpty()) {
+                        String fig = saveSvgFigure(ctx, svg);
+                        if (fig != null) {
+                            n.figure = fig;
+                            r.images++;
+                        }
+                    }
                     db.saveNote(n);
                     r.notes++;
                 }
@@ -203,6 +212,25 @@ public class WebBackup {
         subjMap.put(key, id);
         subjMap.put("__fallback__", id);
         return id;
+    }
+
+    /** 把网页版的 SVG 画图渲染成 PNG 存成配图 */
+    private static String saveSvgFigure(Context ctx, String svg) {
+        try {
+            android.graphics.Bitmap bmp = SvgRender.render(svg, 1200);
+            if (bmp == null) return null;
+            java.io.File dir = new java.io.File(ctx.getFilesDir(), "figures");
+            if (!dir.exists()) dir.mkdirs();
+            java.io.File out = new java.io.File(dir, "svg_" + System.currentTimeMillis() + "_"
+                    + (int) (Math.random() * 1000) + ".png");
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
+            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+            bmp.recycle();
+            return out.getAbsolutePath();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static String trimBasename(String p) {
