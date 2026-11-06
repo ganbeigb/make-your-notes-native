@@ -352,35 +352,85 @@ public class MainActivity extends BaseActivity {
                     .show();
             return;
         }
-        labels.add("从其他位置选择…");
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 8));
+
+        for (final java.io.File f : valid) {
+            String kind = Backups.kindOf(f);
+            boolean web = "web".equals(kind);
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(Ui.CARD);
+            bg.setCornerRadius(Ui.dp(this, 10));
+            row.setBackground(bg);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = Ui.dp(this, 6);
+            row.setLayoutParams(lp);
+
+            TextView name = Ui.text(this, f.getName(), 13.5f, Ui.INK);
+            name.setTypeface(Typeface.DEFAULT_BOLD);
+            row.addView(name);
+
+            TextView meta = Ui.text(this, (web ? "网页版备份 · " : "本机备份 · ") + Backups.describe(f).replace("网页版备份 · ", "").replace("本机备份 · ", ""),
+                    11.5f, Ui.MUTED);
+            meta.setPadding(0, Ui.dp(this, 2), 0, 0);
+            row.addView(meta);
+
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    confirmRestore(f);
+                }
+            });
+            box.addView(row);
+        }
+
+        LinearLayout other = new LinearLayout(this);
+        other.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+        other.setBackground(Ui.card(this));
+        TextView otherText = Ui.text(this, "从其他位置选择…", 13, Ui.ACCENT);
+        other.addView(otherText);
+        other.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openSystemPicker();
+            }
+        });
+        box.addView(other);
+
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(box);
         new AlertDialog.Builder(this)
                 .setTitle("选择要恢复的备份")
-                .setItems(labels.toArray(new String[0]), new DialogInterface.OnClickListener() {
+                .setView(sc)
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void confirmRestore(final java.io.File f) {
+        String kind = Backups.kindOf(f);
+        String detail = f.getName() + "\n" + Backups.describe(f)
+                + "\n\n" + ("web".equals(kind)
+                ? "会把网页版备份里的科目、课件、页面、知识点、原图导入。"
+                : "同名科目按名称合并，重复知识点跳过。");
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("确认恢复")
+                .setMessage(detail)
+                .setPositiveButton("恢复", new DialogInterface.OnClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == valid.size()) {
-                            openSystemPicker();
-                            return;
+                    public void onClick(DialogInterface d2, int w2) {
+                        try {
+                            byte[] data = readAll(f);
+                            startRestore(data);
+                        } catch (Exception e) {
+                            Toast.makeText(MainActivity.this, "读取失败：" + e.getMessage(),
+                                    Toast.LENGTH_LONG).show();
                         }
-                        final java.io.File f = valid.get(which);
-                        new AlertDialog.Builder(MainActivity.this)
-                                .setTitle("确认恢复")
-                                .setMessage(f.getName() + "\n" + Backups.describe(f)
-                                        + "\n\n同名科目按名称合并，重复知识点跳过。")
-                                .setPositiveButton("恢复", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface d2, int w2) {
-                                        try {
-                                            byte[] data = readAll(f);
-                                            startRestore(data);
-                                        } catch (Exception e) {
-                                            Toast.makeText(MainActivity.this, "读取失败：" + e.getMessage(),
-                                                    Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                })
-                                .setNegativeButton("取消", null)
-                                .show();
                     }
                 })
                 .setNegativeButton("取消", null)
