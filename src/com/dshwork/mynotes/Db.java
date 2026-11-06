@@ -1112,6 +1112,32 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    /** 统计没有被任何知识点引用的配图 / 原图文件 */
+    public int[] orphanFiles(java.io.File dir) {
+        int orphan = 0, total = 0;
+        java.util.Set<String> used = new java.util.HashSet<>();
+        Cursor c = getReadableDatabase().rawQuery("SELECT figure, slide_path FROM notes", null);
+        try {
+            while (c.moveToNext()) {
+                String f = c.getString(0);
+                String s = c.getString(1);
+                if (f != null && !f.isEmpty()) used.add(new java.io.File(f).getName());
+                if (s != null && !s.isEmpty()) used.add(new java.io.File(s).getName());
+            }
+        } finally {
+            c.close();
+        }
+        java.io.File[] files = dir == null ? null : dir.listFiles();
+        if (files != null) {
+            for (java.io.File f : files) {
+                if (!f.isFile()) continue;
+                total++;
+                if (!used.contains(f.getName())) orphan++;
+            }
+        }
+        return new int[]{orphan, total};
+    }
+
     public int repairImages() {
         int fixed = 0;
         Cursor c = getReadableDatabase().rawQuery(
