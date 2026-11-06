@@ -50,6 +50,7 @@ public class SubjectActivity extends BaseActivity {
     private final List<Integer> failedPages = new ArrayList<>();
     private String lastDeckId;
     private String lastOpenedNoteId;
+    private String pendingAppendDeckId;
     private TextView retryBtn;
     private boolean selecting = false;
     private String viewMode = "decks";
@@ -645,7 +646,7 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void deckMenu(final Db.Deck d) {
-        final String[] items = {"本节总结（AI）", "重做整册（AI）", "重命名课件", "查看页面", "删除课件"};
+        final String[] items = {"本节总结（AI）", "重做整册（AI）", "追加图片到这册", "重命名课件", "查看页面", "删除课件"};
         new AlertDialog.Builder(this)
                 .setTitle(d.title)
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -656,6 +657,8 @@ public class SubjectActivity extends BaseActivity {
                         } else if (which == 1) {
                             redoDeckMenu(d);
                         } else if (which == 2) {
+                            appendToDeck(d);
+                        } else if (which == 3) {
                             final EditText input = new EditText(SubjectActivity.this);
                             input.setText(d.title);
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -670,7 +673,7 @@ public class SubjectActivity extends BaseActivity {
                                     })
                                     .setNegativeButton("取消", null)
                                     .show();
-                        } else if (which == 3) {
+                        } else if (which == 4) {
                             showSlides(d);
                         } else {
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -746,6 +749,20 @@ public class SubjectActivity extends BaseActivity {
     }
 
     /** 整册重做：逐页重新识别 */
+    /** 把新图片追加到已有课件（网页版「追加图片到这份课件」） */
+    private void appendToDeck(Db.Deck d) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        pendingAppendDeckId = d.id;
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("image/*");
+        i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        startActivityForResult(i, REQ_PICK);
+    }
+
     private void redoDeckMenu(final Db.Deck d) {
         if (!prefs.ready()) {
             Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
@@ -1328,6 +1345,19 @@ public class SubjectActivity extends BaseActivity {
             uris.add(data.getData());
         }
         if (uris.isEmpty()) return;
+        if (pendingAppendDeckId != null) {
+            String deckId = pendingAppendDeckId;
+            pendingAppendDeckId = null;
+            java.util.List<Db.Slide> existing = db.slides(deckId);
+            int base = 0;
+            for (Db.Slide sl : existing) {
+                if (sl.idx > base) base = sl.idx;
+            }
+            List<Integer> pageNos = new ArrayList<>();
+            for (int k = 0; k < uris.size(); k++) pageNos.add(base + k + 1);
+            runImport(uris, pageNos, deckId);
+            return;
+        }
         runImport(uris);
     }
 
