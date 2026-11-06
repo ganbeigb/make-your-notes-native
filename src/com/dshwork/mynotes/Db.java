@@ -538,6 +538,63 @@ public class Db extends SQLiteOpenHelper {
         return out;
     }
 
+    /** 导出全部用量记录 */
+    public org.json.JSONArray exportUsage() {
+        org.json.JSONArray arr = new org.json.JSONArray();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT ts, kind, subject_id, in_tok, out_tok FROM usage_log ORDER BY ts ASC", null);
+        try {
+            while (c.moveToNext()) {
+                org.json.JSONObject o = new org.json.JSONObject();
+                try {
+                    o.put("ts", c.getLong(0));
+                    o.put("kind", c.getString(1));
+                    o.put("subjectId", c.getString(2));
+                    o.put("in", c.getLong(3));
+                    o.put("out", c.getLong(4));
+                } catch (Exception ignored) {
+                }
+                arr.put(o);
+            }
+        } finally {
+            c.close();
+        }
+        return arr;
+    }
+
+    /** 导入用量：同时间戳+用途视为重复，跳过 */
+    public int importUsage(org.json.JSONArray arr) {
+        int added = 0;
+        if (arr == null) return 0;
+        for (int i = 0; i < arr.length(); i++) {
+            org.json.JSONObject o = arr.optJSONObject(i);
+            if (o == null) continue;
+            long ts = o.optLong("ts", 0);
+            String kind = o.optString("kind", "");
+            if (ts <= 0) continue;
+            Cursor c = getReadableDatabase().rawQuery(
+                    "SELECT 1 FROM usage_log WHERE ts = ? AND COALESCE(kind,'') = ? LIMIT 1",
+                    new String[]{String.valueOf(ts), kind == null ? "" : kind});
+            boolean exists;
+            try {
+                exists = c.moveToFirst();
+            } finally {
+                c.close();
+            }
+            if (exists) continue;
+            ContentValues v = new ContentValues();
+            v.put("id", UUID.randomUUID().toString());
+            v.put("ts", ts);
+            v.put("kind", kind);
+            v.put("subject_id", o.optString("subjectId", ""));
+            v.put("in_tok", o.optLong("in", 0));
+            v.put("out_tok", o.optLong("out", 0));
+            getWritableDatabase().insert("usage_log", null, v);
+            added++;
+        }
+        return added;
+    }
+
     public void clearUsage() {
         getWritableDatabase().delete("usage_log", null, null);
     }
