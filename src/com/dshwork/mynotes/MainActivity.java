@@ -54,6 +54,26 @@ public class MainActivity extends Activity {
                 askNewSubject();
             }
         });
+        TextView usage = Ui.text(this, "用量", 13, Ui.INK2);
+        usage.setPadding(Ui.dp(this, 0), 0, Ui.dp(this, 14), 0);
+        usage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, UsageActivity.class));
+            }
+        });
+        bar.addView(usage);
+
+        TextView settings = Ui.text(this, "设置", 13, Ui.INK2);
+        settings.setPadding(0, 0, Ui.dp(this, 12), 0);
+        settings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+            }
+        });
+        bar.addView(settings);
+
         bar.addView(add);
         root.addView(bar);
 
