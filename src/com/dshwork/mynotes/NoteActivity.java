@@ -25,6 +25,9 @@ public class NoteActivity extends BaseActivity {
 
     private Db db;
     private Prefs prefs;
+    private String snapName, snapContent, snapFormula;
+    private boolean hasSnap;
+    private TextView undoAiChip;
     private Db.Note note;
     private EditText nameInput;
     private EditText categoryInput;
@@ -99,6 +102,32 @@ public class NoteActivity extends BaseActivity {
             }
         });
         aiRow.addView(aiDraft);
+
+        TextView copy = Ui.chip(this, "复制", false);
+        copy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                duplicate();
+            }
+        });
+        aiRow.addView(copy);
+
+        undoAiChip = Ui.chip(this, "撤销 AI 修改", false);
+        undoAiChip.setVisibility(View.GONE);
+        undoAiChip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!hasSnap) return;
+                nameInput.setText(snapName);
+                contentInput.setText(snapContent);
+                formulaInput.setText(snapFormula);
+                hasSnap = false;
+                undoAiChip.setVisibility(View.GONE);
+                save(false);
+                Toast.makeText(NoteActivity.this, "已还原", Toast.LENGTH_SHORT).show();
+            }
+        });
+        aiRow.addView(undoAiChip);
         root.addView(aiRow);
 
         ScrollView scroll = new ScrollView(this);
@@ -335,6 +364,9 @@ public class NoteActivity extends BaseActivity {
 
     private void runAiEdit(final String req, final boolean appendMode) {
         save(false);
+        snapName = nameInput.getText().toString();
+        snapContent = contentInput.getText().toString();
+        snapFormula = formulaInput.getText().toString();
         final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
         dlg.setMessage("AI 正在改写…");
         dlg.setCancelable(false);
@@ -362,11 +394,33 @@ public class NoteActivity extends BaseActivity {
                         }
                         if (r.formula != null && !r.formula.trim().isEmpty()) formulaInput.setText(r.formula.trim());
                         save(false);
+                        hasSnap = true;
+                        if (undoAiChip != null) undoAiChip.setVisibility(View.VISIBLE);
                         Toast.makeText(NoteActivity.this, "AI 已更新，可继续手改", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
         }).start();
+    }
+
+    /** 复制这条知识点 */
+    private void duplicate() {
+        save(false);
+        Db.Note copy = db.createNote(note.subjectId);
+        copy.name = (note.name == null ? "知识点" : note.name) + "（副本）";
+        copy.content = note.content;
+        copy.formula = note.formula;
+        copy.quote = note.quote;
+        copy.tags = note.tags;
+        copy.categoryId = note.categoryId;
+        copy.importance = note.importance;
+        copy.source = note.source;
+        copy.slideId = note.slideId;
+        copy.slidePath = note.slidePath;
+        copy.slidePage = note.slidePage;
+        db.saveNote(copy);
+        Toast.makeText(this, "已复制", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     private void askAiDraft() {

@@ -476,17 +476,116 @@ public class SubjectActivity extends BaseActivity {
                 .setItems(labels, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Db.Slide s = slides.get(which);
-                        java.util.List<Db.Note> list = db.notesBySlide(s.id);
-                        if (list.isEmpty()) {
-                            Toast.makeText(SubjectActivity.this, "这一页没有知识点", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-                        openNote(list.get(0).id);
+                        slideMenu(slides.get(which));
                     }
                 })
                 .setNegativeButton("关闭", null)
                 .show();
+    }
+
+    private void slideMenu(final Db.Slide s) {
+        final String[] ops = {"打开该页知识点", "让 AI 重做这一页", "生成该页汇总", "删除这一页"};
+        new AlertDialog.Builder(this)
+                .setTitle("第 " + s.idx + " 页 · " + s.noteCount + " 条")
+                .setItems(ops, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) {
+                            java.util.List<Db.Note> list = db.notesBySlide(s.id);
+                            if (list.isEmpty()) {
+                                Toast.makeText(SubjectActivity.this, "这一页没有知识点", Toast.LENGTH_SHORT).show();
+                            } else {
+                                openNote(list.get(0).id);
+                            }
+                        } else if (which == 1) {
+                            redoSlide(s);
+                        } else if (which == 2) {
+                            makeDigest(s);
+                        } else {
+                            new AlertDialog.Builder(SubjectActivity.this)
+                                    .setTitle("删除这一页")
+                                    .setMessage("会删除该页的知识点，不可恢复。")
+                                    .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dlg, int w2) {
+                                            db.deleteSlide(s.id);
+                                            reload();
+                                        }
+                                    })
+                                    .setNegativeButton("取消", null)
+                                    .show();
+                        }
+                    }
+                })
+                .show();
+    }
+
+    private void redoSlide(final Db.Slide s) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("AI 正在重做第 " + s.idx + " 页…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    String json = Importer.extractFile(prefs, s.imagePath);
+                    int added = Importer.replaceSlide(SubjectActivity.this, db, prefs, subjectId, s, json);
+                    msg = "第 " + s.idx + " 页已重做，现 " + added + " 条";
+                } catch (final Exception e) {
+                    msg = "失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        Toast.makeText(SubjectActivity.this, finalMsg, Toast.LENGTH_LONG).show();
+                        reload();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void makeDigest(final Db.Slide s) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在生成第 " + s.idx + " 页汇总…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    msg = Importer.digestSlide(db, prefs, subjectId, s);
+                    if (msg.length() > 120) msg = msg.substring(0, 120) + "…";
+                } catch (final Exception e) {
+                    msg = "失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        new AlertDialog.Builder(SubjectActivity.this)
+                                .setTitle("第 " + s.idx + " 页汇总")
+                                .setMessage(finalMsg)
+                                .setPositiveButton("好", null)
+                                .show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private TextView batchChip(String label) {

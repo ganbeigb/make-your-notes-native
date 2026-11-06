@@ -680,6 +680,8 @@ public class Db extends SQLiteOpenHelper {
             org.json.JSONArray subjects = root.optJSONArray("subjects");
             org.json.JSONArray cats = root.optJSONArray("categories");
             org.json.JSONArray notes = root.optJSONArray("notes");
+            org.json.JSONArray decks = root.optJSONArray("decks");
+            org.json.JSONArray slides = root.optJSONArray("slides");
 
             java.util.Map<String, String> subjMap = new java.util.HashMap<>();
             if (subjects != null) {
@@ -742,6 +744,34 @@ public class Db extends SQLiteOpenHelper {
                 }
             }
 
+            java.util.Map<String, String> deckMap = new java.util.HashMap<>();
+            if (decks != null) {
+                for (int i = 0; i < decks.length(); i++) {
+                    org.json.JSONObject o = decks.optJSONObject(i);
+                    if (o == null) continue;
+                    String newSubj = subjMap.get(o.optString("subjectId"));
+                    if (newSubj == null) continue;
+                    String title = o.optString("title", "课件");
+                    Deck created = addDeck(newSubj, title);
+                    deckMap.put(o.optString("id"), created.id);
+                }
+            }
+            java.util.Map<String, String> slideMap = new java.util.HashMap<>();
+            if (slides != null) {
+                for (int i = 0; i < slides.length(); i++) {
+                    org.json.JSONObject o = slides.optJSONObject(i);
+                    if (o == null) continue;
+                    String newSubj = subjMap.get(o.optString("subjectId"));
+                    String newDeck = deckMap.get(o.optString("deckId"));
+                    if (newSubj == null || newDeck == null) continue;
+                    Slide created = addSlide(newSubj, newDeck, o.optInt("idx", i + 1), null);
+                    ContentValues sv = new ContentValues();
+                    if (o.has("digest")) sv.put("digest", o.optString("digest", ""));
+                    if (sv.size() > 0) getWritableDatabase().update("slides", sv, "id = ?", new String[]{created.id});
+                    slideMap.put(o.optString("id"), created.id);
+                }
+            }
+
             if (notes != null) {
                 for (int i = 0; i < notes.length(); i++) {
                     org.json.JSONObject n = notes.optJSONObject(i);
@@ -766,6 +796,19 @@ public class Db extends SQLiteOpenHelper {
                     v.put("source", n.optString("source", ""));
                     v.put("importance", n.optInt("importance", 2));
                     v.put("created_at", n.optLong("createdAt", System.currentTimeMillis()));
+                    String oldSlide = n.optString("slideId", null);
+                    if (oldSlide != null && !oldSlide.isEmpty()) {
+                        String mapped = slideMap.get(oldSlide);
+                        if (mapped != null) {
+                            v.put("slide_id", mapped);
+                            Slide sl = slide(mapped);
+                            if (sl != null) {
+                                v.put("slide_page", sl.idx);
+                                v.put("source", "第 " + sl.idx + " 页");
+                            }
+                        }
+                    }
+                    v.put("quote", n.optString("quote", ""));
                     getWritableDatabase().insert("notes", null, v);
                     noteCount++;
                 }
