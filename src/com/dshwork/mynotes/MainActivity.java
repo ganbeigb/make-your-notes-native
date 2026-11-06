@@ -22,7 +22,7 @@ import android.widget.Toast;
 import java.util.List;
 
 /** 科目列表：原生 View，没有 WebView，也没有本地服务器。 */
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
     private Db db;
     private List<Db.Subject> data;
@@ -87,9 +87,6 @@ public class MainActivity extends Activity {
         bar.addView(add);
         root.addView(bar);
 
-        TextView sub = Ui.text(this, "原生架构 · SQLite 本地存储 · 不加载网页", 12, Ui.INK2);
-        sub.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 10));
-        root.addView(sub);
 
         list = new ListView(this);
         list.setDivider(null);
@@ -180,10 +177,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (Ui.themeChanged(this)) {
-            recreate();
-            return;
-        }
         reload();
     }
 
@@ -228,84 +221,158 @@ public class MainActivity extends Activity {
     }
 
     private void pickBackup() {
-        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        i.setType("*/*");
-        startActivityForResult(i, REQ_RESTORE);
+        showRestorePicker();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQ_RESTORE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        final Uri uri = data.getData();
+        try {
+            java.io.InputStream in = getContentResolver().openInputStream(data.getData());
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+            in.close();
+            startRestore(bos.toByteArray());
+        } catch (Exception e) {
+            Toast.makeText(this, "读取备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** 备份目录里能识别的 zip */
+    private void showRestorePicker() {
+        final java.util.List<java.io.File> files = Backups.list(this);
+        final java.util.List<java.io.File> valid = new java.util.ArrayList<>();
+        final java.util.List<String> labels = new java.util.ArrayList<>();
+        for (java.io.File f : files) {
+            if (Backups.kindOf(f).isEmpty()) continue;
+            valid.add(f);
+            labels.add(f.getName() + "\n" + Backups.describe(f));
+        }
+        if (valid.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("没有找到备份")
+                    .setMessage("备份目录里没有可直接识别的文件：\n" + Backups.dirHint(this)
+                            + "\n\n你也可以从其他位置选一个 zip。")
+                    .setPositiveButton("从其他位置选择", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            openSystemPicker();
+                        }
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
+            return;
+        }
+        labels.add("从其他位置选择…");
+        new AlertDialog.Builder(this)
+                .setTitle("选择要恢复的备份")
+                .setItems(labels.toArray(new String[0]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (which == valid.size()) {
+                            openSystemPicker();
+                            return;
+                        }
+                        final java.io.File f = valid.get(which);
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("确认恢复")
+                                .setMessage(f.getName() + "\n" + Backups.describe(f)
+                                        + "\n\n同名科目按名称合并，重复知识点跳过。")
+                                .setPositiveButton("恢复", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface d2, int w2) {
+                                        try {
+                                            byte[] data = readAll(f);
+                                            startRestore(data);
+                                        } catch (Exception e) {
+                                            Toast.makeText(MainActivity.this, "读取失败：" + e.getMessage(),
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    }
+                                })
+                                .setNegativeButton("取消", null)
+                                .show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private byte[] readAll(java.io.File f) throws Exception {
+        java.io.FileInputStream in = new java.io.FileInputStream(f);
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        byte[] buf = new byte[16384];
+        int n;
+        while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+        in.close();
+        return bos.toByteArray();
+    }
+
+    private void openSystemPicker() {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("*/*");
+        startActivityForResult(i, REQ_RESTORE);
+    }
+
+    /** 解析 zip 并合并进库（原生 / 网页版两种格式自动识别） */
+    private void startRestore(final byte[] data) {
+        final String[] holder = new String[]{null};
+        final boolean[] done = new boolean[]{false};
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final String msg;
+                String msg;
                 try {
-                    java.io.InputStream is = getContentResolver().openInputStream(uri);
-
-                    // 先判断是不是网页版备份（manifest.json + images/）
                     boolean isWeb = false;
-                    try {
-                        java.util.zip.ZipInputStream probe = new java.util.zip.ZipInputStream(
-                                getContentResolver().openInputStream(uri));
-                        java.util.zip.ZipEntry pe;
-                        while ((pe = probe.getNextEntry()) != null) {
-                            if ("manifest.json".equals(pe.getName())) {
-                                isWeb = true;
-                                break;
-                            }
-                            if (pe.getName().endsWith("mynotes-backup.json")) break;
+                    java.util.zip.ZipInputStream probe = new java.util.zip.ZipInputStream(
+                            new java.io.ByteArrayInputStream(data));
+                    java.util.zip.ZipEntry pe;
+                    while ((pe = probe.getNextEntry()) != null) {
+                        if ("manifest.json".equals(pe.getName())) {
+                            isWeb = true;
+                            break;
                         }
-                        probe.close();
-                    } catch (Exception ignored) {
+                        if (pe.getName().endsWith("mynotes-backup.json")) break;
                     }
+                    probe.close();
 
                     if (isWeb) {
                         WebBackup.Result wr = WebBackup.importFromZip(MainActivity.this, db,
-                                getContentResolver().openInputStream(uri), new Prefs(MainActivity.this));
-                        if (wr.error != null) {
-                            msg = "网页版备份导入失败：" + wr.error;
-                        } else {
-                            msg = "已从网页版备份导入：" + wr.subjects + " 科目、" + wr.categories + " 分类、"
-                                    + wr.notes + " 知识点、" + wr.images + " 张原图";
-                        }
-                        ui.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                reload();
-                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
-                            }
-                        });
-                        return;
-                    }
-
-                    java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(is);
-                    String json = null;
-                    java.util.zip.ZipEntry e;
-                    byte[] buf = new byte[8192];
-                    while ((e = zip.getNextEntry()) != null) {
-                        if (e.getName().endsWith("mynotes-backup.json")) {
-                            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-                            int n;
-                            while ((n = zip.read(buf)) > 0) bos.write(buf, 0, n);
-                            json = new String(bos.toByteArray(), "UTF-8");
-                            break;
-                        }
-                    }
-                    zip.close();
-                    if (json == null) {
-                        msg = "这个 zip 既不是原生版备份，也不是网页版备份";
+                                new java.io.ByteArrayInputStream(data), new Prefs(MainActivity.this));
+                        msg = wr.error != null ? ("网页版备份导入失败：" + wr.error)
+                                : ("已从网页版备份导入：" + wr.subjects + " 科目、" + wr.categories + " 分类、"
+                                   + wr.notes + " 知识点、" + wr.images + " 张原图");
                     } else {
-                        org.json.JSONObject obj = new org.json.JSONObject(json);
-                        org.json.JSONObject settings = obj.optJSONObject("settings");
-                        if (settings != null) new Prefs(MainActivity.this).restore(settings);
-                        int usageAdded = db.importUsage(obj.optJSONArray("usage"));
-                        int[] r = db.importBackup(obj);
-                        msg = "恢复完成：新增 " + r[0] + " 科目、" + r[1] + " 分类、" + r[2] + " 知识点、"
-                                + usageAdded + " 条用量";
+                        String json = null;
+                        java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
+                                new java.io.ByteArrayInputStream(data));
+                        java.util.zip.ZipEntry e;
+                        byte[] buf = new byte[8192];
+                        while ((e = zip.getNextEntry()) != null) {
+                            if (e.getName().endsWith("mynotes-backup.json")) {
+                                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                                int n;
+                                while ((n = zip.read(buf)) > 0) bos.write(buf, 0, n);
+                                json = new String(bos.toByteArray(), "UTF-8");
+                                break;
+                            }
+                        }
+                        zip.close();
+                        if (json == null) {
+                            msg = "这个 zip 既不是原生版备份，也不是网页版备份";
+                        } else {
+                            org.json.JSONObject obj = new org.json.JSONObject(json);
+                            org.json.JSONObject settings = obj.optJSONObject("settings");
+                            if (settings != null) new Prefs(MainActivity.this).restore(settings);
+                            int usageAdded = db.importUsage(obj.optJSONArray("usage"));
+                            int[] r = db.importBackup(obj);
+                            msg = "恢复完成：新增 " + r[0] + " 科目、" + r[1] + " 分类、" + r[2] + " 知识点、"
+                                    + usageAdded + " 条用量";
+                        }
                     }
                 } catch (final Exception ex) {
                     ui.post(new Runnable() {
@@ -316,11 +383,12 @@ public class MainActivity extends Activity {
                     });
                     return;
                 }
+                final String finalMsg = msg;
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
                         reload();
-                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, finalMsg, Toast.LENGTH_LONG).show();
                     }
                 });
             }

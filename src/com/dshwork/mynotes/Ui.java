@@ -75,6 +75,40 @@ public class Ui {
         return scale;
     }
 
+    /** 顶部状态栏 / 底部导航栏留白（Android 15 强制边到边，必须自己让位） */
+    public static void padForInsets(View root) {
+        final int l = root.getPaddingLeft(), t0 = root.getPaddingTop();
+        final int r = root.getPaddingRight(), b0 = root.getPaddingBottom();
+        root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener() {
+            @Override
+            public android.view.WindowInsets onApplyWindowInsets(View v, android.view.WindowInsets insets) {
+                int top = insets.getSystemWindowInsetTop();
+                int bottom = insets.getSystemWindowInsetBottom();
+                v.setPadding(l, t0 + top, r, b0 + bottom);
+                return insets;
+            }
+        });
+        root.requestApplyInsets();
+    }
+
+    /** 状态栏/导航栏底色与图标明暗跟随主题 */
+    public static void tintSystemBars(android.app.Activity a) {
+        try {
+            android.view.Window w = a.getWindow();
+            w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(BG));
+            w.setStatusBarColor(BG);
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                w.setNavigationBarColor(BG);
+            }
+            View decor = w.getDecorView();
+            int flags = decor.getSystemUiVisibility();
+            if (dark) flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            else flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            decor.setSystemUiVisibility(flags);
+        } catch (Exception ignored) {
+        }
+    }
+
     public static int dp(Context c, float v) {
         return Math.round(v * c.getResources().getDisplayMetrics().density);
     }

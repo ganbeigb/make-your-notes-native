@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 /** 画板页面：工具栏 + 画布，完成后把画布导出成 PNG 交给调用方。 */
-public class BoardActivity extends Activity {
+public class BoardActivity extends BaseActivity {
 
     private BoardView board;
     private LinearLayout shapeRow;

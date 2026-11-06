@@ -17,7 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /** 模型与 Key 设置。 */
-public class SettingsActivity extends Activity {
+public class SettingsActivity extends BaseActivity {
 
     private Prefs prefs;
     private EditText keyInput;
@@ -197,6 +197,7 @@ public class SettingsActivity extends Activity {
         prefs.setShowQuote(quoteBox.isChecked());
         Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+        setResult(RESULT_OK);
         finish();
     }
 }

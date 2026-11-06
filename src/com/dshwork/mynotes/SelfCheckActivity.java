@@ -15,7 +15,7 @@ import android.widget.TextView;
 import java.util.List;
 
 /** 自检页：点「开始自检」跑一遍各子系统的运行期断言。 */
-public class SelfCheckActivity extends Activity {
+public class SelfCheckActivity extends BaseActivity {
 
     private LinearLayout list;
     private TextView summary;

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 /** 思维导图页面：科目 → 分类 → 知识点。 */
-public class MindMapActivity extends Activity {
+public class MindMapActivity extends BaseActivity {
 
     private Db db;
     private MindMapView view;
