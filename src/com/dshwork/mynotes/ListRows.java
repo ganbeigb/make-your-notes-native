@@ -19,6 +19,10 @@ public class ListRows {
         public TextView preview;
         public TextView more;
         public TextView quote;
+        public View divider;
+        public LinearLayout foot;
+        public TextView tags;
+        public TextView src;
     }
 
     public static NoteRow create(Context c) {
@@ -76,6 +80,27 @@ public class ListRows {
         row.quote.setVisibility(View.GONE);
         row.card.addView(row.quote);
 
+        row.divider = new View(c);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(c, 1));
+        dlp.topMargin = Ui.dp(c, 11);
+        android.graphics.drawable.GradientDrawable lineBg = new android.graphics.drawable.GradientDrawable();
+        lineBg.setColor(Ui.LINE);
+        row.divider.setBackground(lineBg);
+        row.divider.setVisibility(View.GONE);
+        row.card.addView(row.divider, dlp);
+
+        row.foot = new LinearLayout(c);
+        row.foot.setOrientation(LinearLayout.HORIZONTAL);
+        row.foot.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.foot.setPadding(0, Ui.dp(c, 8), 0, 0);
+        row.tags = Ui.text(c, "", 10.5f, Ui.GOLD);
+        row.foot.addView(row.tags, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        row.src = Ui.text(c, "", 11, Ui.MUTED);
+        row.foot.addView(row.src);
+        row.foot.setVisibility(View.GONE);
+        row.card.addView(row.foot);
+
         row.card.setTag(row);
         return row;
     }
@@ -98,8 +123,18 @@ public class ListRows {
     /** 完整版：kindex 文本（P3 / 拓展）、重要度 1-5、是否有公式/画图、原文引用 */
     public static void bind(Context c, NoteRow row, String indexLabel, String name, String preview, int lines,
                             int importance, boolean hasFormula, boolean hasFigure, String quote) {
+        bind(c, row, indexLabel, name, preview, lines, importance, hasFormula, hasFigure, quote, null, null, false);
+    }
+
+    public static void bind(Context c, NoteRow row, String indexLabel, String name, String preview, int lines,
+                            int importance, boolean hasFormula, boolean hasFigure, String quote,
+                            String tags, String srcLabel, boolean isExt) {
         android.graphics.drawable.GradientDrawable bg = Ui.card(c);
         bg.setCornerRadius(Ui.dp(c, 14));
+        if (isExt) {
+            bg.setColor(0xFFFFFDF6);
+            bg.setStroke(Ui.dp(c, 1), 0xFFECDFC4);
+        }
         row.card.setBackground(bg);
 
         row.kindex.setText(indexLabel == null ? "" : indexLabel);
@@ -131,6 +166,19 @@ public class ListRows {
         }
         row.preview.setText(p);
         row.preview.setVisibility(p.isEmpty() ? View.GONE : View.VISIBLE);
+
+        StringBuilder footText = new StringBuilder();
+        if (isExt) footText.append("AI 补充 · 请核对");
+        if (tags != null && !tags.trim().isEmpty()) {
+            if (footText.length() > 0) footText.append("   ");
+            footText.append(tags.replace(",", " · "));
+        }
+        row.tags.setText(footText.toString());
+        row.tags.setVisibility(footText.length() == 0 ? View.GONE : View.VISIBLE);
+        row.src.setText(srcLabel == null ? "" : srcLabel);
+        boolean showFoot = footText.length() > 0 || (srcLabel != null && !srcLabel.isEmpty());
+        row.divider.setVisibility(showFoot ? View.VISIBLE : View.GONE);
+        row.foot.setVisibility(showFoot ? View.VISIBLE : View.GONE);
 
         if (quote != null && !quote.trim().isEmpty()) {
             row.quote.setText("「" + quote.trim() + "」");

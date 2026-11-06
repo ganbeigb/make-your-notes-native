@@ -141,7 +141,7 @@ public class CategoryActivity extends BaseActivity {
                 ListRows.bind(CategoryActivity.this, row, catIndex, n.name, n.content, 2, n.importance,
                         n.formula != null && !n.formula.trim().isEmpty(),
                         n.figure != null && !n.figure.isEmpty(),
-                        null);
+                        null, n.tags, null, catExt);
                 return row.card;
             }
         };

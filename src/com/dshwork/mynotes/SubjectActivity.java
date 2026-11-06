@@ -412,11 +412,20 @@ public class SubjectActivity extends BaseActivity {
                 boolean isExt = "extension".equals(n.kind);
                 String indexLabel = isExt ? "拓展"
                         : (n.slidePage > 0 ? "P" + n.slidePage : (path.isEmpty() ? "" : path));
+                String srcLabel;
+                if (n.slideId == null || n.slideId.isEmpty()) {
+                    srcLabel = "手动笔记";
+                } else {
+                    String deckTitle = db.deckTitleBySlide(n.slideId);
+                    srcLabel = (deckTitle == null || deckTitle.isEmpty() ? "" : deckTitle + " · ")
+                            + "第 " + n.slidePage + " 页";
+                }
                 ListRows.bind(SubjectActivity.this, row, indexLabel, n.name, n.content,
                         isExpanded ? -1 : prefs.cardLines(), n.importance,
                         n.formula != null && !n.formula.trim().isEmpty(),
                         n.figure != null && !n.figure.isEmpty(),
-                        prefs.showQuote() ? n.quote : null);
+                        prefs.showQuote() ? n.quote : null,
+                        n.tags, srcLabel, isExt);
                 boolean longContent = prefs.cardLines() > 0 && n.content != null
                         && n.content.length() > prefs.cardLines() * 24;
                 if (row.more != null) {

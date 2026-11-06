@@ -1030,6 +1030,19 @@ public class Db extends SQLiteOpenHelper {
         return fixed;
     }
 
+    /** 知识点所在课件的标题（用于卡片 footer） */
+    public String deckTitleBySlide(String slideId) {
+        if (slideId == null || slideId.isEmpty()) return null;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT d.title FROM slides s JOIN decks d ON d.id = s.deck_id WHERE s.id = ?",
+                new String[]{slideId});
+        try {
+            return c.moveToFirst() ? c.getString(0) : null;
+        } finally {
+            c.close();
+        }
+    }
+
     private String findSlideId(String deckId, int idx) {
         Cursor c = getReadableDatabase().rawQuery(
                 "SELECT id FROM slides WHERE deck_id = ? AND idx = ? LIMIT 1",
