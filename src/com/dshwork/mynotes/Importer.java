@@ -73,6 +73,16 @@ public class Importer {
                 String saved = saveSlide(ctx, uri, i + 1);
                 int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1);
                 out.points += added;
+
+                if (added >= 2) {
+                    try {
+                        String digest = summarize(db, prefs, subjectId, json);
+                        if (digest != null && !digest.trim().isEmpty()) {
+                            db.setPageDigest(subjectId, i + 1, digest.trim());
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
             } catch (Exception e) {
                 out.errors.add("第 " + (i + 1) + " 页失败：" + AiClient.friendly(e));
             }
@@ -112,6 +122,32 @@ public class Importer {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /** 让文本模型给这一页写一句汇总 */
+    private static String summarize(Db db, Prefs prefs, String subjectId, String json) throws Exception {
+        org.json.JSONObject obj = new org.json.JSONObject(AiClient.pickJson(json));
+        org.json.JSONArray points = obj.optJSONArray("points");
+        if (points == null || points.length() < 2) return null;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < points.length(); i++) {
+            org.json.JSONObject p = points.optJSONObject(i);
+            if (p == null) continue;
+            sb.append("- ").append(p.optString("name", ""));
+            String f = p.optString("formula", "");
+            if (!f.trim().isEmpty()) sb.append("（公式：").append(f).append("）");
+            sb.append('\n');
+        }
+        AiClient.Reply reply = AiClient.chat(
+                Prefs.baseUrl(prefs.provider()),
+                prefs.apiKey(),
+                prefs.textModel(),
+                Prompts.DIGEST_SYSTEM,
+                sb.toString(),
+                null,
+                "off");
+        db.logUsage(subjectId, "digest", reply.inTok, reply.outTok);
+        return reply.content;
     }
 
     private static int insertPoints(Db db, String subjectId, String content, String source,

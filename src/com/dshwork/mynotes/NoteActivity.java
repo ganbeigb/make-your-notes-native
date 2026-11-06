@@ -119,6 +119,23 @@ public class NoteActivity extends Activity {
         contentInput = field(form, "正文", note.content == null ? "" : note.content,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
 
+        String digest = note.slidePage > 0 ? db.pageDigest(note.subjectId, note.slidePage) : null;
+        if (digest != null && !digest.trim().isEmpty()) {
+            LinearLayout box = new LinearLayout(this);
+            box.setOrientation(LinearLayout.VERTICAL);
+            box.setBackground(Ui.card(this));
+            box.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+            LinearLayout.LayoutParams lp0 = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp0.topMargin = Ui.dp(this, 14);
+            TextView label = Ui.text(this, "本页汇总（第 " + note.slidePage + " 页）", 11, Ui.INK2);
+            box.addView(label);
+            TextView text = Ui.text(this, digest.trim(), 13, Ui.INK);
+            text.setPadding(0, Ui.dp(this, 4), 0, 0);
+            box.addView(text);
+            form.addView(box, lp0);
+        }
+
         if (prefs.showQuote() && note.quote != null && !note.quote.trim().isEmpty()) {
             LinearLayout quoteBox = new LinearLayout(this);
             quoteBox.setOrientation(LinearLayout.VERTICAL);
