@@ -24,13 +24,13 @@ public class UsageChartView extends View {
         super(c);
         line.setStyle(Paint.Style.STROKE);
         line.setStrokeWidth(Ui.dp(c, 2));
-        line.setColor(0xFF2F5D4B);
+        line.setColor(Ui.ACCENT);
         fill.setStyle(Paint.Style.FILL);
-        fill.setColor(0x332F5D4B);
+        fill.setColor(0x332C5D4A);
         grid.setStyle(Paint.Style.STROKE);
         grid.setStrokeWidth(1);
-        grid.setColor(0xFFE6DDC8);
-        text.setColor(0xFF8A8272);
+        grid.setColor(Ui.LINE);
+        text.setColor(Ui.MUTED);
         text.setTextSize(Ui.dp(c, 10));
     }
 
@@ -104,7 +104,7 @@ public class UsageChartView extends View {
         c.drawPath(p, line);
 
         Paint dot = new Paint(Paint.ANTI_ALIAS_FLAG);
-        dot.setColor(0xFF2F5D4B);
+        dot.setColor(Ui.ACCENT);
         for (int i = 0; i < values.size(); i++) {
             float x = padL + stepX * i;
             float y = padT + h - (values.get(i) / max) * h;

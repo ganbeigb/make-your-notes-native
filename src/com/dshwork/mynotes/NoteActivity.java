@@ -31,6 +31,7 @@ public class NoteActivity extends BaseActivity {
     private Db.Note note;
     private EditText nameInput;
     private EditText categoryInput;
+    private EditText tagsInput;
     private EditText formulaInput;
     private EditText contentInput;
     private FormulaView preview;
@@ -192,8 +193,9 @@ public class NoteActivity extends BaseActivity {
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
 
         nameInput = field(form, "标题", note.name, InputType.TYPE_CLASS_TEXT, 1);
-        categoryInput = field(form, "分类（用 / 分层，例如 力学/运动学）",
-                note.categoryPath == null ? "" : note.categoryPath, InputType.TYPE_CLASS_TEXT, 1);
+
+        contentInput = field(form, "正文", note.content == null ? "" : note.content,
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
 
         formulaInput = field(form, "公式（LaTeX）", note.formula == null ? "" : note.formula, InputType.TYPE_CLASS_TEXT, 1);
         preview = new FormulaView(this);
@@ -226,8 +228,11 @@ public class NoteActivity extends BaseActivity {
             }
         });
 
-        contentInput = field(form, "正文", note.content == null ? "" : note.content,
-                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
+        categoryInput = field(form, "分类（用 / 分层，例如 力学/运动学）",
+                note.categoryPath == null ? "" : note.categoryPath, InputType.TYPE_CLASS_TEXT, 1);
+
+        tagsInput = field(form, "标签（逗号分隔）", note.tags == null ? "" : note.tags,
+                InputType.TYPE_CLASS_TEXT, 1);
 
         String digest = note.slidePage > 0 ? db.pageDigest(note.subjectId, note.slidePage) : null;
         if (digest != null && !digest.trim().isEmpty()) {
@@ -624,6 +629,7 @@ public class NoteActivity extends BaseActivity {
         if (note.name.isEmpty()) note.name = "未命名";
         note.formula = formulaInput.getText().toString().trim();
         note.content = contentInput.getText().toString();
+        if (tagsInput != null) note.tags = tagsInput.getText().toString().trim();
         String cat = categoryInput.getText().toString().trim();
         note.categoryId = cat.isEmpty() ? null : db.ensureCategoryPath(note.subjectId, cat);
         db.saveNote(note);
