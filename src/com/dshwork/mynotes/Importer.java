@@ -123,7 +123,8 @@ public class Importer {
 
             java.io.File dir = new java.io.File(ctx.getFilesDir(), "slides");
             if (!dir.exists()) dir.mkdirs();
-            java.io.File out = new java.io.File(dir, "p" + page + "_" + System.currentTimeMillis() + ".jpg");
+            java.io.File out = new java.io.File(dir,
+                    "p" + page + "_" + System.currentTimeMillis() + "_" + (int) (Math.random() * 1000) + ".jpg");
             java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
             bmp.compress(Bitmap.CompressFormat.JPEG, 78, fos);
             fos.close();

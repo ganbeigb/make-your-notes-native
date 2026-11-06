@@ -509,27 +509,26 @@ public class Db extends SQLiteOpenHelper {
 
             java.util.Map<String, String> catMap = new java.util.HashMap<>();
             if (cats != null) {
+                // 两遍：先建所有分类（父级留空），再回填 parent_id，避免子分类排在父分类前面时丢层级
+                java.util.List<org.json.JSONObject> pending = new java.util.ArrayList<>();
                 for (int i = 0; i < cats.length(); i++) {
                     org.json.JSONObject c = cats.optJSONObject(i);
                     if (c == null) continue;
                     String newSubj = subjMap.get(c.optString("subjectId"));
                     if (newSubj == null) continue;
-                    String oldParent = c.optString("parentId", null);
-                    String newParent = oldParent == null || oldParent.isEmpty() ? null : catMap.get(oldParent);
                     String name = c.optString("name", "").trim();
                     if (name.isEmpty()) continue;
-                    String existing = findCategory(newSubj, newParent, name);
+                    String existing = findCategory(newSubj, null, name);
                     if (existing == null) {
                         Category k = new Category();
                         k.id = UUID.randomUUID().toString();
                         k.subjectId = newSubj;
-                        k.parentId = newParent;
                         k.name = name;
                         k.orderNo = c.optInt("orderNo", 0);
                         ContentValues v = new ContentValues();
                         v.put("id", k.id);
                         v.put("subject_id", newSubj);
-                        v.put("parent_id", newParent);
+                        v.put("parent_id", (String) null);
                         v.put("name", name);
                         v.put("order_no", k.orderNo);
                         v.put("created_at", System.currentTimeMillis());
@@ -538,6 +537,17 @@ public class Db extends SQLiteOpenHelper {
                         catCount++;
                     }
                     catMap.put(c.optString("id"), existing);
+                    pending.add(c);
+                }
+                for (org.json.JSONObject c : pending) {
+                    String oldParent = c.optString("parentId", null);
+                    if (oldParent == null || oldParent.isEmpty()) continue;
+                    String newParent = catMap.get(oldParent);
+                    String self = catMap.get(c.optString("id"));
+                    if (newParent == null || self == null || newParent.equals(self)) continue;
+                    ContentValues v = new ContentValues();
+                    v.put("parent_id", newParent);
+                    getWritableDatabase().update("categories", v, "id = ?", new String[]{self});
                 }
             }
 
