@@ -86,15 +86,6 @@ public class NoteActivity extends BaseActivity {
         aiRow.setOrientation(LinearLayout.HORIZONTAL);
         aiRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 4));
 
-        TextView aiEdit = Ui.chip(this, "✨ 让 AI 改这条", false);
-        aiEdit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                askAiEdit();
-            }
-        });
-        aiRow.addView(aiEdit);
-
         final TextView kindPoint = Ui.chip(this, "知识点", note.kind == null || "point".equals(note.kind));
         final TextView kindExt = Ui.chip(this, "拓展", "extension".equals(note.kind));
         kindPoint.setOnClickListener(new View.OnClickListener() {
@@ -226,6 +217,78 @@ public class NoteActivity extends BaseActivity {
         draftRow.addView(draftGo, dglp);
         draftBlock.addView(draftRow);
         form.addView(draftBlock);
+
+        LinearLayout editBlock = new LinearLayout(this);
+        editBlock.setOrientation(LinearLayout.VERTICAL);
+        editBlock.setBackground(Ui.card(this));
+        editBlock.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+        LinearLayout.LayoutParams eblp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        eblp.bottomMargin = Ui.dp(this, 12);
+        editBlock.setLayoutParams(eblp);
+
+        TextView editTitle = Ui.text(this, "让 AI 改这条", 13.5f, Ui.INK);
+        editTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        editBlock.addView(editTitle);
+        TextView editHint = Ui.text(this, "写一句要求，或点下面的快捷建议", 11.5f, Ui.MUTED);
+        editHint.setPadding(0, Ui.dp(this, 2), 0, Ui.dp(this, 8));
+        editBlock.addView(editHint);
+
+        final EditText editInput = new EditText(this);
+        editInput.setHint("例如：改写成适合背诵的短句");
+        editInput.setTextSize(13);
+        editInput.setBackground(Ui.card(this));
+        editInput.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        editBlock.addView(editInput);
+
+        LinearLayout sugRow = new LinearLayout(this);
+        sugRow.setOrientation(LinearLayout.HORIZONTAL);
+        sugRow.setPadding(0, Ui.dp(this, 8), 0, 0);
+        String[] suggests = {"更易背诵", "补充适用条件", "精简到两句", "加上易错点", "换成公式推导"};
+        for (final String sug : suggests) {
+            TextView chipSug = Ui.chip(this, sug, false);
+            chipSug.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String old = editInput.getText().toString().trim();
+                    editInput.setText(old.isEmpty() ? sug : old + "；" + sug);
+                    editInput.setSelection(editInput.getText().length());
+                }
+            });
+            LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            slp.rightMargin = Ui.dp(this, 6);
+            sugRow.addView(chipSug, slp);
+        }
+        android.widget.HorizontalScrollView sugScroll = new android.widget.HorizontalScrollView(this);
+        sugScroll.setHorizontalScrollBarEnabled(false);
+        sugScroll.addView(sugRow);
+        editBlock.addView(sugScroll);
+
+        LinearLayout editFoot = new LinearLayout(this);
+        editFoot.setOrientation(LinearLayout.HORIZONTAL);
+        editFoot.setGravity(Gravity.CENTER_VERTICAL);
+        editFoot.setPadding(0, Ui.dp(this, 8), 0, 0);
+        final android.widget.CheckBox appendBox = new android.widget.CheckBox(this);
+        appendBox.setText("在原内容后追加");
+        appendBox.setTextSize(12);
+        editFoot.addView(appendBox, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        TextView editGo = Ui.button(this, "开始改写");
+        editGo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String req = editInput.getText().toString().trim();
+                if (req.isEmpty()) {
+                    Toast.makeText(NoteActivity.this, "先写一句要求或点个快捷建议", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                runAiEdit(req, appendBox.isChecked());
+            }
+        });
+        editFoot.addView(editGo);
+        editBlock.addView(editFoot);
+
+        form.addView(editBlock);
 
         nameInput = field(form, "标题", note.name, InputType.TYPE_CLASS_TEXT, 1);
 
