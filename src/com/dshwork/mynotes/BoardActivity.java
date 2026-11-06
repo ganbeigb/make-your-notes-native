@@ -255,6 +255,34 @@ public class BoardActivity extends BaseActivity {
         rlp2.leftMargin = Ui.dp(this, 8);
         styleRow.addView(rot, rlp2);
 
+        TextView scaleUpBtn = Ui.chip(this, "放大", false);
+        scaleUpBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.scaleSelected(1.15f)) {
+                    Toast.makeText(BoardActivity.this, "先选中要放大的元素", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        LinearLayout.LayoutParams suPlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        suPlp.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(scaleUpBtn, suPlp);
+
+        TextView scaleDownBtn = Ui.chip(this, "缩小", false);
+        scaleDownBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.scaleSelected(0.87f)) {
+                    Toast.makeText(BoardActivity.this, "先选中要缩小的元素", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        LinearLayout.LayoutParams sdPlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        sdPlp.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(scaleDownBtn, sdPlp);
+
         TextView groupBtn = Ui.chip(this, "组合", false);
         groupBtn.setOnClickListener(new View.OnClickListener() {
             @Override
