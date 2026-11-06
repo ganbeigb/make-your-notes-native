@@ -56,9 +56,12 @@ public class ListRows {
         row.name.setText(name == null ? "" : name);
 
         String p = preview == null ? "" : preview.replace("\n", " ").trim();
-        int limit = lines <= 0 ? 0 : lines * 24;
-        if (limit == 0) p = "";
-        else if (p.length() > limit) p = p.substring(0, limit) + "…";
+        if (lines == 0) {
+            p = "";
+        } else if (lines > 0) {
+            int limit = lines * 24;
+            if (p.length() > limit) p = p.substring(0, limit) + "…";
+        }
         row.preview.setText(p);
         row.preview.setVisibility(p.isEmpty() ? View.GONE : View.VISIBLE);
     }

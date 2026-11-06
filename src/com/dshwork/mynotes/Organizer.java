@@ -68,6 +68,9 @@ public class Organizer {
         if (criteria != null && !criteria.trim().isEmpty()) {
             sb.append("本科目的整理标准：").append(criteria.trim()).append("\n\n");
         }
+        if (prefs.keepFormula()) {
+            sb.append("注意：不要改写任何公式，只调整分类。\n\n");
+        }
         for (int i = 0; i < notes.size(); i++) {
             Db.Note n = notes.get(i);
             String cur = n.categoryId == null ? "" : db.categoryPath(n.categoryId);

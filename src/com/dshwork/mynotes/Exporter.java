@@ -69,6 +69,9 @@ public class Exporter {
                 if (n.quote != null && !n.quote.trim().isEmpty()) {
                     sb.append("> 原文：").append(n.quote.trim()).append("\n\n");
                 }
+                if (n.figure != null && !n.figure.isEmpty()) {
+                    sb.append("![配图](").append(new java.io.File(n.figure).getName()).append(")\n\n");
+                }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
                     sb.append("标签：").append(n.tags).append("\n\n");
                 }
@@ -118,6 +121,13 @@ public class Exporter {
                 if (n.quote != null && !n.quote.trim().isEmpty()) {
                     sb.append("<div class=\"tag\" style=\"border-left:3px solid #d8cfb8;padding-left:8px;margin-top:6px\">原文：")
                             .append(esc(n.quote.trim())).append("</div>");
+                }
+                if (n.figure != null && !n.figure.isEmpty()) {
+                    String fig = pngBase64(n.figure);
+                    if (fig != null) {
+                        sb.append("<div class=\"fx\"><img alt=\"figure\" src=\"data:image/png;base64,")
+                                .append(fig).append("\"></div>");
+                    }
                 }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
                     sb.append("<div class=\"tag\">标签：").append(esc(n.tags)).append("</div>");
@@ -206,9 +216,23 @@ public class Exporter {
         return root.toString(2);
     }
 
+    /* ---------------- 全科目备份 ---------------- */
+
+    public static byte[] backupAll(Db db, Context ctx) throws Exception {
+        return build(db, ctx, null);
+    }
+
     /* ---------------- 备份 zip ---------------- */
 
     public static byte[] backup(Db db, Context ctx) throws Exception {
+        return build(db, ctx, null);
+    }
+
+    public static byte[] backupSubject(Db db, Context ctx, String subjectId) throws Exception {
+        return build(db, ctx, subjectId);
+    }
+
+    private static byte[] build(Db db, Context ctx, String onlySubjectId) throws Exception {
         Prefs prefs = new Prefs(ctx);
         JSONObject root = new JSONObject();
         root.put("app", "MakeYourNotes-native");
@@ -219,7 +243,11 @@ public class Exporter {
         JSONArray categories = new JSONArray();
         JSONArray notes = new JSONArray();
 
+        java.util.List<Db.Subject> subjectList = new java.util.ArrayList<>();
         for (Db.Subject s : db.subjects()) {
+            if (onlySubjectId == null || onlySubjectId.equals(s.id)) subjectList.add(s);
+        }
+        for (Db.Subject s : subjectList) {
             JSONObject o = new JSONObject();
             o.put("id", s.id);
             o.put("name", s.name);
@@ -245,6 +273,10 @@ public class Exporter {
                 no.put("formula", n.formula);
                 no.put("tags", n.tags);
                 no.put("source", n.source);
+                no.put("quote", n.quote);
+                no.put("figure", n.figure);
+                no.put("slidePath", n.slidePath);
+                no.put("slidePage", n.slidePage);
                 no.put("importance", n.importance);
                 no.put("createdAt", n.createdAt);
                 notes.put(no);
@@ -267,6 +299,26 @@ public class Exporter {
         zip.closeEntry();
         zip.close();
         return bos.toByteArray();
+    }
+
+    /** 把本地图片读成 base64（配图用） */
+    private static String pngBase64(String path) {
+        try {
+            java.io.File f = new java.io.File(path);
+            if (!f.exists()) return null;
+            byte[] data = new byte[(int) f.length()];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            int off = 0;
+            while (off < data.length) {
+                int n = in.read(data, off, data.length - off);
+                if (n < 0) break;
+                off += n;
+            }
+            in.close();
+            return Base64.encodeToString(data, Base64.NO_WRAP);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /* ---------------- 公式 → PNG ---------------- */

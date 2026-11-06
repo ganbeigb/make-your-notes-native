@@ -699,6 +699,24 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().delete("usage_log", null, null);
     }
 
+    /** 按科目汇总：科目名, 次数, 输入, 输出 */
+    public List<String[]> usageBySubject() {
+        List<String[]> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT COALESCE(s.name,'未关联科目'), COUNT(*), COALESCE(SUM(u.in_tok),0), COALESCE(SUM(u.out_tok),0) " +
+                        "FROM usage_log u LEFT JOIN subjects s ON s.id = u.subject_id " +
+                        "GROUP BY u.subject_id ORDER BY COUNT(*) DESC", null);
+        try {
+            while (c.moveToNext()) {
+                out.add(new String[]{c.getString(0), String.valueOf(c.getInt(1)),
+                        String.valueOf(c.getLong(2)), String.valueOf(c.getLong(3))});
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
     public long[] usageTotals() {
         Cursor c = getReadableDatabase().rawQuery("SELECT COALESCE(SUM(in_tok),0), COALESCE(SUM(out_tok),0), COUNT(*) FROM usage_log", null);
         try {

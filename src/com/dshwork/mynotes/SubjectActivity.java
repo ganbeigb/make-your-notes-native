@@ -96,27 +96,9 @@ public class SubjectActivity extends BaseActivity {
 
         LinearLayout tools = new LinearLayout(this);
         tools.setOrientation(LinearLayout.HORIZONTAL);
-        tools.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
-        TextView bulk = Ui.text(this, "  批量  ", 14, Ui.INK);
-        bulk.setBackground(Ui.card(this));
-        bulk.setGravity(Gravity.CENTER);
-        bulk.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        blp.leftMargin = Ui.dp(this, 8);
-        bulk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (selecting) exitSelect();
-                else enterSelect();
-            }
-        });
-        tools.addView(bulk, blp);
+        tools.setPadding(Ui.dp(this, 16), 0, 0, Ui.dp(this, 8));
 
-        TextView imp = Ui.text(this, "  导入课件截图  ", 14, 0xFFFFFFFF);
-        imp.setBackground(Ui.button(this, "  导入课件截图  ").getBackground());
-        imp.setGravity(Gravity.CENTER);
-        imp.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        TextView imp = Ui.chip(this, "导入课件", true);
         imp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -125,14 +107,8 @@ public class SubjectActivity extends BaseActivity {
         });
         tools.addView(imp);
 
-        retryBtn = Ui.text(this, "  重试失败  ", 14, 0xFFFFFFFF);
-        retryBtn.setBackground(Ui.button(this, "").getBackground());
-        retryBtn.setGravity(Gravity.CENTER);
-        retryBtn.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        retryBtn = Ui.chip(this, "重试失败", true);
         retryBtn.setVisibility(View.GONE);
-        LinearLayout.LayoutParams rlbp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlbp.leftMargin = Ui.dp(this, 8);
         retryBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -142,30 +118,18 @@ public class SubjectActivity extends BaseActivity {
                 runImport(again);
             }
         });
-        tools.addView(retryBtn, rlbp);
+        tools.addView(retryBtn);
 
-        TextView exp = Ui.text(this, "  导出  ", 14, Ui.INK);
-        exp.setBackground(Ui.card(this));
-        exp.setGravity(Gravity.CENTER);
-        exp.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        elp.leftMargin = Ui.dp(this, 8);
+        TextView exp = Ui.chip(this, "导出", false);
         exp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openExportMenu();
             }
         });
-        tools.addView(exp, elp);
+        tools.addView(exp);
 
-        TextView map = Ui.text(this, "  导图  ", 14, Ui.INK);
-        map.setBackground(Ui.card(this));
-        map.setGravity(Gravity.CENTER);
-        map.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mlp.leftMargin = Ui.dp(this, 8);
+        TextView map = Ui.chip(this, "导图", false);
         map.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -175,45 +139,9 @@ public class SubjectActivity extends BaseActivity {
                 startActivity(i);
             }
         });
-        tools.addView(map, mlp);
+        tools.addView(map);
 
-        TextView tidy = Ui.text(this, "  整理  ", 14, Ui.INK);
-        tidy.setBackground(Ui.card(this));
-        tidy.setGravity(Gravity.CENTER);
-        tidy.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.leftMargin = Ui.dp(this, 8);
-        tidy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                confirmOrganize();
-            }
-        });
-        tools.addView(tidy, tlp);
-
-        TextView rename = Ui.text(this, "  标题  ", 14, Ui.INK);
-        rename.setBackground(Ui.card(this));
-        rename.setGravity(Gravity.CENTER);
-        rename.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        nlp.leftMargin = Ui.dp(this, 8);
-        rename.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                confirmTitles();
-            }
-        });
-        tools.addView(rename, nlp);
-
-        TextView cat = Ui.text(this, "  分类  ", 14, Ui.INK);
-        cat.setBackground(Ui.card(this));
-        cat.setGravity(Gravity.CENTER);
-        cat.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        clp.leftMargin = Ui.dp(this, 8);
+        TextView cat = Ui.chip(this, "分类", false);
         cat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -223,23 +151,49 @@ public class SubjectActivity extends BaseActivity {
                 startActivity(i);
             }
         });
-        tools.addView(cat, clp);
+        tools.addView(cat);
 
-        TextView rule = Ui.text(this, "  标准  ", 14, Ui.INK);
-        rule.setBackground(Ui.card(this));
-        rule.setGravity(Gravity.CENTER);
-        rule.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlp.leftMargin = Ui.dp(this, 8);
+        TextView bulk = Ui.chip(this, "批量", false);
+        bulk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selecting) exitSelect();
+                else enterSelect();
+            }
+        });
+        tools.addView(bulk);
+
+        TextView tidy = Ui.chip(this, "整理", false);
+        tidy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmOrganize();
+            }
+        });
+        tools.addView(tidy);
+
+        TextView rename = Ui.chip(this, "标题", false);
+        rename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmTitles();
+            }
+        });
+        tools.addView(rename);
+
+        TextView rule = Ui.chip(this, "标准", false);
         rule.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 editCriteria();
             }
         });
-        tools.addView(rule, rlp);
-        root.addView(tools);
+        tools.addView(rule);
+
+        android.widget.HorizontalScrollView toolScroll = new android.widget.HorizontalScrollView(this);
+        toolScroll.setHorizontalScrollBarEnabled(false);
+        toolScroll.addView(tools);
+        root.addView(toolScroll);
 
         batchRow = new LinearLayout(this);
         batchRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -496,7 +450,7 @@ private void openExportMenu() {
                 pendingName = safeName() + "-笔记.json";
                 pendingMime = "application/json";
             } else {
-                byte[] data = Exporter.backup(db, this);
+                byte[] data = Exporter.backupSubject(db, this, subjectId);
                 java.io.File saved = Backups.save(this, safeName() + "-备份-" + Backups.stamp() + ".zip", data);
                 new AlertDialog.Builder(this)
                         .setTitle("备份已保存")

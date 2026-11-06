@@ -188,7 +188,7 @@ public class MainActivity extends BaseActivity {
     }
 
     private void openMenu() {
-        final String[] items = {"搜索", "用量", "设置", "恢复备份", "自检", "关于"};
+        final String[] items = {"搜索", "用量", "设置", "恢复备份", "导出全部备份", "自检", "关于"};
         new AlertDialog.Builder(this)
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
@@ -197,11 +197,26 @@ public class MainActivity extends BaseActivity {
                         else if (which == 1) startActivity(new Intent(MainActivity.this, UsageActivity.class));
                         else if (which == 2) startActivity(new Intent(MainActivity.this, SettingsActivity.class));
                         else if (which == 3) pickBackup();
-                        else if (which == 4) startActivity(new Intent(MainActivity.this, SelfCheckActivity.class));
+                        else if (which == 4) exportAllBackup();
+                        else if (which == 5) startActivity(new Intent(MainActivity.this, SelfCheckActivity.class));
                         else showAbout();
                     }
                 })
                 .show();
+    }
+
+    private void exportAllBackup() {
+        try {
+            byte[] data = Exporter.backupAll(db, this);
+            java.io.File saved = Backups.save(this, "全部科目-备份-" + Backups.stamp() + ".zip", data);
+            new AlertDialog.Builder(this)
+                    .setTitle("全部科目已备份")
+                    .setMessage("文件：\n" + saved.getName() + "\n\n位置：\n" + Backups.dirHint(this))
+                    .setPositiveButton("好", null)
+                    .show();
+        } catch (Exception e) {
+            Toast.makeText(this, "备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void showAbout() {
