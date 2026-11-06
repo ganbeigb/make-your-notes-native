@@ -20,6 +20,7 @@ import java.util.Map;
 public class MindMapActivity extends BaseActivity {
 
     private Db db;
+    private java.util.List<String> onlyIds;
     private MindMapView view;
     private static final int REQ_SAVE = 4001;
 
@@ -30,6 +31,7 @@ public class MindMapActivity extends BaseActivity {
         db = new Db(this);
         String subjectId = getIntent().getStringExtra("subjectId");
         String subjectName = getIntent().getStringExtra("subjectName");
+        onlyIds = getIntent().getStringArrayListExtra("noteIds");
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -153,6 +155,7 @@ public class MindMapActivity extends BaseActivity {
 
         MindMapView.Node misc = null;
         for (Db.Note note : db.notes(subjectId)) {
+            if (onlyIds != null && !onlyIds.isEmpty() && !onlyIds.contains(note.id)) continue;
             MindMapView.Node n = new MindMapView.Node();
             n.kind = 2;
             n.id = note.id;
