@@ -183,6 +183,44 @@ public class BoardView extends View {
         tool = T_SHAPE;
     }
 
+    /** 按倍率缩放视图（围绕画布中心） */
+    public void zoomBy(float f) {
+        float cx = getWidth() / 2f, cy = getHeight() / 2f;
+        float next = Math.max(0.3f, Math.min(3f, scale * f));
+        float real = next / scale;
+        tx = cx - (cx - tx) * real;
+        ty = cy - (cy - ty) * real;
+        scale = next;
+        invalidate();
+    }
+
+    /** 复位视图：全部内容适配屏幕 */
+    public void resetView() {
+        if (items.isEmpty()) {
+            scale = 1f;
+            tx = 0;
+            ty = 0;
+            invalidate();
+            return;
+        }
+        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+        for (Item it : items) {
+            for (PointF p : it.pts) {
+                minX = Math.min(minX, p.x);
+                maxX = Math.max(maxX, p.x);
+                minY = Math.min(minY, p.y);
+                maxY = Math.max(maxY, p.y);
+            }
+        }
+        float wpx = Math.max(1, maxX - minX), hpx = Math.max(1, maxY - minY);
+        float paddingPx = Ui.dp(getContext(), 40);
+        float s = Math.min((getWidth() - paddingPx * 2) / wpx, (getHeight() - paddingPx * 2) / hpx);
+        scale = Math.max(0.2f, Math.min(2f, s));
+        tx = getWidth() / 2f - (minX + maxX) / 2f * scale;
+        ty = getHeight() / 2f - (minY + maxY) / 2f * scale;
+        invalidate();
+    }
+
     public void setPenColor(int c) {
         baseColor = c;
         applyStyle();
