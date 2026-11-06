@@ -245,6 +245,43 @@ public class MainActivity extends Activity {
                 final String msg;
                 try {
                     java.io.InputStream is = getContentResolver().openInputStream(uri);
+
+                    // 先判断是不是网页版备份（manifest.json + images/）
+                    boolean isWeb = false;
+                    try {
+                        java.util.zip.ZipInputStream probe = new java.util.zip.ZipInputStream(
+                                getContentResolver().openInputStream(uri));
+                        java.util.zip.ZipEntry pe;
+                        while ((pe = probe.getNextEntry()) != null) {
+                            if ("manifest.json".equals(pe.getName())) {
+                                isWeb = true;
+                                break;
+                            }
+                            if (pe.getName().endsWith("mynotes-backup.json")) break;
+                        }
+                        probe.close();
+                    } catch (Exception ignored) {
+                    }
+
+                    if (isWeb) {
+                        WebBackup.Result wr = WebBackup.importFromZip(MainActivity.this, db,
+                                getContentResolver().openInputStream(uri), new Prefs(MainActivity.this));
+                        if (wr.error != null) {
+                            msg = "网页版备份导入失败：" + wr.error;
+                        } else {
+                            msg = "已从网页版备份导入：" + wr.subjects + " 科目、" + wr.categories + " 分类、"
+                                    + wr.notes + " 知识点、" + wr.images + " 张原图";
+                        }
+                        ui.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                reload();
+                                Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                            }
+                        });
+                        return;
+                    }
+
                     java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(is);
                     String json = null;
                     java.util.zip.ZipEntry e;
@@ -260,7 +297,7 @@ public class MainActivity extends Activity {
                     }
                     zip.close();
                     if (json == null) {
-                        msg = "这个 zip 里没有找到 mynotes-backup.json";
+                        msg = "这个 zip 既不是原生版备份，也不是网页版备份";
                     } else {
                         org.json.JSONObject obj = new org.json.JSONObject(json);
                         org.json.JSONObject settings = obj.optJSONObject("settings");

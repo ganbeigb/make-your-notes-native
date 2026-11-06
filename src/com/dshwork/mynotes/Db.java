@@ -270,6 +270,10 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    public String findCategoryId(String subjectId, String parent, String name) {
+        return findCategory(subjectId, parent, name);
+    }
+
     private String findCategory(String subjectId, String parent, String name) {
         Cursor c = getReadableDatabase().rawQuery(
                 "SELECT id FROM categories WHERE subject_id = ? AND name = ? AND " +
@@ -582,6 +586,20 @@ public class Db extends SQLiteOpenHelper {
         } catch (Exception ignored) {
         }
         return new int[]{subjCount, catCount, noteCount};
+    }
+
+    public boolean noteExistsByTitle(String subjectId, String name) {
+        return noteExists(subjectId, name);
+    }
+
+    public void reparentCategory(String categoryId, String parentId) {
+        ContentValues v = new ContentValues();
+        v.put("parent_id", parentId);
+        getWritableDatabase().update("categories", v, "id = ?", new String[]{categoryId});
+    }
+
+    public String findSubjectIdByName(String name) {
+        return findSubjectByName(name);
     }
 
     private String findSubjectByName(String name) {
