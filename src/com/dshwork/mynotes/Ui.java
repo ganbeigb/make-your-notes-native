@@ -320,6 +320,18 @@ public class Ui {
         return box;
     }
 
+    /** 设置分组标题 */
+    public static TextView section(Context c, String title) {
+        TextView t = new TextView(c);
+        t.setText(title);
+        t.setTextSize(11f * scale);
+        t.setTextColor(MUTED);
+        t.setLetterSpacing(0.08f);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        t.setPadding(dp(c, 2), dp(c, 18), 0, dp(c, 4));
+        return t;
+    }
+
     public static View divider(Context c) {
         View v = new View(c);
         v.setBackgroundColor(LINE);

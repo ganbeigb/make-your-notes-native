@@ -92,6 +92,7 @@ public class SettingsActivity extends BaseActivity {
         form.setOrientation(LinearLayout.VERTICAL);
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 30));
 
+        form.addView(Ui.section(this, "模型与服务商"));
         providerSpinner = spinner(form, "服务商", providers, indexOf(providers, prefs.provider()));
         keyInput = edit(form, "DeepSeek API Key", prefs.apiKey("deepseek"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         zhipuKeyInput = edit(form, "智谱 API Key（识图用，免费）", prefs.apiKey("zhipu"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
@@ -101,6 +102,7 @@ public class SettingsActivity extends BaseActivity {
 
         int si = 1;
         for (int i = 0; i < scaleValues.length; i++) if (Math.abs(scaleValues[i] - prefs.uiScale()) < 0.01f) si = i;
+        form.addView(Ui.section(this, "界面"));
         scaleSpinner = spinner(form, "界面字号", scales, si);
 
         int li = 3;
@@ -111,6 +113,7 @@ public class SettingsActivity extends BaseActivity {
 
         themeSpinner = spinner(form, "主题", themes, Math.max(0, indexOf(themeKeys, prefs.theme())));
 
+        form.addView(Ui.section(this, "费用估算"));
         priceInInput = edit(form, "输入单价（元 / 百万 token，0 = 不估算）",
                 prefs.priceIn() > 0 ? String.valueOf(prefs.priceIn()) : "", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         priceOutInput = edit(form, "输出单价（元 / 百万 token）",
@@ -133,6 +136,7 @@ public class SettingsActivity extends BaseActivity {
         keepFormulaBox.setChecked(prefs.keepFormula());
         keepFormulaBox.setPadding(0, Ui.dp(this, 8), 0, 0);
         form.addView(Ui.settingRow(this, keepFormulaBox.getText().toString(), null, keepFormulaBox));
+        form.addView(Ui.section(this, "识别与整理"));
         this.keepFormulaBox = keepFormulaBox;
 
         mockBox = new android.widget.CheckBox(this);
@@ -203,9 +207,11 @@ public class SettingsActivity extends BaseActivity {
             }
         });
         actions.addView(relink);
+        form.addView(Ui.section(this, "数据维护"));
         form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
+        form.addView(Ui.section(this, "显示与校对"));
         form.addView(Ui.settingRow(this, quoteBox.getText().toString(), null, quoteBox));
 
         strictBox.setChecked(prefs.strict());
