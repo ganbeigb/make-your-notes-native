@@ -245,7 +245,7 @@ public class Ui {
         android.widget.LinearLayout box = new android.widget.LinearLayout(c);
         box.setOrientation(android.widget.LinearLayout.VERTICAL);
         box.setGravity(android.view.Gravity.CENTER);
-        box.setPadding(dp(c, 24), dp(c, 40), dp(c, 24), dp(c, 24));
+        box.setPadding(dp(c, 24), dp(c, 56), dp(c, 24), dp(c, 32));
 
         android.widget.TextView t = new android.widget.TextView(c);
         t.setText(title);
@@ -271,6 +271,51 @@ public class Ui {
             a.setPadding(0, dp(c, 12), 0, 0);
             if (onClick != null) a.setOnClickListener(onClick);
             box.addView(a);
+        }
+        return box;
+    }
+
+    /** 分段控件：网页版 .segmented（#ebe5d8 底、圆角 9、内 padding 3） */
+    public static android.widget.LinearLayout segmented(final Context c, String[] labels, int selected,
+                                                        final android.view.View.OnClickListener onClick) {
+        android.widget.LinearLayout box = new android.widget.LinearLayout(c);
+        box.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xFFEBE5D8);
+        bg.setCornerRadius(dp(c, 9));
+        box.setBackground(bg);
+        box.setPadding(dp(c, 3), dp(c, 3), dp(c, 3), dp(c, 3));
+        for (int i = 0; i < labels.length; i++) {
+            android.widget.TextView t = new android.widget.TextView(c);
+            t.setText(labels[i]);
+            t.setTextSize(12.5f * scale);
+            t.setGravity(android.view.Gravity.CENTER);
+            t.setPadding(dp(c, 14), dp(c, 6), dp(c, 14), dp(c, 6));
+            if (i == selected) {
+                android.graphics.drawable.GradientDrawable on = new android.graphics.drawable.GradientDrawable();
+                on.setColor(CARD);
+                on.setCornerRadius(dp(c, 7));
+                on.setStroke(dp(c, 1), LINE_STRONG);
+                t.setBackground(on);
+                t.setTextColor(INK);
+            } else {
+                t.setTextColor(INK2);
+            }
+            final int idx = i;
+            t.setOnClickListener(new android.view.View.OnClickListener() {
+                @Override
+                public void onClick(android.view.View v) {
+                    if (onClick != null) {
+                        v.setTag(idx);
+                        onClick.onClick(v);
+                    }
+                }
+            });
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,
+                    android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = dp(c, 2);
+            box.addView(t, lp);
         }
         return box;
     }

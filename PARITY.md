@@ -126,3 +126,32 @@
 2. 符号面板按类别分组（网页版 `SYMBOLS` 分组标签）
 3. 导图节点样式微调（网页版圆角胶囊）
 4. 逐屏像素级复核（需要你截图对照）
+
+
+---
+
+## 视觉数值表（来源：styles.css，已落到代码）
+
+| 元素 | 网页版 | 原生 | 状态 |
+|---|---|---|---|
+| 背景 | `--bg: #f4f1ea` | `Ui.BG` | ✅ |
+| 纸面/卡片 | `--paper: #fffdf8` | `Ui.CARD` | ✅ |
+| 主文字 | `--ink: #211e19` | `Ui.INK` | ✅ |
+| 次文字 | `--ink-2: #4b463d` | `Ui.INK2` | ✅ |
+| 弱文字 | `--muted: #8b8477` | `Ui.MUTED` | ✅ |
+| 分隔线 | `--line: #e5ddcc` / `--line-strong: #d6ccb6` | `Ui.LINE / LINE_STRONG` | ✅ |
+| 主色 | `--accent: #2c5d4a` / `--accent-2: #3d7a61` / `--accent-soft: #e6efe9` | `Ui.ACCENT / ACCENT2 / ACCENT_SOFT` | ✅ |
+| 卡片圆角 | `--radius: 16px`；`.kcard` 14px | 卡片 14、容器 16 | ✅ |
+| 卡片内边距 | `.kcard: 16px 17px 14px` | 17/16/17/14 | ✅ |
+| 卡片间距 | `.klist: gap 14px` | 14dp | ✅ |
+| 分类标签 | `.tag`: #f0ebdf / #7b7364 / 圆角 5 / 10.5px / 1×7 | 一致 | ✅ |
+| 展开全文 | `.kcard-more`: 12px、accent-2、上边距 6 | 一致 | ✅ |
+| 胶囊按钮 | `.chipbtn`: 28 高 / 11 边 / 圆角 999 / 12px | 一致 | ✅ |
+| 普通按钮 | `.btn`: 34 高 / 14 边 / 圆角 9 / 1px line-strong | 一致 | ✅ |
+| 输入框 | `.input`: padding 9×11 | 一致 | ✅ |
+| 分段控件 | `.tabs/.segmented`: #ebe5d8 / 圆角 9 / padding 3 / 选中白底细边 | 课件/知识点切换用同款 | ✅ |
+| 空态 | `.empty`: padding 64×24、gap 10 | 56 上下近似 | 🟡 |
+| 课件卡 | `.deck`: 圆角 16、padding 18/18/20 | 头部 18/12/18/12 | 🟡 |
+| 侧栏科目行 | `.subject`: padding 9×10、gap 9 | 卡片式，16/14 | 🟡（结构不同：手机全屏无侧栏） |
+| 顶栏 | 网页由多段 padding 叠加 | 统一 12/14/16/10 | 🟡 待截图核对 |
+| 字号基准 | body 14px、行高 1.62 | 14 基准、行距 1.16 倍 | 🟡 |
