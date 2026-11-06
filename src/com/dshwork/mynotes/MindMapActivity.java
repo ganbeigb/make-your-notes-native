@@ -102,7 +102,14 @@ public class MindMapActivity extends BaseActivity {
         root.addView(bar);
 
         view = new MindMapView(this);
-        root.addView(view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        if (db.notes(subjectId).isEmpty()) {
+            LinearLayout empty = Ui.emptyState(this, "还没有知识点",
+                    "导入课件并完成识别后，这里会长出知识点导图。", null, null);
+            root.addView(empty, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        } else {
+            root.addView(view, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        }
         setContentView(root);
 
         view.setOnNodeClick(new MindMapView.OnNodeClick() {
