@@ -317,6 +317,18 @@ public class Db extends SQLiteOpenHelper {
     }
 
     /** 同科目里是否已有同哈希页面（导入去重用） */
+    public boolean slideIndexExists(String deckId, int idx) {
+        if (deckId == null) return false;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM slides WHERE deck_id = ? AND idx = ? LIMIT 1",
+                new String[]{deckId, String.valueOf(idx)});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
+    }
+
     public boolean slideHashExists(String subjectId, String hash) {
         if (hash == null || hash.isEmpty()) return false;
         Cursor c = getReadableDatabase().rawQuery(

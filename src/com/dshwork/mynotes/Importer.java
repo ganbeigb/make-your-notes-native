@@ -138,6 +138,13 @@ public class Importer {
                     cb.onStep(i + 1, uris.size(), "第 " + (i + 1) + " 页已存在，跳过");
                     continue;
                 }
+                if (db.slideIndexExists(deck.id, pageNo)) {
+                    java.io.File dup2 = new java.io.File(saved);
+                    if (dup2.exists()) dup2.delete();
+                    out.skipped++;
+                    cb.onStep(i + 1, uris.size(), "第 " + pageNo + " 页已存在，跳过");
+                    continue;
+                }
                 Db.Slide slide = db.addSlide(subjectId, deck.id, pageNo, saved, hash);
                 int added = insertPoints(db, subjectId, json, "第 " + pageNo + " 页", saved, pageNo, slide.id);
                 out.points += added;
