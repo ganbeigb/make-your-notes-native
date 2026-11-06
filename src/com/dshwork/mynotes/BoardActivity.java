@@ -224,6 +224,46 @@ public class BoardActivity extends BaseActivity {
         rlp2.leftMargin = Ui.dp(this, 8);
         styleRow.addView(rot, rlp2);
 
+        TextView groupBtn = Ui.chip(this, "组合", false);
+        groupBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.groupSelected()) {
+                    Toast.makeText(BoardActivity.this, "先选中两个以上元素（选择工具可框选）", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        glp.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(groupBtn, glp);
+
+        TextView ungroupBtn = Ui.chip(this, "拆开", false);
+        ungroupBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!board.ungroupSelected()) {
+                    Toast.makeText(BoardActivity.this, "选中项没有组合", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        LinearLayout.LayoutParams uglp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        uglp.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(ungroupBtn, uglp);
+
+        TextView boardCfg = Ui.chip(this, "画板设置", false);
+        boardCfg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showBoardSettings();
+            }
+        });
+        LinearLayout.LayoutParams blp2 = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        blp2.leftMargin = Ui.dp(this, 8);
+        styleRow.addView(boardCfg, blp2);
+
         android.widget.HorizontalScrollView styleScroll = new android.widget.HorizontalScrollView(this);
         styleScroll.setHorizontalScrollBarEnabled(false);
         styleScroll.addView(styleRow);
@@ -357,6 +397,45 @@ public class BoardActivity extends BaseActivity {
         lp.rightMargin = Ui.dp(this, 8);
         t.setLayoutParams(lp);
         return t;
+    }
+
+    /** 画板设置：引脚吸附 / 显示网格 / 拖动对齐网格 */
+    private void showBoardSettings() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(Ui.dp(this, 20), Ui.dp(this, 8), Ui.dp(this, 20), 0);
+
+        final android.widget.CheckBox snap = new android.widget.CheckBox(this);
+        snap.setText("引脚自动吸附（导线端点对齐引脚）");
+        snap.setTextSize(13);
+        snap.setChecked(board.snapPins);
+        box.addView(snap);
+
+        final android.widget.CheckBox grid = new android.widget.CheckBox(this);
+        grid.setText("显示网格（10px）");
+        grid.setTextSize(13);
+        grid.setChecked(board.showGrid);
+        box.addView(grid);
+
+        final android.widget.CheckBox drag = new android.widget.CheckBox(this);
+        drag.setText("拖动时对齐网格（按 10px 跳动）");
+        drag.setTextSize(13);
+        drag.setChecked(board.snapDrag);
+        box.addView(drag);
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("画板设置")
+                .setView(box)
+                .setPositiveButton("好", new android.content.DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(android.content.DialogInterface dialog, int which) {
+                        board.snapPins = snap.isChecked();
+                        board.showGrid = grid.isChecked();
+                        board.snapDrag = drag.isChecked();
+                        board.invalidate();
+                    }
+                })
+                .show();
     }
 
     private void askChipSpec() {

@@ -8,12 +8,18 @@ import android.widget.TextView;
 
 /** 一点共用的界面小工具，保持三个页面风格一致。 */
 public class Ui {
-    public static int BG = 0xFFFBF8F1;
-    public static int CARD = 0xFFFFFFFF;
-    public static int INK = 0xFF23302A;
-    public static int INK2 = 0xFF5A6A62;
-    public static int LINE = 0xFFE6DDC8;
-    public static int ACCENT = 0xFF2F5D4B;
+    public static int BG = 0xFFF4F1EA;
+    public static int CARD = 0xFFFFFDF8;
+    public static int INK = 0xFF211E19;
+    public static int INK2 = 0xFF4B463D;
+    public static int LINE = 0xFFE5DDCC;
+    public static int ACCENT = 0xFF2C5D4A;
+    public static int ACCENT2 = 0xFF3D7A61;
+    public static int MUTED = 0xFF8B8477;
+    public static int ACCENT_SOFT = 0xFFE6EFE9;
+    public static int GOLD = 0xFFA9762A;
+    public static int RED = 0xFFA2453A;
+    public static int LINE_STRONG = 0xFFD6CCB6;
 
     public static boolean dark = false;
 
@@ -116,7 +122,7 @@ public class Ui {
     public static GradientDrawable card(Context c) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(CARD);
-        d.setCornerRadius(dp(c, 12));
+        d.setCornerRadius(dp(c, 16));
         d.setStroke(dp(c, 1), LINE);
         return d;
     }
@@ -124,7 +130,7 @@ public class Ui {
     public static GradientDrawable cardSelected(Context c) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(CARD);
-        d.setCornerRadius(dp(c, 12));
+        d.setCornerRadius(dp(c, 16));
         d.setStroke(dp(c, 2), ACCENT);
         return d;
     }
@@ -134,19 +140,38 @@ public class Ui {
         t.setText(s);
         t.setTextSize(size * scale);
         t.setTextColor(color);
+        t.setLineSpacing(0, 1.16f);
         return t;
     }
 
     public static TextView button(Context c, String s) {
         TextView t = new TextView(c);
         t.setText(s);
-        t.setTextSize(14);
+        t.setTextSize(13.5f * scale);
         t.setTextColor(0xFFFFFFFF);
         t.setGravity(android.view.Gravity.CENTER);
-        t.setPadding(dp(c, 14), dp(c, 8), dp(c, 14), dp(c, 8));
+        t.setMinHeight(dp(c, 34));
+        t.setPadding(dp(c, 14), 0, dp(c, 14), 0);
         GradientDrawable d = new GradientDrawable();
         d.setColor(ACCENT);
         d.setCornerRadius(dp(c, 9));
+        t.setBackground(d);
+        return t;
+    }
+
+    /** 次要按钮：白底、细边、深字（网页版 .btn 默认样式） */
+    public static TextView buttonGhost(Context c, String s) {
+        TextView t = new TextView(c);
+        t.setText(s);
+        t.setTextSize(13.5f * scale);
+        t.setTextColor(INK);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setMinHeight(dp(c, 34));
+        t.setPadding(dp(c, 14), 0, dp(c, 14), 0);
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(CARD);
+        d.setCornerRadius(dp(c, 9));
+        d.setStroke(dp(c, 1), LINE_STRONG);
         t.setBackground(d);
         return t;
     }
@@ -155,11 +180,12 @@ public class Ui {
     public static TextView chip(Context c, String label, boolean primary) {
         TextView t = new TextView(c);
         t.setText(label);
-        t.setTextSize(13.5f * scale);
+        t.setTextSize(12.5f * scale);
         t.setSingleLine(true);
         t.setMaxLines(1);
         t.setGravity(android.view.Gravity.CENTER);
-        t.setPadding(dp(c, 14), dp(c, 9), dp(c, 14), dp(c, 9));
+        t.setMinHeight(dp(c, 32));
+        t.setPadding(dp(c, 12), 0, dp(c, 12), 0);
         if (primary) {
             t.setTextColor(0xFFFFFFFF);
             t.setBackground(button(c, "").getBackground());
