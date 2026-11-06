@@ -156,8 +156,14 @@ public class UsageActivity extends BaseActivity {
             }
             body.addView(box);
         } else {
-            TextView empty = Ui.text(this, "还没有调用记录。导入课件或做 AI 整理后会记在这里。", 13, Ui.INK2);
-            empty.setPadding(0, Ui.dp(this, 20), 0, 0);
+            LinearLayout empty = Ui.emptyState(this, "还没有调用记录",
+                    "导入课件或做 AI 整理后，调用次数与 token 会记在这里。", "去导入课件",
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            finish();
+                        }
+                    });
             body.addView(empty);
         }
 
