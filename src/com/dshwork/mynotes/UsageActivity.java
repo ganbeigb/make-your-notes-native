@@ -132,32 +132,29 @@ public class UsageActivity extends BaseActivity {
 
         List<String[]> kinds = db.usageByKind();
         if (!kinds.isEmpty()) {
-            String[] lines = new String[kinds.size()];
-            for (int i = 0; i < kinds.size(); i++) {
-                String[] r = kinds.get(i);
-                lines[i] = labelOf(r[0]) + "：" + r[1] + " 次，输入 " + fmt(parse(r[2])) + "，输出 " + fmt(parse(r[3]));
+            LinearLayout box = card2("按用途");
+            for (String[] r : kinds) {
+                box.addView(statRow(labelOf(r[0]), r[1] + " 次 · " + fmt(parse(r[2]) + parse(r[3])) + " tokens", false));
             }
-            body.addView(card("按用途", lines));
+            body.addView(box);
         }
 
         List<String[]> bySubject = db.usageBySubject();
         if (!bySubject.isEmpty()) {
-            String[] lines = new String[bySubject.size()];
-            for (int i = 0; i < bySubject.size(); i++) {
-                String[] r = bySubject.get(i);
-                lines[i] = r[0] + "：" + r[1] + " 次，输入 " + fmt(parse(r[2])) + "，输出 " + fmt(parse(r[3]));
+            LinearLayout box = card2("按科目");
+            for (String[] r : bySubject) {
+                box.addView(statRow(r[0], r[1] + " 次 · " + fmt(parse(r[2]) + parse(r[3])) + " tokens", false));
             }
-            body.addView(card("按科目", lines));
+            body.addView(box);
         }
 
         List<String[]> days = db.usageByDay(dayRange);
         if (!days.isEmpty()) {
-            String[] lines = new String[days.size()];
-            for (int i = 0; i < days.size(); i++) {
-                String[] r = days.get(i);
-                lines[i] = r[0] + "　" + r[1] + " 次　输入 " + fmt(parse(r[2])) + "　输出 " + fmt(parse(r[3]));
+            LinearLayout box = card2(dayRange >= 3650 ? "全部时间" : "最近 " + dayRange + " 天");
+            for (String[] r : days) {
+                box.addView(statRow(r[0], r[1] + " 次 · " + fmt(parse(r[2]) + parse(r[3])) + " tokens", false));
             }
-            body.addView(card(dayRange >= 3650 ? "全部时间" : "最近 " + dayRange + " 天", lines));
+            body.addView(box);
         } else {
             TextView empty = Ui.text(this, "还没有调用记录。导入课件或做 AI 整理后会记在这里。", 13, Ui.INK2);
             empty.setPadding(0, Ui.dp(this, 20), 0, 0);
@@ -205,6 +202,38 @@ public class UsageActivity extends BaseActivity {
         if (n < 1000) return String.valueOf(n);
         if (n < 1000000) return String.format(java.util.Locale.CHINA, "%.1fk", n / 1000.0);
         return String.format(java.util.Locale.CHINA, "%.1fM", n / 1000000.0);
+    }
+
+    /** 一行统计：左边名称，右边数字（对照网页版列表右对齐） */
+    private LinearLayout card2(String title) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setBackground(Ui.card(this));
+        box.setPadding(Ui.dp(this, 17), Ui.dp(this, 14), Ui.dp(this, 17), Ui.dp(this, 14));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.bottomMargin = Ui.dp(this, 12);
+        box.setLayoutParams(lp);
+        TextView t = Ui.text(this, title, 11.5f, Ui.MUTED);
+        t.setPadding(0, 0, 0, Ui.dp(this, 6));
+        box.addView(t);
+        return box;
+    }
+
+    private View statRow(String label, String value, boolean strong) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 5));
+
+        TextView l = Ui.text(this, label, 12.5f, strong ? Ui.INK : Ui.INK2);
+        if (strong) l.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        row.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        TextView v = Ui.text(this, value, 12.5f, strong ? Ui.INK : Ui.MUTED);
+        if (strong) v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        row.addView(v);
+        return row;
     }
 
     private View card(String title, String[] lines) {

@@ -96,7 +96,8 @@ public class SearchActivity extends BaseActivity {
             public View getView(int position, View convertView, ViewGroup parent) {
                 ListRows.NoteRow row = ListRows.obtain(SearchActivity.this, convertView);
                 String[] h = hits.get(position);
-                ListRows.bind(SearchActivity.this, row, "", h[1], h[2], 0, 0, false, false, null);
+                ListRows.bind(SearchActivity.this, row, "", h[1], "", 0, 0, false, false, null,
+                        null, h[2], false, false, false);
                 return row.card;
             }
         };
