@@ -106,7 +106,7 @@ public class CategoryActivity extends BaseActivity {
 
         ListView list = new ListView(this);
         list.setDivider(null);
-        list.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 12));
+        list.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 16));
         list.setClipToPadding(false);
         root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
