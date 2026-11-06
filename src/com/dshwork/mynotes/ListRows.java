@@ -26,10 +26,10 @@ public class ListRows {
         NoteRow row = new NoteRow();
         row.card = new LinearLayout(c);
         row.card.setOrientation(LinearLayout.VERTICAL);
-        row.card.setPadding(Ui.dp(c, 16), Ui.dp(c, 12), Ui.dp(c, 16), Ui.dp(c, 12));
+        row.card.setPadding(Ui.dp(c, 17), Ui.dp(c, 16), Ui.dp(c, 17), Ui.dp(c, 14));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = Ui.dp(c, 10);
+        lp.bottomMargin = Ui.dp(c, 14);
         row.card.setLayoutParams(lp);
 
         row.tag = Ui.text(c, "", 11, Ui.ACCENT);
@@ -39,12 +39,12 @@ public class ListRows {
         row.name.setTypeface(Typeface.DEFAULT_BOLD);
         row.card.addView(row.name);
 
-        row.preview = Ui.text(c, "", 12, Ui.INK2);
+        row.preview = Ui.text(c, "", 12.5f, Ui.INK2);
         row.preview.setPadding(0, Ui.dp(c, 4), 0, 0);
         row.card.addView(row.preview);
 
-        row.more = Ui.text(c, "", 11.5f, Ui.ACCENT);
-        row.more.setPadding(0, dp(c, 4), 0, 0);
+        row.more = Ui.text(c, "", 12f, Ui.ACCENT2);
+        row.more.setPadding(0, dp(c, 6), 0, 0);
         row.more.setVisibility(View.GONE);
         row.card.addView(row.more);
 
@@ -64,9 +64,18 @@ public class ListRows {
     }
 
     public static void bind(Context c, NoteRow row, String tagText, String name, String preview, int lines, int importance) {
-        row.card.setBackground(Ui.card(c));
+        android.graphics.drawable.GradientDrawable bg = Ui.card(c);
+        bg.setCornerRadius(Ui.dp(c, 14));
+        row.card.setBackground(bg);
         row.tag.setText(tagText == null ? "" : tagText);
         row.tag.setVisibility(tagText == null || tagText.isEmpty() ? View.GONE : View.VISIBLE);
+        android.graphics.drawable.GradientDrawable tagBg = new android.graphics.drawable.GradientDrawable();
+        tagBg.setColor(0xFFF0EBDF);
+        tagBg.setCornerRadius(Ui.dp(c, 5));
+        row.tag.setBackground(tagBg);
+        row.tag.setTextColor(0xFF7B7364);
+        row.tag.setTextSize(10.5f);
+        row.tag.setPadding(Ui.dp(c, 7), Ui.dp(c, 1), Ui.dp(c, 7), Ui.dp(c, 1));
         String label = name == null ? "" : name;
         if (importance >= 4) label = "★★ " + label;
         else if (importance == 3) label = "★ " + label;
