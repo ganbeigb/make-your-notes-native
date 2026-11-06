@@ -200,6 +200,40 @@ public class Ui {
         return t;
     }
 
+    /** 网页版的设置行：左侧标题+说明，右侧控件 */
+    public static android.widget.LinearLayout settingRow(Context c, String title, String hint, View control) {
+        android.widget.LinearLayout row = new android.widget.LinearLayout(c);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(c, 10), 0, dp(c, 10));
+
+        android.widget.LinearLayout left = new android.widget.LinearLayout(c);
+        left.setOrientation(android.widget.LinearLayout.VERTICAL);
+        TextView t = new TextView(c);
+        t.setText(title);
+        t.setTextSize(13.5f * scale);
+        t.setTextColor(INK);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        left.addView(t);
+        if (hint != null && !hint.isEmpty()) {
+            TextView h = new TextView(c);
+            h.setText(hint);
+            h.setTextSize(11.5f * scale);
+            h.setTextColor(MUTED);
+            h.setPadding(0, dp(c, 2), 0, 0);
+            left.addView(h);
+        }
+        row.addView(left, new android.widget.LinearLayout.LayoutParams(0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        if (control != null) {
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.leftMargin = dp(c, 12);
+            row.addView(control, lp);
+        }
+        return row;
+    }
+
     public static View divider(Context c) {
         View v = new View(c);
         v.setBackgroundColor(LINE);
