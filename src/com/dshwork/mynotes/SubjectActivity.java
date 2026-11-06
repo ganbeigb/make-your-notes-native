@@ -49,6 +49,7 @@ public class SubjectActivity extends BaseActivity {
     private final List<Uri> failedUris = new ArrayList<>();
     private final List<Integer> failedPages = new ArrayList<>();
     private String lastDeckId;
+    private String lastOpenedNoteId;
     private TextView retryBtn;
     private boolean selecting = false;
     private String viewMode = "decks";
@@ -530,6 +531,7 @@ public class SubjectActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         reload();
+        scrollToLastOpened();
     }
 
     /** 刷新列表但保持滚动位置 */
@@ -914,9 +916,32 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void openNote(String noteId) {
+        lastOpenedNoteId = noteId;
         Intent i = new Intent(this, NoteActivity.class);
         i.putExtra("noteId", noteId);
         startActivity(i);
+    }
+
+    /** 从详情返回后，把列表滚到刚才那条 */
+    private void scrollToLastOpened() {
+        if (lastOpenedNoteId == null || list == null) return;
+        final String target = lastOpenedNoteId;
+        lastOpenedNoteId = null;
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i) instanceof Db.Note) {
+                Db.Note n = (Db.Note) rows.get(i);
+                if (target.equals(n.id)) {
+                    final int index = i;
+                    list.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            list.setSelection(Math.max(0, index - 1));
+                        }
+                    });
+                    return;
+                }
+            }
+        }
     }
 
     private void openExportMenu() {
