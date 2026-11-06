@@ -27,6 +27,7 @@ public class MindMapView extends View {
         int kind; // 0 科目，1 分类，2 知识点
         List<Node> children = new ArrayList<>();
         float x, y, w, h;
+        boolean collapsed;
     }
 
     private final TextPaint textPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
@@ -92,7 +93,7 @@ public class MindMapView extends View {
     private void layoutTree(Node n, int depth, int[] cursor) {
         measureWidth(n);
         n.x = depth * Ui.dp(getContext(), 210);
-        if (n.children.isEmpty()) {
+        if (n.collapsed || n.children.isEmpty()) {
             n.y = cursor[0] * Ui.dp(getContext(), 58);
             cursor[0]++;
             return;
@@ -154,6 +155,21 @@ public class MindMapView extends View {
         float ty2 = n.y + n.h / 2 - (tp.descent() + tp.ascent()) / 2;
         c.drawText(label, n.x + Ui.dp(getContext(), 9), ty2, tp);
 
+        if (n.collapsed && !n.children.isEmpty()) {
+            int count = countDescendants(n);
+            Paint badge = new Paint(Paint.ANTI_ALIAS_FLAG);
+            badge.setColor(Ui.ACCENT);
+            float brad = Ui.dp(getContext(), 11);
+            float bx = n.x + n.w + brad + 4;
+            float by = n.y + n.h / 2;
+            c.drawCircle(bx, by, brad, badge);
+            Paint num = new Paint(textPaint);
+            num.setColor(0xFFFFFFFF);
+            num.setTextSize(Ui.dp(getContext(), 11));
+            num.setTextAlign(Paint.Align.CENTER);
+            c.drawText(String.valueOf(count), bx, by + Ui.dp(getContext(), 4), num);
+        }
+
         for (Node ch : n.children) drawNodes(c, ch);
     }
 
@@ -168,6 +184,12 @@ public class MindMapView extends View {
         scale = Math.max(0.25f, Math.min(1.6f, s));
         tx = Ui.dp(getContext(), 12) - b.left * scale;
         ty = Ui.dp(getContext(), 12) - b.top * scale;
+    }
+
+    private int countDescendants(Node n) {
+        int total = 0;
+        for (Node c : n.children) total += 1 + countDescendants(c);
+        return total;
     }
 
     private RectF bounds(Node n, RectF acc) {
@@ -264,7 +286,17 @@ public class MindMapView extends View {
         float wx = (sx - tx) / scale;
         float wy = (sy - ty) / scale;
         Node hit = hit(rootNode, wx, wy);
-        if (hit != null && hit.kind == 2 && listener != null) listener.onClick(hit.id);
+        if (hit == null) return;
+        if (hit.kind == 2) {
+            if (listener != null) listener.onClick(hit.id);
+            return;
+        }
+        if (!hit.children.isEmpty()) {
+            hit.collapsed = !hit.collapsed;
+            layoutTree(rootNode, 0, new int[]{0});
+            requestLayout();
+            invalidate();
+        }
     }
 
     private Node hit(Node n, float x, float y) {
