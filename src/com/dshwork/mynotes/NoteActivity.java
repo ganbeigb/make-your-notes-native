@@ -183,7 +183,7 @@ public class NoteActivity extends BaseActivity {
         dblp.bottomMargin = Ui.dp(this, 12);
         draftBlock.setLayoutParams(dblp);
 
-        TextView draftTitle = Ui.text(this, "让 AI 起草", 13.5f, Ui.INK);
+        TextView draftTitle = Ui.text(this, "让 AI 起草", 14, Ui.INK);
         draftTitle.setTypeface(Typeface.DEFAULT_BOLD);
         draftBlock.addView(draftTitle);
         TextView draftHint = Ui.text(this, "写一句要求，生成后还可以改", 11.5f, Ui.MUTED);
@@ -227,7 +227,7 @@ public class NoteActivity extends BaseActivity {
         eblp.bottomMargin = Ui.dp(this, 12);
         editBlock.setLayoutParams(eblp);
 
-        TextView editTitle = Ui.text(this, "让 AI 改这条", 13.5f, Ui.INK);
+        TextView editTitle = Ui.text(this, "让 AI 改这条", 14, Ui.INK);
         editTitle.setTypeface(Typeface.DEFAULT_BOLD);
         editBlock.addView(editTitle);
         TextView editHint = Ui.text(this, "写一句要求，或点下面的快捷建议", 11.5f, Ui.MUTED);
