@@ -90,6 +90,9 @@ public class Ui {
             public android.view.WindowInsets onApplyWindowInsets(View v, android.view.WindowInsets insets) {
                 int top = insets.getSystemWindowInsetTop();
                 int bottom = insets.getSystemWindowInsetBottom();
+                if (android.os.Build.VERSION.SDK_INT >= 20) {
+                    bottom = Math.max(bottom, insets.getSystemWindowInsetBottom());
+                }
                 v.setPadding(l, t0 + top, r, b0 + bottom);
                 return insets;
             }

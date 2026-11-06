@@ -336,7 +336,12 @@ public class SubjectActivity extends BaseActivity {
                                 db.bulkDelete(new ArrayList<>(picked));
                                 picked.clear();
                                 exitSelect();
-                                reload();
+                                keepScroll(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        reload();
+                                    }
+                                });
                             }
                         })
                         .setNegativeButton("取消", null)
@@ -525,6 +530,27 @@ public class SubjectActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         reload();
+    }
+
+    /** 刷新列表但保持滚动位置 */
+    private void keepScroll(Runnable reloadTask) {
+        int first = 0;
+        int top = 0;
+        try {
+            first = list.getFirstVisiblePosition();
+            View v0 = list.getChildAt(0);
+            top = v0 == null ? 0 : v0.getTop();
+        } catch (Exception ignored) {
+        }
+        reloadTask.run();
+        final int f = first;
+        final int t = top;
+        list.post(new Runnable() {
+            @Override
+            public void run() {
+                list.setSelectionFromTop(f, t);
+            }
+        });
     }
 
     private void reload() {
@@ -1227,7 +1253,12 @@ public class SubjectActivity extends BaseActivity {
                     @Override
                     public void run() {
                         dlg.dismiss();
-                        reload();
+                        keepScroll(new Runnable() {
+                            @Override
+                            public void run() {
+                                reload();
+                            }
+                        });
                         StringBuilder sb = new StringBuilder();
                         sb.append("识别 ").append(out.pages).append(" 页，新增 ").append(out.points).append(" 个知识点");
                         if (out.skipped > 0) {
