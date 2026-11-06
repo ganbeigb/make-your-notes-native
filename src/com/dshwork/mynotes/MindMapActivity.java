@@ -2,6 +2,8 @@ package com.dshwork.mynotes;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -19,6 +21,7 @@ public class MindMapActivity extends Activity {
 
     private Db db;
     private MindMapView view;
+    private static final int REQ_SAVE = 4001;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -71,6 +74,20 @@ public class MindMapActivity extends Activity {
         });
         bar.addView(zoomOut);
 
+        TextView export = Ui.text(this, "导出", 14, Ui.ACCENT);
+        export.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 10), 0);
+        export.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("image/png");
+                i.putExtra(Intent.EXTRA_TITLE, "思维导图.png");
+                startActivityForResult(i, REQ_SAVE);
+            }
+        });
+        bar.addView(export);
+
         TextView reset = Ui.text(this, "适应", 14, Ui.ACCENT);
         reset.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
         reset.setOnClickListener(new View.OnClickListener() {
@@ -95,6 +112,23 @@ public class MindMapActivity extends Activity {
             }
         });
         view.setTree(build(subjectId, subjectName));
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQ_SAVE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        try {
+            Bitmap bmp = view.renderToBitmap();
+            if (bmp == null) return;
+            java.io.OutputStream os = getContentResolver().openOutputStream(data.getData());
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, os);
+            os.close();
+            bmp.recycle();
+            android.widget.Toast.makeText(this, "已导出 PNG", android.widget.Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            android.widget.Toast.makeText(this, "导出失败：" + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+        }
     }
 
     private MindMapView.Node build(String subjectId, String subjectName) {

@@ -163,6 +163,24 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(rename, nlp);
+
+        TextView cat = Ui.text(this, "  分类  ", 14, Ui.INK);
+        cat.setBackground(Ui.card(this));
+        cat.setGravity(Gravity.CENTER);
+        cat.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.leftMargin = Ui.dp(this, 8);
+        cat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(SubjectActivity.this, CategoryActivity.class);
+                i.putExtra("subjectId", subjectId);
+                i.putExtra("subjectName", subjectName);
+                startActivity(i);
+            }
+        });
+        tools.addView(cat, clp);
         root.addView(tools);
 
         list = new ListView(this);
