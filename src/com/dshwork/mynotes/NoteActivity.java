@@ -345,6 +345,7 @@ public class NoteActivity extends BaseActivity {
             LinearLayout box = new LinearLayout(this);
             box.setOrientation(LinearLayout.VERTICAL);
             box.setBackground(Ui.card(this));
+            box.setElevation(Ui.dp(this, 1));
             box.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
             LinearLayout.LayoutParams lp0 = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -361,6 +362,7 @@ public class NoteActivity extends BaseActivity {
             LinearLayout quoteBox = new LinearLayout(this);
             quoteBox.setOrientation(LinearLayout.VERTICAL);
             quoteBox.setBackground(Ui.card(this));
+            quoteBox.setElevation(Ui.dp(this, 1));
             quoteBox.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
             LinearLayout.LayoutParams qlp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -471,6 +473,7 @@ public class NoteActivity extends BaseActivity {
             LinearLayout srcBox = new LinearLayout(this);
             srcBox.setOrientation(LinearLayout.VERTICAL);
             srcBox.setBackground(Ui.card(this));
+            srcBox.setElevation(Ui.dp(this, 1));
             srcBox.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
             LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
