@@ -312,6 +312,7 @@ public class SubjectActivity extends BaseActivity {
                 ListRows.NoteRow row = ListRows.obtain(SubjectActivity.this, convertView);
                 Db.Note n = (Db.Note) o;
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
+                if ("extension".equals(n.kind)) path = path.isEmpty() ? "拓展" : path + " · 拓展";
                 ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines());
                 if (selecting && picked.contains(n.id)) {
                     row.card.setBackground(Ui.cardSelected(SubjectActivity.this));
@@ -485,7 +486,7 @@ public class SubjectActivity extends BaseActivity {
         String[] labels = new String[slides.size()];
         for (int i = 0; i < slides.size(); i++) {
             Db.Slide s = slides.get(i);
-            labels[i] = "第 " + s.idx + " 页 · " + s.noteCount + " 条"
+            labels[i] = (s.title == null || s.title.isEmpty() ? "第 " + s.idx + " 页" : s.title) + " · " + s.noteCount + " 条"
                     + (s.digest != null && !s.digest.isEmpty() ? " · 有汇总" : "");
         }
         new AlertDialog.Builder(this)
@@ -535,7 +536,7 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void slideMenu(final Db.Slide s) {
-        final String[] ops = {"打开该页知识点", "让 AI 重做这一页", "生成该页汇总", "删除这一页"};
+        final String[] ops = {"打开该页知识点", "重命名这一页", "让 AI 重做这一页", "生成该页汇总", "删除这一页"};
         new AlertDialog.Builder(this)
                 .setTitle("第 " + s.idx + " 页 · " + s.noteCount + " 条")
                 .setItems(ops, new DialogInterface.OnClickListener() {
@@ -549,8 +550,23 @@ public class SubjectActivity extends BaseActivity {
                                 openNote(list.get(0).id);
                             }
                         } else if (which == 1) {
-                            redoSlide(s);
+                            final EditText renameInput = new EditText(SubjectActivity.this);
+                            renameInput.setText(s.title == null ? "" : s.title);
+                            renameInput.setHint("这一页的标题");
+                            new AlertDialog.Builder(SubjectActivity.this)
+                                    .setTitle("重命名第 " + s.idx + " 页")
+                                    .setView(renameInput)
+                                    .setPositiveButton("保存", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dlg, int w) {
+                                            db.renameSlide(s.id, renameInput.getText().toString().trim());
+                                        }
+                                    })
+                                    .setNegativeButton("取消", null)
+                                    .show();
                         } else if (which == 2) {
+                            redoSlide(s);
+                        } else if (which == 3) {
                             makeDigest(s);
                         } else {
                             new AlertDialog.Builder(SubjectActivity.this)
