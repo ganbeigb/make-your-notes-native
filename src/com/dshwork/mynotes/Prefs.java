@@ -47,6 +47,37 @@ public class Prefs {
         sp.edit().putString("textModel", v.trim()).apply();
     }
 
+    /** 最近搜索关键词（最多 8 条，新的在前） */
+    public java.util.List<String> recentSearches() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        String raw = sp.getString("recentSearch", "");
+        if (raw == null || raw.isEmpty()) return out;
+        for (String s : raw.split("\n")) {
+            if (!s.trim().isEmpty()) out.add(s);
+        }
+        return out;
+    }
+
+    public void addSearch(String q) {
+        if (q == null) return;
+        String key = q.trim();
+        if (key.isEmpty()) return;
+        java.util.List<String> list = recentSearches();
+        list.remove(key);
+        list.add(0, key);
+        while (list.size() > 8) list.remove(list.size() - 1);
+        StringBuilder sb = new StringBuilder();
+        for (String s : list) {
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(s);
+        }
+        sp.edit().putString("recentSearch", sb.toString()).apply();
+    }
+
+    public void clearSearches() {
+        sp.edit().remove("recentSearch").apply();
+    }
+
     public boolean mock() {
         return sp.getBoolean("mock", false);
     }
