@@ -70,7 +70,7 @@ public class Organizer {
                 r.updated++;
             }
         } catch (Exception e) {
-            r.error = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+            r.error = AiClient.friendly(e);
         }
         return r;
     }

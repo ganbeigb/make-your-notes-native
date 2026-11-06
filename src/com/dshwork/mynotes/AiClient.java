@@ -139,6 +139,32 @@ public class AiClient {
         return sb.toString();
     }
 
+    /** 把网络/接口异常翻译成用户能看懂的话 */
+    public static String friendly(Throwable e) {
+        if (e == null) return "未知错误";
+        String raw = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+        String msg = raw.toLowerCase();
+        if (raw.contains("Unable to resolve host") || msg.contains("unknownhost")) {
+            return "网络不通：解析不到服务器地址（校园网/代理可能限制了这个域名）";
+        }
+        if (msg.contains("timeout") || raw.contains("timed out")) {
+            return "请求超时：图片多的话可以分几批导入";
+        }
+        if (msg.contains("401") || msg.contains("unauthorized") || raw.contains("invalid api key")) {
+            return "API Key 不对或已失效，去设置里检查一下";
+        }
+        if (msg.contains("402") || raw.contains("Insufficient Balance") || raw.contains("余额")) {
+            return "账户余额不足";
+        }
+        if (msg.contains("429") || raw.contains("rate limit")) {
+            return "请求太频繁，等几秒再试";
+        }
+        if (raw.contains("Failed to connect") || raw.contains("Connection refused")) {
+            return "连不上服务器：检查网络后重试";
+        }
+        return raw.length() > 160 ? raw.substring(0, 160) : raw;
+    }
+
     /** 去掉模型可能加上的代码围栏，截取最外层 JSON。 */
     public static String pickJson(String s) {
         if (s == null) return "";
