@@ -64,6 +64,24 @@ public class CategoryActivity extends BaseActivity {
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
         root.addView(bar);
 
+        LinearLayout modes = new LinearLayout(this);
+        modes.setOrientation(LinearLayout.HORIZONTAL);
+        modes.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 6));
+        TextView listMode = Ui.chip(this, "列表", true);
+        modes.addView(listMode);
+        TextView mapMode = Ui.chip(this, "导图", false);
+        mapMode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent mi = new Intent(CategoryActivity.this, MindMapActivity.class);
+                mi.putExtra("subjectId", subjectId);
+                mi.putExtra("subjectName", subjectName);
+                startActivity(mi);
+            }
+        });
+        modes.addView(mapMode);
+        root.addView(modes);
+
         HorizontalScrollView scroll = new HorizontalScrollView(this);
         scroll.setHorizontalScrollBarEnabled(false);
         chipRow = new LinearLayout(this);
