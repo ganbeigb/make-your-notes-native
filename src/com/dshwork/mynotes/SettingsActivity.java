@@ -29,6 +29,8 @@ public class SettingsActivity extends Activity {
     private Spinner linesSpinner;
     private Spinner sortSpinner;
     private Spinner themeSpinner;
+    private EditText priceInInput;
+    private EditText priceOutInput;
     private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
@@ -101,6 +103,11 @@ public class SettingsActivity extends Activity {
 
         themeSpinner = spinner(form, "主题", themes, Math.max(0, indexOf(themeKeys, prefs.theme())));
 
+        priceInInput = edit(form, "输入单价（元 / 百万 token，0 = 不估算）",
+                prefs.priceIn() > 0 ? String.valueOf(prefs.priceIn()) : "", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        priceOutInput = edit(form, "输出单价（元 / 百万 token）",
+                prefs.priceOut() > 0 ? String.valueOf(prefs.priceOut()) : "", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+
         strictBox = new android.widget.CheckBox(this);
         strictBox.setText("严格校对：每页识别完再用原图核对一次（会多花一次调用）");
         strictBox.setTextSize(13);
@@ -118,6 +125,14 @@ public class SettingsActivity extends Activity {
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
+    }
+
+    private float parseFloat(String s) {
+        try {
+            return Float.parseFloat(s.trim());
+        } catch (Exception e) {
+            return 0f;
+        }
     }
 
     private int indexOf(String[] arr, String v) {
@@ -163,6 +178,9 @@ public class SettingsActivity extends Activity {
         prefs.setCardLines(lineValues[linesSpinner.getSelectedItemPosition()]);
         prefs.setSort(sortKeys[sortSpinner.getSelectedItemPosition()]);
         prefs.setTheme(themeKeys[themeSpinner.getSelectedItemPosition()]);
+        float pi = parseFloat(priceInInput.getText().toString());
+        float po = parseFloat(priceOutInput.getText().toString());
+        prefs.setPrice(pi, po);
         prefs.setStrict(strictBox.isChecked());
         Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();

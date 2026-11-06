@@ -66,11 +66,18 @@ public class UsageActivity extends Activity {
         body.addView(chartBox, clp);
 
         long[] total = db.usageTotals();
-        body.addView(card("总览", new String[]{
-                "调用次数：" + total[2] + " 次",
-                "输入 tokens：" + fmt(total[0]),
-                "输出 tokens：" + fmt(total[1])
-        }));
+        Prefs prefs = new Prefs(this);
+        float priceIn = prefs.priceIn();
+        float priceOut = prefs.priceOut();
+        java.util.List<String> overview = new java.util.ArrayList<>();
+        overview.add("调用次数：" + total[2] + " 次");
+        overview.add("输入 tokens：" + fmt(total[0]));
+        overview.add("输出 tokens：" + fmt(total[1]));
+        if (priceIn > 0 || priceOut > 0) {
+            double cost = total[0] / 1000000.0 * priceIn + total[1] / 1000000.0 * priceOut;
+            overview.add(String.format(java.util.Locale.CHINA, "预估费用：¥%.4f", cost));
+        }
+        body.addView(card("总览", overview.toArray(new String[0])));
 
         List<String[]> kinds = db.usageByKind();
         if (!kinds.isEmpty()) {

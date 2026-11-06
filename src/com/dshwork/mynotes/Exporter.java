@@ -175,9 +175,10 @@ public class Exporter {
     /* ---------------- 备份 zip ---------------- */
 
     public static byte[] backup(Db db, Context ctx) throws Exception {
+        Prefs prefs = new Prefs(ctx);
         JSONObject root = new JSONObject();
         root.put("app", "MakeYourNotes-native");
-        root.put("version", 1);
+        root.put("version", 2);
         root.put("exportedAt", System.currentTimeMillis());
 
         JSONArray subjects = new JSONArray();
@@ -216,6 +217,8 @@ public class Exporter {
             }
         }
 
+        root.put("settings", prefs.snapshot());
+        root.put("usage", db.exportUsage());
         root.put("subjects", subjects);
         root.put("categories", categories);
         root.put("notes", notes);
@@ -226,7 +229,7 @@ public class Exporter {
         zip.write(root.toString(2).getBytes("UTF-8"));
         zip.closeEntry();
         zip.putNextEntry(new ZipEntry("README.txt"));
-        zip.write(("Make Your Notes 备份\n导出时间: " + ymd() + "\n包含: subjects / categories / notes\n").getBytes("UTF-8"));
+        zip.write(("Make Your Notes 备份\n导出时间: " + ymd() + "\n包含: subjects / categories / notes / settings / usage\n").getBytes("UTF-8"));
         zip.closeEntry();
         zip.close();
         return bos.toByteArray();

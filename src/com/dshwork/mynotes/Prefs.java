@@ -56,6 +56,56 @@ public class Prefs {
         sp.edit().putString("theme", v).apply();
     }
 
+    /** 每百万 token 的价格（元），0 表示不估算 */
+    public float priceIn() {
+        return sp.getFloat("priceIn", 0f);
+    }
+
+    public float priceOut() {
+        return sp.getFloat("priceOut", 0f);
+    }
+
+    public void setPrice(float in, float out) {
+        sp.edit().putFloat("priceIn", in).putFloat("priceOut", out).apply();
+    }
+
+    /** 导出设置快照，用于备份 */
+    public org.json.JSONObject snapshot() {
+        org.json.JSONObject o = new org.json.JSONObject();
+        try {
+            o.put("provider", provider());
+            o.put("visionModel", visionModel());
+            o.put("textModel", textModel());
+            o.put("reasoning", reasoning());
+            o.put("strict", strict());
+            o.put("uiScale", (double) uiScale());
+            o.put("cardLines", cardLines());
+            o.put("sort", sort());
+            o.put("theme", theme());
+            o.put("priceIn", (double) priceIn());
+            o.put("priceOut", (double) priceOut());
+        } catch (Exception ignored) {
+        }
+        return o;
+    }
+
+    /** 从备份还原设置（不动 API Key） */
+    public void restore(org.json.JSONObject o) {
+        if (o == null) return;
+        if (o.has("provider")) setProvider(o.optString("provider", provider()));
+        if (o.has("visionModel")) setVisionModel(o.optString("visionModel", visionModel()));
+        if (o.has("textModel")) setTextModel(o.optString("textModel", textModel()));
+        if (o.has("reasoning")) setReasoning(o.optString("reasoning", reasoning()));
+        if (o.has("strict")) setStrict(o.optBoolean("strict", strict()));
+        if (o.has("uiScale")) setUiScale((float) o.optDouble("uiScale", uiScale()));
+        if (o.has("cardLines")) setCardLines(o.optInt("cardLines", cardLines()));
+        if (o.has("sort")) setSort(o.optString("sort", sort()));
+        if (o.has("theme")) setTheme(o.optString("theme", theme()));
+        if (o.has("priceIn") || o.has("priceOut")) {
+            setPrice((float) o.optDouble("priceIn", priceIn()), (float) o.optDouble("priceOut", priceOut()));
+        }
+    }
+
     /** off | low | high | max */
     public String reasoning() {
         return sp.getString("reasoning", "off");

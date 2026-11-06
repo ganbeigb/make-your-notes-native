@@ -261,8 +261,13 @@ public class MainActivity extends Activity {
                     if (json == null) {
                         msg = "这个 zip 里没有找到 mynotes-backup.json";
                     } else {
-                        int[] r = db.importBackup(new org.json.JSONObject(json));
-                        msg = "恢复完成：新增 " + r[0] + " 个科目、" + r[1] + " 个分类、" + r[2] + " 条知识点";
+                        org.json.JSONObject obj = new org.json.JSONObject(json);
+                        org.json.JSONObject settings = obj.optJSONObject("settings");
+                        if (settings != null) new Prefs(MainActivity.this).restore(settings);
+                        int usageAdded = db.importUsage(obj.optJSONArray("usage"));
+                        int[] r = db.importBackup(obj);
+                        msg = "恢复完成：新增 " + r[0] + " 科目、" + r[1] + " 分类、" + r[2] + " 知识点、"
+                                + usageAdded + " 条用量";
                     }
                 } catch (final Exception ex) {
                     ui.post(new Runnable() {
