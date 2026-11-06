@@ -49,6 +49,7 @@ public class SubjectActivity extends Activity {
     private final java.util.Set<String> picked = new java.util.HashSet<>();
     private LinearLayout batchRow;
     private TextView selectCount;
+    private volatile boolean importCancelled = false;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -462,7 +463,7 @@ public class SubjectActivity extends Activity {
     }
 
 private void openExportMenu() {
-        final String[] items = {"Markdown 笔记", "HTML 笔记（含公式图片）", "公式合集（HTML）", "完整备份（zip）"};
+        final String[] items = {"Markdown 笔记", "HTML 笔记（含公式图片）", "公式合集（HTML）", "JSON（仅文字）", "完整备份（zip）"};
         new AlertDialog.Builder(this)
                 .setTitle("导出")
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -494,6 +495,10 @@ private void openExportMenu() {
                 pendingBytes = Exporter.formulas(this, db, subjectId).getBytes("UTF-8");
                 pendingName = safeName() + "-公式合集.html";
                 pendingMime = "text/html";
+            } else if (kind == 4) {
+                pendingBytes = Exporter.json(db, subjectId).getBytes("UTF-8");
+                pendingName = safeName() + "-笔记.json";
+                pendingMime = "application/json";
             } else {
                 pendingBytes = Exporter.backup(db, this);
                 pendingName = safeName() + "-备份.zip";
@@ -684,7 +689,17 @@ private void openExportMenu() {
         final ProgressDialog dlg = new ProgressDialog(this);
         dlg.setTitle("正在解析课件");
         dlg.setMessage("准备中…");
-        dlg.setCancelable(false);
+        dlg.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        dlg.setMax(uris.size());
+        dlg.setProgress(0);
+        dlg.setCancelable(true);
+        importCancelled = false;
+        dlg.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                importCancelled = true;
+            }
+        });
         dlg.show();
 
         new Thread(new Runnable() {
@@ -697,9 +712,16 @@ private void openExportMenu() {
                                 ui.post(new Runnable() {
                                     @Override
                                     public void run() {
+                                        dlg.setMax(total);
+                                        dlg.setProgress(done);
                                         dlg.setMessage(message);
                                     }
                                 });
+                            }
+
+                            @Override
+                            public boolean cancelled() {
+                                return importCancelled;
                             }
                         });
                 ui.post(new Runnable() {
