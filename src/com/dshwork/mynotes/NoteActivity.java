@@ -95,15 +95,6 @@ public class NoteActivity extends BaseActivity {
         });
         aiRow.addView(aiEdit);
 
-        TextView aiDraft = Ui.chip(this, "✨ AI 起草", false);
-        aiDraft.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                askAiDraft();
-            }
-        });
-        aiRow.addView(aiDraft);
-
         final TextView kindPoint = Ui.chip(this, "知识点", note.kind == null || "point".equals(note.kind));
         final TextView kindExt = Ui.chip(this, "拓展", "extension".equals(note.kind));
         kindPoint.setOnClickListener(new View.OnClickListener() {
@@ -191,6 +182,50 @@ public class NoteActivity extends BaseActivity {
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
+
+        LinearLayout draftBlock = new LinearLayout(this);
+        draftBlock.setOrientation(LinearLayout.VERTICAL);
+        draftBlock.setBackground(Ui.card(this));
+        draftBlock.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+        LinearLayout.LayoutParams dblp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dblp.bottomMargin = Ui.dp(this, 12);
+        draftBlock.setLayoutParams(dblp);
+
+        TextView draftTitle = Ui.text(this, "让 AI 起草", 13.5f, Ui.INK);
+        draftTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        draftBlock.addView(draftTitle);
+        TextView draftHint = Ui.text(this, "写一句要求，生成后还可以改", 11.5f, Ui.MUTED);
+        draftHint.setPadding(0, Ui.dp(this, 2), 0, Ui.dp(this, 8));
+        draftBlock.addView(draftHint);
+
+        LinearLayout draftRow = new LinearLayout(this);
+        draftRow.setOrientation(LinearLayout.HORIZONTAL);
+        draftRow.setGravity(Gravity.CENTER_VERTICAL);
+        final EditText draftInput = new EditText(this);
+        draftInput.setHint("例如：用两句话解释洛必达法则的适用条件");
+        draftInput.setTextSize(13);
+        draftInput.setBackground(Ui.card(this));
+        draftInput.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        draftRow.addView(draftInput, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        TextView draftGo = Ui.button(this, "生成");
+        LinearLayout.LayoutParams dglp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dglp.leftMargin = Ui.dp(this, 8);
+        draftGo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String req = draftInput.getText().toString().trim();
+                if (req.isEmpty()) {
+                    Toast.makeText(NoteActivity.this, "先写一句要求", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                runAiDraft(req);
+            }
+        });
+        draftRow.addView(draftGo, dglp);
+        draftBlock.addView(draftRow);
+        form.addView(draftBlock);
 
         nameInput = field(form, "标题", note.name, InputType.TYPE_CLASS_TEXT, 1);
 

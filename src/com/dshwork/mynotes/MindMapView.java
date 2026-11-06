@@ -53,16 +53,16 @@ public class MindMapView extends View {
         super(c);
         textPaint.setTextSize(Ui.dp(c, 13));
         textPaint.setColor(Ui.INK);
-        linePaint.setColor(0xFFB9C6BE);
+        linePaint.setColor(Ui.LINE);
         linePaint.setStyle(Paint.Style.STROKE);
         linePaint.setStrokeWidth(Ui.dp(c, 1.4f));
         nodePaint.setStyle(Paint.Style.STROKE);
         nodePaint.setStrokeWidth(Ui.dp(c, 1.2f));
-        nodePaint.setColor(0xFFDCD3BE);
+        nodePaint.setColor(Ui.LINE);
 
-        fillRoot.setColor(0xFF2F5D4B);
-        fillCat.setColor(0xFFE8F0EA);
-        fillNote.setColor(0xFFFFFFFF);
+        fillRoot.setColor(Ui.ACCENT);
+        fillCat.setColor(Ui.ACCENT_SOFT);
+        fillNote.setColor(Ui.CARD);
         setBackgroundColor(Ui.BG);
     }
 
