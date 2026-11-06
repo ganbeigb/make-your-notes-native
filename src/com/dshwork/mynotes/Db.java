@@ -346,6 +346,42 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().insert("usage_log", null, v);
     }
 
+    /** 按用途汇总：kind, 次数, 输入, 输出 */
+    public List<String[]> usageByKind() {
+        List<String[]> out = new ArrayList<>();
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT COALESCE(kind,'other'), COUNT(*), COALESCE(SUM(in_tok),0), COALESCE(SUM(out_tok),0) " +
+                        "FROM usage_log GROUP BY kind ORDER BY COUNT(*) DESC", null);
+        try {
+            while (c.moveToNext()) {
+                out.add(new String[]{c.getString(0), String.valueOf(c.getInt(1)),
+                        String.valueOf(c.getLong(2)), String.valueOf(c.getLong(3))});
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
+    /** 按天汇总：yyyy-MM-dd, 次数, 输入, 输出 */
+    public List<String[]> usageByDay(int days) {
+        List<String[]> out = new ArrayList<>();
+        long since = System.currentTimeMillis() - days * 24L * 3600 * 1000;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT date(ts/1000,'unixepoch','localtime') AS d, COUNT(*), " +
+                        "COALESCE(SUM(in_tok),0), COALESCE(SUM(out_tok),0) " +
+                        "FROM usage_log WHERE ts >= ? GROUP BY d ORDER BY d DESC", new String[]{String.valueOf(since)});
+        try {
+            while (c.moveToNext()) {
+                out.add(new String[]{c.getString(0), String.valueOf(c.getInt(1)),
+                        String.valueOf(c.getLong(2)), String.valueOf(c.getLong(3))});
+            }
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
     public long[] usageTotals() {
         Cursor c = getReadableDatabase().rawQuery("SELECT COALESCE(SUM(in_tok),0), COALESCE(SUM(out_tok),0), COUNT(*) FROM usage_log", null);
         try {
