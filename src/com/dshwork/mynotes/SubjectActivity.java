@@ -334,6 +334,35 @@ public class SubjectActivity extends BaseActivity {
             flp2.rightMargin = Ui.dp(this, 6);
             filterRow.addView(fv, flp2);
         }
+        final android.widget.Spinner inlineSort = new android.widget.Spinner(this);
+        String[] sortLabels = {"最近创建", "按标题", "按重要度"};
+        final String[] sortKeys = {"recent", "title", "importance"};
+        android.widget.ArrayAdapter<String> sortAdapter = new android.widget.ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, sortLabels);
+        inlineSort.setAdapter(sortAdapter);
+        int current = 0;
+        for (int k = 0; k < sortKeys.length; k++) {
+            if (sortKeys[k].equals(prefs.sort())) current = k;
+        }
+        inlineSort.setSelection(current);
+        inlineSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position < 0 || position >= sortKeys.length) return;
+                if (sortKeys[position].equals(prefs.sort())) return;
+                prefs.setSort(sortKeys[position]);
+                reload();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        LinearLayout.LayoutParams sortLp = new LinearLayout.LayoutParams(
+                Ui.dp(this, 120), ViewGroup.LayoutParams.WRAP_CONTENT);
+        sortLp.leftMargin = Ui.dp(this, 8);
+        filterRow.addView(inlineSort, sortLp);
+
         root.addView(filterRow);
 
         batchRow = new LinearLayout(this);
