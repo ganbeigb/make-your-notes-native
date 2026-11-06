@@ -409,8 +409,14 @@ public class SubjectActivity extends BaseActivity {
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
                 if ("extension".equals(n.kind)) path = path.isEmpty() ? "拓展" : path + " · 拓展";
                 boolean isExpanded = expanded.contains(n.id);
-                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content,
-                        isExpanded ? -1 : prefs.cardLines(), n.importance);
+                boolean isExt = "extension".equals(n.kind);
+                String indexLabel = isExt ? "拓展"
+                        : (n.slidePage > 0 ? "P" + n.slidePage : (path.isEmpty() ? "" : path));
+                ListRows.bind(SubjectActivity.this, row, indexLabel, n.name, n.content,
+                        isExpanded ? -1 : prefs.cardLines(), n.importance,
+                        n.formula != null && !n.formula.trim().isEmpty(),
+                        n.figure != null && !n.figure.isEmpty(),
+                        prefs.showQuote() ? n.quote : null);
                 boolean longContent = prefs.cardLines() > 0 && n.content != null
                         && n.content.length() > prefs.cardLines() * 24;
                 if (row.more != null) {

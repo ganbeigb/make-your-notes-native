@@ -136,7 +136,12 @@ public class CategoryActivity extends BaseActivity {
                 ListRows.NoteRow row = ListRows.obtain(CategoryActivity.this, convertView);
                 Db.Note n = shown.get(position);
                 String path = n.categoryId == null ? "未分类" : db.categoryPath(n.categoryId);
-                ListRows.bind(CategoryActivity.this, row, path, n.name, n.content, 2);
+                boolean catExt = "extension".equals(n.kind);
+                String catIndex = catExt ? "拓展" : (n.slidePage > 0 ? "P" + n.slidePage : path);
+                ListRows.bind(CategoryActivity.this, row, catIndex, n.name, n.content, 2, n.importance,
+                        n.formula != null && !n.formula.trim().isEmpty(),
+                        n.figure != null && !n.figure.isEmpty(),
+                        null);
                 return row.card;
             }
         };
