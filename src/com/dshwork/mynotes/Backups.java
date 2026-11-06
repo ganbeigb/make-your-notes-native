@@ -31,7 +31,8 @@ public class Backups {
     public static String dirHint(Context c) {
         String abs = dir(c).getAbsolutePath();
         int i = abs.indexOf("/Android/data/");
-        if (i > 0) return "内部存储" + abs.substring(i) + "（用文件管理器进入可看到）";
+        if (i > 0) return "内部存储" + abs.substring(i)
+                    + "\n（文件管理器 → Android/data/com.dshwork.mynotes/files/backups）";
         return abs;
     }
 
