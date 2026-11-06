@@ -26,6 +26,7 @@ public class Importer {
     public static class Outcome {
         public int pages;
         public int points;
+        public int skipped;
         public final List<String> errors = new ArrayList<>();
         public final List<Uri> failed = new ArrayList<>();
     }
@@ -101,7 +102,16 @@ public class Importer {
                 }
 
                 String saved = saveSlide(ctx, uri, i + 1);
-                Db.Slide slide = db.addSlide(subjectId, deck.id, i + 1, saved);
+                String hash = sha1OfFile(saved);
+                if (db.slideHashExists(subjectId, hash)) {
+                    // 同一个科目里已经有这一页（图片完全相同），跳过不重复建
+                    java.io.File dupFile = new java.io.File(saved);
+                    if (dupFile.exists()) dupFile.delete();
+                    out.skipped++;
+                    cb.onStep(i + 1, uris.size(), "第 " + (i + 1) + " 页已存在，跳过");
+                    continue;
+                }
+                Db.Slide slide = db.addSlide(subjectId, deck.id, i + 1, saved, hash);
                 int added = insertPoints(db, subjectId, json, "第 " + (i + 1) + " 页", saved, i + 1, slide.id);
                 out.points += added;
 
@@ -283,6 +293,24 @@ public class Importer {
         String digest = reply.content == null ? "" : reply.content.trim();
         db.setSlideDigest(slide.id, digest);
         return digest;
+    }
+
+    private static String sha1OfFile(String path) {
+        try {
+            java.io.File f = new java.io.File(path);
+            if (!f.exists()) return "";
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-1");
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+            in.close();
+            StringBuilder sb = new StringBuilder();
+            for (byte bt : md.digest()) sb.append(String.format("%02x", bt));
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private static String toBase64File(String path) throws Exception {

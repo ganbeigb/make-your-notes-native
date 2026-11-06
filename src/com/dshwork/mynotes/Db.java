@@ -56,7 +56,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 11;
+    private static final int VERSION = 12;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -86,6 +86,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 12) {
+            tryAdd(db, "slides", "hash", "TEXT");
+        }
         if (oldVersion < 11) {
             tryAdd(db, "subjects", "color", "TEXT");
         }
@@ -287,6 +290,29 @@ public class Db extends SQLiteOpenHelper {
             c.close();
         }
         return out;
+    }
+
+    public Slide addSlide(String subjectId, String deckId, int idx, String imagePath, String hash) {
+        Slide s = addSlide(subjectId, deckId, idx, imagePath);
+        if (hash != null && !hash.isEmpty()) {
+            ContentValues v = new ContentValues();
+            v.put("hash", hash);
+            getWritableDatabase().update("slides", v, "id = ?", new String[]{s.id});
+        }
+        return s;
+    }
+
+    /** 同科目里是否已有同哈希页面（导入去重用） */
+    public boolean slideHashExists(String subjectId, String hash) {
+        if (hash == null || hash.isEmpty()) return false;
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM slides WHERE subject_id = ? AND hash = ? LIMIT 1",
+                new String[]{subjectId, hash});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
     }
 
     public Slide addSlide(String subjectId, String deckId, int idx, String imagePath) {
