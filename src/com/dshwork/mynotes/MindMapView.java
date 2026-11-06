@@ -86,7 +86,7 @@ public class MindMapView extends View {
         float max = Ui.dp(getContext(), 190);
         float min = Ui.dp(getContext(), 76);
         n.w = Math.min(max, Math.max(min, tw + Ui.dp(getContext(), 26)));
-        n.h = n.kind == 0 ? Ui.dp(getContext(), 48) : Ui.dp(getContext(), 38);
+        n.h = n.kind == 0 ? Ui.dp(getContext(), 46) : Ui.dp(getContext(), 36);
         return n.w;
     }
 
@@ -144,8 +144,9 @@ public class MindMapView extends View {
     private void drawNodes(Canvas c, Node n) {
         RectF r = new RectF(n.x, n.y, n.x + n.w, n.y + n.h);
         Paint fill = n.kind == 0 ? fillRoot : n.kind == 1 ? fillCat : fillNote;
-        c.drawRoundRect(r, Ui.dp(getContext(), 10), Ui.dp(getContext(), 10), fill);
-        if (n.kind != 0) c.drawRoundRect(r, Ui.dp(getContext(), 10), Ui.dp(getContext(), 10), nodePaint);
+        float rad = (n.kind == 0 ? Ui.dp(getContext(), 23) : Ui.dp(getContext(), 18));
+        c.drawRoundRect(r, rad, rad, fill);
+        if (n.kind != 0) c.drawRoundRect(r, rad, rad, nodePaint);
 
         TextPaint tp = new TextPaint(textPaint);
         tp.setColor(n.kind == 0 ? Color.WHITE : Ui.INK);
