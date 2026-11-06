@@ -204,12 +204,23 @@ public class CategoryActivity extends BaseActivity {
     private View chip(String label, final String id) {
         TextView t = new TextView(this);
         t.setText(label);
-        t.setTextSize(13);
+        t.setTextSize(12);
+        t.setSingleLine(true);
         boolean active = (id == null && filterId == null) || (id != null && id.equals(filterId));
         t.setTextColor(active ? Ui.ACCENT : Ui.INK2);
         t.setGravity(Gravity.CENTER);
-        t.setPadding(Ui.dp(this, 12), Ui.dp(this, 7), Ui.dp(this, 12), Ui.dp(this, 7));
-        t.setBackground(active ? Ui.button(this, "").getBackground() : Ui.card(this));
+        t.setMinHeight(Ui.dp(this, 28));
+        t.setPadding(Ui.dp(this, 11), 0, Ui.dp(this, 11), 0);
+        android.graphics.drawable.GradientDrawable cg = new android.graphics.drawable.GradientDrawable();
+        cg.setCornerRadius(Ui.dp(this, 999));
+        if (active) {
+            cg.setColor(Ui.ACCENT_SOFT);
+            cg.setStroke(Ui.dp(this, 1), Ui.ACCENT2);
+        } else {
+            cg.setColor(Ui.CARD);
+            cg.setStroke(Ui.dp(this, 1), Ui.LINE);
+        }
+        t.setBackground(cg);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.rightMargin = Ui.dp(this, 8);
