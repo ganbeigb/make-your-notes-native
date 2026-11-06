@@ -401,6 +401,12 @@ public class SubjectActivity extends BaseActivity {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 Object o = rows.get(position);
+                if (o instanceof HintRow) {
+                    TextView tip = Ui.text(SubjectActivity.this, ((HintRow) o).text, 11.5f, Ui.MUTED);
+                    tip.setPadding(Ui.dp(SubjectActivity.this, 4), Ui.dp(SubjectActivity.this, 6),
+                            Ui.dp(SubjectActivity.this, 4), Ui.dp(SubjectActivity.this, 10));
+                    return tip;
+                }
                 if (o instanceof Db.Deck) {
                     return deckHeader((Db.Deck) o);
                 }
@@ -454,6 +460,7 @@ public class SubjectActivity extends BaseActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Object clicked = rows.get(position);
+                if (clicked instanceof HintRow) return;
                 if (clicked instanceof Db.Deck) {
                     Db.Deck d = (Db.Deck) clicked;
                     if (collapsedDecks.contains(d.id)) collapsedDecks.remove(d.id);
@@ -544,6 +551,12 @@ public class SubjectActivity extends BaseActivity {
             for (Db.Note n : data) rows.add(n);
             return;
         }
+        if (!data.isEmpty() && (decks == null || decks.isEmpty())) {
+            // 全是手动笔记：在顶部给一句说明，避免以为分组坏了
+            HintRow hint = new HintRow();
+            hint.text = "这些是手动新建的笔记。导入课件后，这里会按课件分组显示。";
+            rows.add(hint);
+        }
         for (Db.Deck d : decks) {
             java.util.List<Db.Note> list = byDeck.get(d.id);
             if (list == null || list.isEmpty()) continue;
@@ -551,6 +564,10 @@ public class SubjectActivity extends BaseActivity {
             if (!collapsedDecks.contains(d.id)) rows.addAll(list);
         }
         for (Db.Note n : loose) rows.add(n);
+    }
+
+    static class HintRow {
+        String text;
     }
 
     private View deckHeader(final Db.Deck d) {
