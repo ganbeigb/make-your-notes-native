@@ -25,8 +25,8 @@ $env:PATH = (Join-Path $Jdk 'bin') + ';' + $env:PATH
 
 $MinSdk = 24
 $TargetSdk = 35
-$VersionCode = 35
-$VersionName = '0.24.1'
+$VersionCode = 36
+$VersionName = '0.24.2'
 
 $Build = Join-Path $Work 'build'
 $Gen = Join-Path $Build 'gen'
@@ -37,7 +37,8 @@ $Keystore = Join-Path $Build 'mynotes.keystore'
 $StorePass = 'mynotes'
 $Alias = 'mynotes'
 $FinalApk = Join-Path $Build 'MyNotes.apk'
-$Deliverable = Join-Path $App 'MakeYourNotes-native-v0.24.1.apk'
+$Dist = Join-Path $Src 'dist'
+$Deliverable = Join-Path $Dist 'MakeYourNotes-native-v0.24.2.apk'
 
 function Step($m) { Write-Host "
 === $m ===" -ForegroundColor Cyan }
@@ -111,6 +112,7 @@ Step 'verify'
 & $Aapt2 dump badging $FinalApk 2>&1 | Select-String -Pattern '^package|^application-label|^launchable-activity|^sdkVersion|^targetSdkVersion' | ForEach-Object { Write-Host "  $($_.Line)" }
 
 Step 'delivering'
+if (-not (Test-Path $Dist)) { New-Item -ItemType Directory -Force -Path $Dist | Out-Null }
 if (Test-Path $Deliverable) { Remove-Item $Deliverable -Force }
 Copy-Item $FinalApk $Deliverable -Force
 $apk = Get-Item $Deliverable
