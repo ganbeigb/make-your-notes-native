@@ -151,6 +151,29 @@ public class Ui {
         return t;
     }
 
+    /** 工具行里的胶囊按钮：单行、等高、不换行 */
+    public static TextView chip(Context c, String label, boolean primary) {
+        TextView t = new TextView(c);
+        t.setText(label);
+        t.setTextSize(13.5f * scale);
+        t.setSingleLine(true);
+        t.setMaxLines(1);
+        t.setGravity(android.view.Gravity.CENTER);
+        t.setPadding(dp(c, 14), dp(c, 9), dp(c, 14), dp(c, 9));
+        if (primary) {
+            t.setTextColor(0xFFFFFFFF);
+            t.setBackground(button(c, "").getBackground());
+        } else {
+            t.setTextColor(INK);
+            t.setBackground(card(c));
+        }
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.rightMargin = dp(c, 8);
+        t.setLayoutParams(lp);
+        return t;
+    }
+
     public static View divider(Context c) {
         View v = new View(c);
         v.setBackgroundColor(LINE);

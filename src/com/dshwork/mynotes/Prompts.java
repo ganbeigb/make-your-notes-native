@@ -38,6 +38,16 @@ public class Prompts {
             "你是课件归纳助手。用户给出一页课件里提取出的知识点列表，请用 2-3 句话概括这一页在讲什么、" +
             "关键结论是什么。只输出这段中文，不要标题、不要列表、不要解释。";
 
+    public static final String REFINE_SYSTEM =
+            "你是笔记修改助手。用户给出一条知识点（标题/正文/公式）和一句要求，请按要求改写。" +
+            "只输出 JSON，不要解释：{\"name\":\"标题\",\"content\":\"正文\",\"formula\":\"LaTeX，没有就空\"}。" +
+            "保留原有的事实与公式，不要编造；正文保持 2-5 句。";
+
+    public static final String DRAFT_SYSTEM =
+            "你是笔记起草助手。用户给出一句主题或要求，请起草一条可复习的知识点。" +
+            "只输出 JSON，不要解释：{\"name\":\"标题\",\"content\":\"正文 3-6 句\"," +
+            "\"formula\":\"LaTeX，没有就空\",\"tags\":[\"标签\"]}。";
+
     private Prompts() {
     }
 }

@@ -89,6 +89,16 @@ public class UsageActivity extends BaseActivity {
             body.addView(card("按用途", lines));
         }
 
+        List<String[]> bySubject = db.usageBySubject();
+        if (!bySubject.isEmpty()) {
+            String[] lines = new String[bySubject.size()];
+            for (int i = 0; i < bySubject.size(); i++) {
+                String[] r = bySubject.get(i);
+                lines[i] = r[0] + "：" + r[1] + " 次，输入 " + fmt(parse(r[2])) + "，输出 " + fmt(parse(r[3]));
+            }
+            body.addView(card("按科目", lines));
+        }
+
         List<String[]> days = db.usageByDay(30);
         if (!days.isEmpty()) {
             String[] lines = new String[days.size()];

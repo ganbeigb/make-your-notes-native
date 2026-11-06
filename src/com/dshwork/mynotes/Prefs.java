@@ -47,6 +47,14 @@ public class Prefs {
         sp.edit().putString("textModel", v.trim()).apply();
     }
 
+    public boolean keepFormula() {
+        return sp.getBoolean("keepFormula", false);
+    }
+
+    public void setKeepFormula(boolean v) {
+        sp.edit().putBoolean("keepFormula", v).apply();
+    }
+
     public boolean showQuote() {
         return sp.getBoolean("showQuote", true);
     }

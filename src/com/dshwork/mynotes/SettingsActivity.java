@@ -33,13 +33,14 @@ public class SettingsActivity extends BaseActivity {
     private EditText priceInInput;
     private EditText priceOutInput;
     private android.widget.CheckBox quoteBox;
+    private android.widget.CheckBox keepFormulaBox;
     private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
     private final String[] scales = {"小", "标准", "大", "特大"};
     private final float[] scaleValues = {0.9f, 1f, 1.15f, 1.3f};
-    private final String[] lineOptions = {"不显示正文", "1 行", "2 行", "3 行", "4 行", "6 行"};
-    private final int[] lineValues = {0, 1, 2, 3, 4, 6};
+    private final String[] lineOptions = {"不显示正文", "1 行", "2 行", "3 行", "4 行", "6 行", "不截断（显示全文）"};
+    private final int[] lineValues = {0, 1, 2, 3, 4, 6, -1};
     private final String[] sorts = {"最近创建", "标题", "重要度"};
     private final String[] themes = {"跟随系统", "浅色", "深色"};
     private final String[] themeKeys = {"system", "light", "dark"};
@@ -120,6 +121,15 @@ public class SettingsActivity extends BaseActivity {
         quoteBox.setTextSize(13);
         quoteBox.setTextColor(Ui.INK);
         quoteBox.setChecked(prefs.showQuote());
+
+        final android.widget.CheckBox keepFormulaBox = new android.widget.CheckBox(this);
+        keepFormulaBox.setText("保留原公式写法（整理/改写时不重写公式）");
+        keepFormulaBox.setTextSize(13);
+        keepFormulaBox.setTextColor(Ui.INK);
+        keepFormulaBox.setChecked(prefs.keepFormula());
+        keepFormulaBox.setPadding(0, Ui.dp(this, 8), 0, 0);
+        form.addView(keepFormulaBox);
+        this.keepFormulaBox = keepFormulaBox;
         quoteBox.setPadding(0, Ui.dp(this, 10), 0, 0);
         form.addView(quoteBox);
 
@@ -195,6 +205,7 @@ public class SettingsActivity extends BaseActivity {
         prefs.setPrice(pi, po);
         prefs.setStrict(strictBox.isChecked());
         prefs.setShowQuote(quoteBox.isChecked());
+        if (keepFormulaBox != null) prefs.setKeepFormula(keepFormulaBox.isChecked());
         Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);

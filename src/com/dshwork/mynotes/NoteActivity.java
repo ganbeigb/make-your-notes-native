@@ -1,6 +1,8 @@
 package com.dshwork.mynotes;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
@@ -75,6 +77,29 @@ public class NoteActivity extends BaseActivity {
         });
         bar.addView(saveBtn);
         root.addView(bar);
+
+        LinearLayout aiRow = new LinearLayout(this);
+        aiRow.setOrientation(LinearLayout.HORIZONTAL);
+        aiRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 4));
+
+        TextView aiEdit = Ui.chip(this, "✨ 让 AI 改这条", false);
+        aiEdit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                askAiEdit();
+            }
+        });
+        aiRow.addView(aiEdit);
+
+        TextView aiDraft = Ui.chip(this, "✨ AI 起草", false);
+        aiDraft.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                askAiDraft();
+            }
+        });
+        aiRow.addView(aiDraft);
+        root.addView(aiRow);
 
         ScrollView scroll = new ScrollView(this);
         LinearLayout form = new LinearLayout(this);
@@ -271,6 +296,126 @@ public class NoteActivity extends BaseActivity {
                 .setView(scroll)
                 .setPositiveButton("关闭", null)
                 .show();
+    }
+
+    /** 让 AI 按要求改写这条笔记 */
+    private void askAiEdit() {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), 0);
+
+        final EditText input = new EditText(this);
+        input.setHint("例如：改写成适合背诵的短句；补充适用条件；把公式改成标准形式");
+        input.setMinLines(2);
+        box.addView(input);
+
+        final android.widget.CheckBox append = new android.widget.CheckBox(this);
+        append.setText("在原内容后面追加（不覆盖）");
+        append.setTextSize(13);
+        box.addView(append);
+
+        new AlertDialog.Builder(this)
+                .setTitle("让 AI 修改")
+                .setView(box)
+                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(final DialogInterface dialog, int which) {
+                        final String req = input.getText().toString().trim();
+                        if (req.isEmpty()) return;
+                        runAiEdit(req, append.isChecked());
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void runAiEdit(final String req, final boolean appendMode) {
+        save(false);
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("AI 正在改写…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Refine.Result r = Refine.edit(prefs, db, note, req, appendMode);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        if (r.error != null) {
+                            Toast.makeText(NoteActivity.this, r.error, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        if (r.name != null && !r.name.trim().isEmpty()) nameInput.setText(r.name.trim());
+                        if (r.content != null && !r.content.trim().isEmpty()) {
+                            if (appendMode) {
+                                String old = contentInput.getText().toString().trim();
+                                contentInput.setText(old.isEmpty() ? r.content.trim() : old + "\n\n" + r.content.trim());
+                            } else {
+                                contentInput.setText(r.content.trim());
+                            }
+                        }
+                        if (r.formula != null && !r.formula.trim().isEmpty()) formulaInput.setText(r.formula.trim());
+                        save(false);
+                        Toast.makeText(NoteActivity.this, "AI 已更新，可继续手改", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void askAiDraft() {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final EditText input = new EditText(this);
+        input.setHint("例如：用一句话解释基尔霍夫电流定律，并给公式");
+        new AlertDialog.Builder(this)
+                .setTitle("AI 起草")
+                .setView(input)
+                .setPositiveButton("生成", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String req = input.getText().toString().trim();
+                        if (!req.isEmpty()) runAiDraft(req);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void runAiDraft(final String req) {
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("AI 正在起草…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final Refine.Result r = Refine.draft(prefs, db, note.subjectId, req);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        if (r.error != null) {
+                            Toast.makeText(NoteActivity.this, r.error, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        if (r.name != null && !r.name.trim().isEmpty()) nameInput.setText(r.name.trim());
+                        if (r.content != null) contentInput.setText(r.content.trim());
+                        if (r.formula != null) formulaInput.setText(r.formula.trim());
+                        save(false);
+                        Toast.makeText(NoteActivity.this, "已生成，可继续改", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void insertSymbol(String s) {
