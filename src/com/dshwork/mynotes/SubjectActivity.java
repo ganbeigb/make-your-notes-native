@@ -54,9 +54,11 @@ public class SubjectActivity extends BaseActivity {
     private TextView retryBtn;
     private boolean selecting = false;
     private String viewMode = "decks";
+    private String filterKind = "all";
     private final java.util.Set<String> expanded = new java.util.HashSet<>();
     private final java.util.Set<String> picked = new java.util.HashSet<>();
     private LinearLayout batchRow;
+    private LinearLayout filterRow;
     private TextView selectCount;
     private volatile boolean importCancelled = false;
 
@@ -303,6 +305,36 @@ public class SubjectActivity extends BaseActivity {
         toolScroll.setHorizontalScrollBarEnabled(false);
         toolScroll.addView(tools);
         root.addView(toolScroll);
+
+        filterRow = new LinearLayout(this);
+        filterRow.setOrientation(LinearLayout.HORIZONTAL);
+        filterRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
+        final String[] filterKeys = {"all", "point", "ext"};
+        final String[] filterLabels = {"全部", "知识点", "拓展"};
+        final TextView[] filterViews = new TextView[filterKeys.length];
+        for (int fi = 0; fi < filterKeys.length; fi++) {
+            final int idx = fi;
+            final TextView fv = Ui.chip(this, filterLabels[fi], fi == 0);
+            filterViews[fi] = fv;
+            fv.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    filterKind = filterKeys[idx];
+                    for (int k = 0; k < filterViews.length; k++) {
+                        boolean on = k == idx;
+                        filterViews[k].setBackground(Ui.chip(SubjectActivity.this, "x", on).getBackground());
+                        filterViews[k].setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                    }
+                    buildRows();
+                    adapter.notifyDataSetChanged();
+                }
+            });
+            LinearLayout.LayoutParams flp2 = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            flp2.rightMargin = Ui.dp(this, 6);
+            filterRow.addView(fv, flp2);
+        }
+        root.addView(filterRow);
 
         batchRow = new LinearLayout(this);
         batchRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -572,6 +604,13 @@ public class SubjectActivity extends BaseActivity {
     /** 把「课件 → 其下知识点」摊平成行；没有课件的归到「未分组」 */
     private void buildRows() {
         rows.clear();
+        java.util.List<Db.Note> visible = new ArrayList<>();
+        for (Db.Note n : data) {
+            boolean ext = "extension".equals(n.kind);
+            if ("point".equals(filterKind) && ext) continue;
+            if ("ext".equals(filterKind) && !ext) continue;
+            visible.add(n);
+        }
         java.util.List<Db.Deck> decks = db.decks(subjectId);
         java.util.Map<String, java.util.List<Db.Note>> byDeck = new java.util.HashMap<>();
         java.util.List<Db.Note> loose = new ArrayList<>();
@@ -580,7 +619,7 @@ public class SubjectActivity extends BaseActivity {
         for (Db.Deck d : decks) {
             for (Db.Slide s : db.slides(d.id)) slideDeck.put(s.id, d.id);
         }
-        for (Db.Note n : data) {
+        for (Db.Note n : visible) {
             String deckId = n.slideId == null ? null : slideDeck.get(n.slideId);
             if (deckId == null) {
                 loose.add(n);
@@ -590,10 +629,10 @@ public class SubjectActivity extends BaseActivity {
             }
         }
         if ("items".equals(viewMode)) {
-            for (Db.Note n : data) rows.add(n);
+            for (Db.Note n : visible) rows.add(n);
             return;
         }
-        if (!data.isEmpty() && (decks == null || decks.isEmpty())) {
+        if (!visible.isEmpty() && (decks == null || decks.isEmpty())) {
             // 全是手动笔记：在顶部给一句说明，避免以为分组坏了
             HintRow hint = new HintRow();
             hint.text = "这些是手动新建的笔记。导入课件后，这里会按课件分组显示。";
