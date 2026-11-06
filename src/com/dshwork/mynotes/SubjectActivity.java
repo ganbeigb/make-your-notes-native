@@ -574,7 +574,16 @@ public class SubjectActivity extends BaseActivity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
         box.setGravity(Gravity.CENTER_VERTICAL);
-        box.setPadding(Ui.dp(this, 18), Ui.dp(this, 12), Ui.dp(this, 18), Ui.dp(this, 12));
+        box.setPadding(Ui.dp(this, 18), Ui.dp(this, 14), Ui.dp(this, 18), Ui.dp(this, 14));
+        android.graphics.drawable.GradientDrawable dbg = new android.graphics.drawable.GradientDrawable();
+        dbg.setColor(Ui.CARD);
+        dbg.setCornerRadius(Ui.dp(this, 16));
+        dbg.setStroke(Ui.dp(this, 1), Ui.LINE);
+        box.setBackground(dbg);
+        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dlp.bottomMargin = Ui.dp(this, 10);
+        box.setLayoutParams(dlp);
 
         boolean open = !collapsedDecks.contains(d.id);
         TextView arrow = Ui.text(this, open ? "▾" : "▸", 14, Ui.ACCENT);
