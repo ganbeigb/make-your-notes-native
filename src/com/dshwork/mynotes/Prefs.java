@@ -47,6 +47,14 @@ public class Prefs {
         sp.edit().putString("textModel", v.trim()).apply();
     }
 
+    public boolean showQuote() {
+        return sp.getBoolean("showQuote", true);
+    }
+
+    public void setShowQuote(boolean v) {
+        sp.edit().putBoolean("showQuote", v).apply();
+    }
+
     /** light | dark | system */
     public String theme() {
         return sp.getString("theme", "system");

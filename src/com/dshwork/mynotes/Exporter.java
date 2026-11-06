@@ -66,6 +66,9 @@ public class Exporter {
                 if (n.formula != null && !n.formula.trim().isEmpty()) {
                     sb.append("$$").append(n.formula.trim()).append("$$\n\n");
                 }
+                if (n.quote != null && !n.quote.trim().isEmpty()) {
+                    sb.append("> 原文：").append(n.quote.trim()).append("\n\n");
+                }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
                     sb.append("标签：").append(n.tags).append("\n\n");
                 }
@@ -111,6 +114,10 @@ public class Exporter {
                     } else {
                         sb.append("<div class=\"fx\">").append(esc(n.formula.trim())).append("</div>");
                     }
+                }
+                if (n.quote != null && !n.quote.trim().isEmpty()) {
+                    sb.append("<div class=\"tag\" style=\"border-left:3px solid #d8cfb8;padding-left:8px;margin-top:6px\">原文：")
+                            .append(esc(n.quote.trim())).append("</div>");
                 }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
                     sb.append("<div class=\"tag\">标签：").append(esc(n.tags)).append("</div>");
