@@ -297,6 +297,24 @@ public class SubjectActivity extends BaseActivity {
         });
         batchRow.addView(delPicked);
 
+        TextView mmSelected = batchChip("生成导图");
+        mmSelected.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (picked.isEmpty()) {
+                    Toast.makeText(SubjectActivity.this, "先选中知识点", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent mi = new Intent(SubjectActivity.this, MindMapActivity.class);
+                mi.putExtra("subjectId", subjectId);
+                mi.putExtra("subjectName", subjectName);
+                mi.putStringArrayListExtra("noteIds", new ArrayList<>(picked));
+                exitSelect();
+                startActivity(mi);
+            }
+        });
+        batchRow.addView(mmSelected);
+
         TextView movePicked = batchChip("改分类");
         movePicked.setOnClickListener(new View.OnClickListener() {
             @Override

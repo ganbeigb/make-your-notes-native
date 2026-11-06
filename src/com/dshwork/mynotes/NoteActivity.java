@@ -344,35 +344,46 @@ public class NoteActivity extends BaseActivity {
         symLabel.setPadding(0, Ui.dp(this, 14), 0, Ui.dp(this, 6));
         form.addView(symLabel);
 
+        // 分组与字符与网页版 SYMBOLS 一致
+        final String[][] groups = {
+                {"常用", "± × ÷ ≠ ≈ ≤ ≥ ∞ ∝ ∴ ∵ ° ′ ″ → ⇒"},
+                {"希腊", "α β γ δ ε ζ η θ κ λ μ ν ξ π ρ σ τ φ χ ψ ω Δ Σ Π Ω"},
+                {"运算", "∑ ∏ ∫ ∬ ∮ ∂ ∇ √ ∠ ⊥ ∥ ⊕ ⊗ · ! ∘"},
+                {"集合", "∈ ∉ ⊂ ⊃ ⊆ ⊇ ∪ ∩ ∅ ∀ ∃ ¬ ∧ ∨ ⇔ ↦"}
+        };
+        final LinearLayout symRow = new LinearLayout(this);
+        symRow.setOrientation(LinearLayout.HORIZONTAL);
         android.widget.HorizontalScrollView symScroll = new android.widget.HorizontalScrollView(this);
         symScroll.setHorizontalScrollBarEnabled(false);
-        LinearLayout symRow = new LinearLayout(this);
-        symRow.setOrientation(LinearLayout.HORIZONTAL);
-        String[] symbols = {"α", "β", "γ", "δ", "ε", "θ", "λ", "μ", "π", "ρ", "σ", "τ", "φ", "ω",
-                "Δ", "Ω", "∑", "∫", "√", "±", "×", "÷", "≠", "≤", "≥", "≈", "∞", "∂", "°",
-                "²", "³", "⁻¹", "₁", "₂", "→", "⇒", "∠", "⊥", "∥"};
-        for (final String s : symbols) {
-            TextView b = new TextView(this);
-            b.setText(s);
-            b.setTextSize(15);
-            b.setTextColor(Ui.INK);
-            b.setGravity(Gravity.CENTER);
-            b.setPadding(Ui.dp(this, 11), Ui.dp(this, 7), Ui.dp(this, 11), Ui.dp(this, 7));
-            b.setBackground(Ui.card(this));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.rightMargin = Ui.dp(this, 6);
-            b.setLayoutParams(lp);
-            b.setOnClickListener(new View.OnClickListener() {
+        symScroll.addView(symRow);
+
+        final LinearLayout tabRow = new LinearLayout(this);
+        tabRow.setOrientation(LinearLayout.HORIZONTAL);
+        tabRow.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+        final java.util.List<TextView> tabViews = new java.util.ArrayList<>();
+        for (int gi = 0; gi < groups.length; gi++) {
+            final int index = gi;
+            final TextView tab = Ui.chip(this, groups[gi][0], gi == 0);
+            tab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    insertSymbol(s);
+                    for (int k = 0; k < tabViews.size(); k++) {
+                        boolean on = k == index;
+                        tabViews.get(k).setBackground(Ui.chip(NoteActivity.this, "x", on).getBackground());
+                        tabViews.get(k).setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                    }
+                    fillSymbols(symRow, groups[index][1]);
                 }
             });
-            symRow.addView(b);
+            tabViews.add(tab);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tlp.rightMargin = Ui.dp(this, 6);
+            tabRow.addView(tab, tlp);
         }
-        symScroll.addView(symRow);
+        form.addView(tabRow);
         form.addView(symScroll);
+        fillSymbols(symRow, groups[0][1]);
 
         if (note.source != null && !note.source.isEmpty()) {
             TextView src = Ui.text(this, "来源：" + note.source, 12, Ui.INK2);
@@ -607,6 +618,33 @@ public class NoteActivity extends BaseActivity {
                 });
             }
         }).start();
+    }
+
+    /** 按分组把符号填进一行 */
+    private void fillSymbols(LinearLayout row, String chars) {
+        row.removeAllViews();
+        for (String s : chars.split(" ")) {
+            if (s.trim().isEmpty()) continue;
+            final String sym = s.trim();
+            TextView b = new TextView(this);
+            b.setText(sym);
+            b.setTextSize(15);
+            b.setTextColor(Ui.INK);
+            b.setGravity(Gravity.CENTER);
+            b.setPadding(Ui.dp(this, 11), Ui.dp(this, 7), Ui.dp(this, 11), Ui.dp(this, 7));
+            b.setBackground(Ui.card(this));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.rightMargin = Ui.dp(this, 6);
+            b.setLayoutParams(lp);
+            b.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    insertSymbol(sym);
+                }
+            });
+            row.addView(b);
+        }
     }
 
     private void insertSymbol(String s) {
