@@ -3,7 +3,9 @@ package com.dshwork.mynotes;
 import android.app.Activity;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +15,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/** 知识点详情 / 编辑。 */
+/** 知识点详情：编辑 + 公式实时预览。 */
 public class NoteActivity extends Activity {
 
     private Db db;
@@ -22,6 +24,7 @@ public class NoteActivity extends Activity {
     private EditText categoryInput;
     private EditText formulaInput;
     private EditText contentInput;
+    private FormulaView preview;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -41,7 +44,6 @@ public class NoteActivity extends Activity {
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 10));
-
         TextView back = Ui.text(this, "‹", 26, Ui.ACCENT);
         back.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 12), 0);
         back.setOnClickListener(new View.OnClickListener() {
@@ -52,11 +54,9 @@ public class NoteActivity extends Activity {
             }
         });
         bar.addView(back);
-
         TextView title = Ui.text(this, "知识点", 19, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-
         TextView saveBtn = Ui.button(this, "保存");
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -73,14 +73,41 @@ public class NoteActivity extends Activity {
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
 
         nameInput = field(form, "标题", note.name, InputType.TYPE_CLASS_TEXT, 1);
-        categoryInput = field(form, "分类", note.category == null ? "" : note.category, InputType.TYPE_CLASS_TEXT, 1);
-        formulaInput = field(form, "公式（LaTeX，例如 E=mc^2）", note.formula == null ? "" : note.formula, InputType.TYPE_CLASS_TEXT, 1);
+        categoryInput = field(form, "分类（用 / 分层，例如 力学/运动学）",
+                note.categoryPath == null ? "" : note.categoryPath, InputType.TYPE_CLASS_TEXT, 1);
+
+        formulaInput = field(form, "公式（LaTeX）", note.formula == null ? "" : note.formula, InputType.TYPE_CLASS_TEXT, 1);
+        preview = new FormulaView(this);
+        preview.setBackground(Ui.card(this));
+        preview.setTex(note.formula == null ? "" : note.formula);
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        plp.topMargin = Ui.dp(this, 6);
+        form.addView(preview, plp);
+
+        formulaInput.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                preview.setTex(s.toString());
+            }
+        });
+
         contentInput = field(form, "正文", note.content == null ? "" : note.content,
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE, 8);
 
-        TextView hint = Ui.text(this, "当前版本只编辑纯文本；公式渲染、AI 提取与画板在后续里程碑接入。", 12, Ui.INK2);
-        hint.setPadding(0, Ui.dp(this, 12), 0, 0);
-        form.addView(hint);
+        if (note.source != null && !note.source.isEmpty()) {
+            TextView src = Ui.text(this, "来源：" + note.source, 12, Ui.INK2);
+            src.setPadding(0, Ui.dp(this, 10), 0, 0);
+            form.addView(src);
+        }
 
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -108,9 +135,10 @@ public class NoteActivity extends Activity {
     private void save(boolean toast) {
         note.name = nameInput.getText().toString().trim();
         if (note.name.isEmpty()) note.name = "未命名";
-        note.category = categoryInput.getText().toString().trim();
         note.formula = formulaInput.getText().toString().trim();
         note.content = contentInput.getText().toString();
+        String cat = categoryInput.getText().toString().trim();
+        note.categoryId = cat.isEmpty() ? null : db.ensureCategoryPath(note.subjectId, cat);
         db.saveNote(note);
         if (toast) Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
     }
