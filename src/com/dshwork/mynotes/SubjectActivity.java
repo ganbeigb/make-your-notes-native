@@ -1070,44 +1070,69 @@ public class SubjectActivity extends BaseActivity {
         return base.isEmpty() ? "notes" : base;
     }
 
-    private void startExport(int kind) {
-        try {
-            if (kind == 0) {
-                pendingBytes = Exporter.markdown(db, subjectId).getBytes("UTF-8");
-                pendingName = safeName() + "-笔记.md";
-                pendingMime = "text/markdown";
-            } else if (kind == 1) {
-                pendingBytes = Exporter.html(this, db, subjectId).getBytes("UTF-8");
-                pendingName = safeName() + "-笔记.html";
-                pendingMime = "text/html";
-            } else if (kind == 2) {
-                pendingBytes = Exporter.formulas(this, db, subjectId).getBytes("UTF-8");
-                pendingName = safeName() + "-公式合集.html";
-                pendingMime = "text/html";
-            } else if (kind == 4) {
-                pendingBytes = Exporter.json(db, subjectId).getBytes("UTF-8");
-                pendingName = safeName() + "-笔记.json";
-                pendingMime = "application/json";
-            } else {
-                byte[] data = Exporter.backupSubject(db, this, subjectId);
-                java.io.File saved = Backups.save(this, safeName() + "-备份-" + Backups.stamp() + ".zip", data);
-                new AlertDialog.Builder(this)
-                        .setTitle("备份已保存")
-                        .setMessage("文件：\n" + saved.getName() + "\n\n位置：\n" + Backups.dirHint(this)
-                                + "\n\n恢复时在这里直接选，不用去翻文件管理器。")
-                        .setPositiveButton("好", null)
-                        .show();
-                return;
+    private void startExport(final int kind) {
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在生成…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String err = null;
+                java.io.File savedZip = null;
+                try {
+                    if (kind == 0) {
+                        pendingBytes = Exporter.markdown(db, subjectId).getBytes("UTF-8");
+                        pendingName = safeName() + "-笔记.md";
+                        pendingMime = "text/markdown";
+                    } else if (kind == 1) {
+                        pendingBytes = Exporter.html(SubjectActivity.this, db, subjectId).getBytes("UTF-8");
+                        pendingName = safeName() + "-笔记.html";
+                        pendingMime = "text/html";
+                    } else if (kind == 2) {
+                        pendingBytes = Exporter.formulas(SubjectActivity.this, db, subjectId).getBytes("UTF-8");
+                        pendingName = safeName() + "-公式合集.html";
+                        pendingMime = "text/html";
+                    } else if (kind == 4) {
+                        pendingBytes = Exporter.json(db, subjectId).getBytes("UTF-8");
+                        pendingName = safeName() + "-笔记.json";
+                        pendingMime = "application/json";
+                    } else {
+                        byte[] data = Exporter.backupSubject(db, SubjectActivity.this, subjectId);
+                        savedZip = Backups.save(SubjectActivity.this,
+                                safeName() + "-备份-" + Backups.stamp() + ".zip", data);
+                    }
+                } catch (Exception e) {
+                    err = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                }
+                final String finalErr = err;
+                final java.io.File zip = savedZip;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        if (finalErr != null) {
+                            Toast.makeText(SubjectActivity.this, "生成失败：" + finalErr, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        if (zip != null) {
+                            new AlertDialog.Builder(SubjectActivity.this)
+                                    .setTitle("备份已保存")
+                                    .setMessage("文件：\n" + zip.getName() + "\n\n位置：\n" + Backups.dirHint(SubjectActivity.this)
+                                            + "\n\n恢复时在这里直接选，不用去翻文件管理器。")
+                                    .setPositiveButton("好", null)
+                                    .show();
+                            return;
+                        }
+                        Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                        i.addCategory(Intent.CATEGORY_OPENABLE);
+                        i.setType(pendingMime);
+                        i.putExtra(Intent.EXTRA_TITLE, pendingName);
+                        startActivityForResult(i, REQ_SAVE);
+                    }
+                });
             }
-        } catch (Exception e) {
-            Toast.makeText(this, "生成失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
-            return;
-        }
-        Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        i.setType(pendingMime);
-        i.putExtra(Intent.EXTRA_TITLE, pendingName);
-        startActivityForResult(i, REQ_SAVE);
+        }).start();
     }
 
     private void editCriteria() {
