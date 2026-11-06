@@ -26,6 +26,7 @@ public class BoardActivity extends BaseActivity {
     private BoardView board;
     private LinearLayout shapeRow;
     private LinearLayout symbolRow;
+    private LinearLayout dirRow;
     private android.widget.HorizontalScrollView symbolScroll;
 
     @Override
@@ -355,6 +356,36 @@ public class BoardActivity extends BaseActivity {
                 askTextDialog(sink);
             }
         });
+        final LinearLayout dirRow = new LinearLayout(this);
+        dirRow.setOrientation(LinearLayout.HORIZONTAL);
+        dirRow.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 6));
+        dirRow.setVisibility(View.GONE);
+        final String[] dirs = {"auto", "up", "right", "down", "left"};
+        final String[] dirLabels = {"自动", "↑", "→", "↓", "←"};
+        final java.util.List<TextView> dirChips = new java.util.ArrayList<>();
+        for (int i = 0; i < dirs.length; i++) {
+            final String dir = dirs[i];
+            final TextView chipDir = Ui.chip(this, dirLabels[i], i == 0);
+            chipDir.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    board.pipeDir = dir;
+                    for (int k = 0; k < dirChips.size(); k++) {
+                        boolean on = dirs[k].equals(dir);
+                        dirChips.get(k).setBackground(Ui.chip(BoardActivity.this, "x", on).getBackground());
+                        dirChips.get(k).setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                    }
+                }
+            });
+            dirChips.add(chipDir);
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dlp.rightMargin = Ui.dp(this, 6);
+            dirRow.addView(chipDir, dlp);
+        }
+        root.addView(dirRow);
+        this.dirRow = dirRow;
+
         root.addView(board, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         // 底部提示
@@ -379,6 +410,7 @@ public class BoardActivity extends BaseActivity {
                 }
                 shapeRow.setVisibility(tool == BoardView.T_SHAPE ? View.VISIBLE : View.GONE);
                 if (symbolScroll != null) symbolScroll.setVisibility(tool == BoardView.T_SYMBOL ? View.VISIBLE : View.GONE);
+        if (dirRow != null) dirRow.setVisibility(tool == BoardView.T_WIRE ? View.VISIBLE : View.GONE);
             }
         });
         return b;

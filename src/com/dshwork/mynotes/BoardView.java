@@ -134,6 +134,8 @@ public class BoardView extends View {
     private boolean boxing = false;
     private float boxX0, boxY0, boxX1, boxY1;
     public boolean snapPins = true;
+    /** auto | up | right | down | left：导线从起点先往哪个方向走 */
+    public String pipeDir = "auto";
     public boolean showGrid = true;
     public boolean snapDrag = false;
 
@@ -936,7 +938,39 @@ public class BoardView extends View {
 
     /* ---------------- 直角走线 ---------------- */
 
+    /** 对外入口：先按方向优先加引线，再走实际布线 */
     private List<PointF> routeWire(PointF a, PointF b) {
+        List<PointF> stub = withStub(a, b);
+        if (stub.size() < 2) {
+            return routeWireRaw(a, b);
+        }
+        List<PointF> out = new ArrayList<>(stub);
+        PointF last = stub.get(stub.size() - 1);
+        List<PointF> rest = routeWireRaw(last, b);
+        for (int i = 1; i < rest.size(); i++) out.add(rest.get(i));
+        return out;
+    }
+
+    /** 按「方向优先」给起点加一小段引线，再交给 A* */
+    private List<PointF> withStub(PointF a, PointF b) {
+        List<PointF> out = new ArrayList<>();
+        if ("auto".equals(pipeDir)) {
+            out.add(new PointF(a.x, a.y));
+            return out;
+        }
+        float step = 20f;
+        float sx = a.x, sy = a.y;
+        if ("up".equals(pipeDir)) sy -= step;
+        else if ("down".equals(pipeDir)) sy += step;
+        else if ("left".equals(pipeDir)) sx -= step;
+        else if ("right".equals(pipeDir)) sx += step;
+        out.add(new PointF(a.x, a.y));
+        out.add(new PointF(sx, sy));
+        return out;
+    }
+
+    /** 实际布线（不带方向引线） */
+    private List<PointF> routeWireRaw(PointF a, PointF b) {
         List<PointF> out = new ArrayList<>();
         out.add(new PointF(a.x, a.y));
         boolean hFirst = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
