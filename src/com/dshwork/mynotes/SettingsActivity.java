@@ -272,7 +272,7 @@ public class SettingsActivity extends BaseActivity {
         e.setTextSize(13.5f);
         e.setTextColor(Ui.INK);
         e.setBackground(Ui.card(this));
-        e.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        e.setPadding(Ui.dp(this, 11), Ui.dp(this, 9), Ui.dp(this, 11), Ui.dp(this, 9));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(Ui.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT);
         e.setLayoutParams(lp);
         parent.addView(Ui.settingRow(this, label, null, e));
