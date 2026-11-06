@@ -19,7 +19,7 @@
 | 动作 | 原生实现 | 状态 |
 |---|---|---|
 | upload | 「导入课件」多选图片 | ✅ |
-| extract-slide / extract-all / extract-deck | 导入即逐页识别；「重试失败」补漏 | ✅ |
+| extract-slide / extract-all / extract-deck | 导入逐页识别；「重试失败」补漏；「重做整册」整册重跑 | ✅ |
 | refine-slide | 页面菜单「让 AI 重做这一页」 | ✅ |
 | digest-slide | 页面菜单「生成该页汇总」 | ✅ |
 | summarize-deck | 课件菜单「本节总结（AI）」 | ✅ |
