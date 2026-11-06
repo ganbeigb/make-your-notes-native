@@ -52,7 +52,7 @@ public class CategoryActivity extends BaseActivity {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 8));
+        bar.setPadding(Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 10));
         TextView back = Ui.text(this, "‹", 26, Ui.ACCENT);
         back.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 10), 0);
         back.setOnClickListener(new View.OnClickListener() {
