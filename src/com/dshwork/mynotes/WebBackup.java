@@ -187,6 +187,7 @@ public class WebBackup {
                     n.formula = it.optString("formula", "");
                     n.quote = it.optString("quote", "");
                     n.importance = Math.max(1, Math.min(5, it.optInt("importance", 2)));
+                    n.kind = "extension".equals(it.optString("kind", "point")) ? "extension" : "point";
                     n.categoryId = catId;
                     JSONArray tags = it.optJSONArray("tags");
                     if (tags != null) {
