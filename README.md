@@ -199,6 +199,10 @@ git tag -a vX.Y.Z -m "说明"
 见 [CHANGELOG.md](CHANGELOG.md)，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
 
 
+## 迁移对照
+
+网页版每个功能对应的原生实现文件见 [MIGRATION.md](MIGRATION.md)。
+
 ## 发布
 
 推送到 GitHub、打 Release 的完整命令见 [PUSH.md](PUSH.md)。
