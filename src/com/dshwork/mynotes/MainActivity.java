@@ -387,7 +387,7 @@ public class MainActivity extends BaseActivity {
                         WebBackup.Result wr = WebBackup.importFromZip(MainActivity.this, db,
                                 new java.io.ByteArrayInputStream(data), new Prefs(MainActivity.this));
                         msg = wr.error != null ? ("网页版备份导入失败：" + wr.error)
-                                : ("已从网页版备份导入：" + wr.subjects + " 科目、" + wr.categories + " 分类、"
+                                : ("已从网页版备份导入：" + wr.subjects + " 科目、" + wr.decks + " 课件、" + wr.categories + " 分类、"
                                    + wr.notes + " 知识点、" + wr.images + " 张原图");
                     } else {
                         String json = null;

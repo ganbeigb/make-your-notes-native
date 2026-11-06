@@ -21,6 +21,7 @@ public class WebBackup {
         public int categories;
         public int notes;
         public int images;
+        public int decks;
         public String error;
     }
 
@@ -112,6 +113,24 @@ public class WebBackup {
                 }
             }
 
+            // 3) 课件与页面：把网页版的 decks / slides 落成本地记录
+            Map<String, String> deckMap = new HashMap<>();
+            JSONArray webDecks = m.optJSONArray("decks");
+            if (webDecks != null) {
+                for (int i = 0; i < webDecks.length(); i++) {
+                    JSONObject d = webDecks.optJSONObject(i);
+                    if (d == null) continue;
+                    String newSubj = subjMap.get(d.optString("subjectId"));
+                    if (newSubj == null) continue;
+                    String title = d.optString("title", "课件");
+                    Db.Deck created = db.addDeck(newSubj, title);
+                    deckMap.put(d.optString("id"), created.id);
+                    r.decks++;
+                }
+            }
+
+            Map<String, String> slideMap = new HashMap<>();
+            Map<String, Integer> slideIdx = new HashMap<>();
             // 3) 页面：slideId → 页码 + 图片
             Map<String, Integer> slidePage = new HashMap<>();
             Map<String, String> slideImage = new HashMap<>();
@@ -120,9 +139,29 @@ public class WebBackup {
                 for (int i = 0; i < slides.length(); i++) {
                     JSONObject s = slides.optJSONObject(i);
                     if (s == null) continue;
-                    slidePage.put(s.optString("id"), s.optInt("index", i + 1));
+                    int idx = s.optInt("index", i + 1);
+                    String oldSlideId = s.optString("id");
+                    slidePage.put(oldSlideId, idx);
                     String img = s.optString("image", "");
-                    if (!img.isEmpty()) slideImage.put(s.optString("id"), trimBasename(img));
+                    if (!img.isEmpty()) slideImage.put(oldSlideId, trimBasename(img));
+
+                    String newSubj = subjMap.get(s.optString("subjectId"));
+                    if (newSubj == null) continue;
+                    String newDeck = deckMap.get(s.optString("deckId"));
+                    if (newDeck == null) {
+                        // 网页版某些备份里 slide 没带 deckId：给它建一个「课件」
+                        Db.Deck fallback = db.addDeck(newSubj, "课件");
+                        deckMap.put(s.optString("deckId"), fallback.id);
+                        newDeck = fallback.id;
+                        r.decks++;
+                    }
+                    Db.Slide local = db.addSlide(newSubj, newDeck, idx, null);
+                    String title = s.optString("title", "");
+                    if (!title.trim().isEmpty()) db.renameSlide(local.id, title.trim());
+                    String digest = s.optString("digest", "");
+                    if (!digest.trim().isEmpty()) db.setSlideDigest(local.id, digest.trim());
+                    slideMap.put(oldSlideId, local.id);
+                    slideIdx.put(oldSlideId, idx);
                 }
             }
 
@@ -159,6 +198,9 @@ public class WebBackup {
                         n.tags = sb.toString();
                     }
                     String slideId = it.optString("slideId", null);
+                    if (slideId != null && slideMap.containsKey(slideId)) {
+                        n.slideId = slideMap.get(slideId);
+                    }
                     if (slideId != null && slidePage.containsKey(slideId)) {
                         int page = slidePage.get(slideId);
                         n.slidePage = page;
@@ -173,6 +215,7 @@ public class WebBackup {
                                     if (path != null) r.images++;
                                 }
                                 pageImagePath.put(base, path);
+                                if (n.slideId != null) db.setSlideImage(n.slideId, path);
                             }
                             n.slidePath = path;
                         }

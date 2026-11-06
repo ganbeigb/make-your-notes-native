@@ -356,6 +356,12 @@ public class Db extends SQLiteOpenHelper {
         }
     }
 
+    public void setSlideImage(String slideId, String path) {
+        ContentValues v = new ContentValues();
+        v.put("image_path", path);
+        getWritableDatabase().update("slides", v, "id = ?", new String[]{slideId});
+    }
+
     public void renameSlide(String slideId, String title) {
         ContentValues v = new ContentValues();
         v.put("title", title);
@@ -992,6 +998,49 @@ public class Db extends SQLiteOpenHelper {
 
     /** 清空所有数据（不可恢复） */
     /** 清掉指向已不存在文件的配图/原图引用 */
+    /** 把「有页码但没挂课件」的知识点补到课件的对应页上（旧导入修复用） */
+    public int repairDeckLinks() {
+        int fixed = 0;
+        for (Subject s : subjects()) {
+            Deck deck = null;
+            for (Note n : notes(s.id)) {
+                if (n.slideId != null && !n.slideId.isEmpty()) continue;
+                if (n.slidePage <= 0) continue;
+                if (deck == null) {
+                    for (Deck dk : decks(s.id)) {
+                        if ("导入的课件".equals(dk.title)) {
+                            deck = dk;
+                            break;
+                        }
+                    }
+                    if (deck == null) deck = addDeck(s.id, "导入的课件");
+                }
+                String slideId = findSlideId(deck.id, n.slidePage);
+                if (slideId == null) {
+                    Slide sl = addSlide(s.id, deck.id, n.slidePage, n.slidePath);
+                    if (sl.id == null) continue;
+                    slideId = sl.id;
+                }
+                ContentValues v = new ContentValues();
+                v.put("slide_id", slideId);
+                getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});
+                fixed++;
+            }
+        }
+        return fixed;
+    }
+
+    private String findSlideId(String deckId, int idx) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT id FROM slides WHERE deck_id = ? AND idx = ? LIMIT 1",
+                new String[]{deckId, String.valueOf(idx)});
+        try {
+            return c.moveToFirst() ? c.getString(0) : null;
+        } finally {
+            c.close();
+        }
+    }
+
     public int repairImages() {
         int fixed = 0;
         Cursor c = getReadableDatabase().rawQuery(
