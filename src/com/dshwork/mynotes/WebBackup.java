@@ -51,6 +51,20 @@ public class WebBackup {
 
             // 1) 科目
             Map<String, String> subjMap = new HashMap<>();
+            String defaultOldId = null;
+            JSONObject one = m.optJSONObject("subject");
+            if (one != null) {
+                defaultOldId = one.optString("id", null);
+                String name = one.optString("name", "").trim();
+                if (!name.isEmpty()) {
+                    String id = db.findSubjectIdByName(name);
+                    if (id == null) {
+                        id = db.addSubject(name).id;
+                        r.subjects++;
+                    }
+                    subjMap.put(defaultOldId, id);
+                }
+            }
             JSONArray subjects = m.optJSONArray("subjects");
             if (subjects != null) {
                 for (int i = 0; i < subjects.length(); i++) {
@@ -75,8 +89,9 @@ public class WebBackup {
                 for (int i = 0; i < cats.length(); i++) {
                     JSONObject c = cats.optJSONObject(i);
                     if (c == null) continue;
-                    String newSubj = subjMap.get(c.optString("subjectId"));
-                    if (newSubj == null) continue;
+                    String oldSid = c.optString("subjectId", defaultOldId == null ? "" : defaultOldId);
+                    String newSubj = subjMap.get(oldSid);
+                    if (newSubj == null) newSubj = ensureFallbackSubject(db, subjMap, oldSid, r);
                     String name = c.optString("name", "").trim();
                     if (name.isEmpty()) continue;
                     String existing = db.findCategoryId(newSubj, null, name);
@@ -118,8 +133,9 @@ public class WebBackup {
                 for (int i = 0; i < items.length(); i++) {
                     JSONObject it = items.optJSONObject(i);
                     if (it == null) continue;
-                    String newSubj = subjMap.get(it.optString("subjectId"));
-                    if (newSubj == null) continue;
+                    String oldSid = it.optString("subjectId", defaultOldId == null ? "" : defaultOldId);
+                    String newSubj = subjMap.get(oldSid);
+                    if (newSubj == null) newSubj = ensureFallbackSubject(db, subjMap, oldSid, r);
                     String name = it.optString("name", "").trim();
                     if (name.isEmpty()) continue;
                     if (db.noteExistsByTitle(newSubj, name)) continue;
@@ -171,6 +187,22 @@ public class WebBackup {
             r.error = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
         }
         return r;
+    }
+
+    /** 备份里出现了没登记过的 subjectId：建一个「导入的科目」接住，避免整批被跳过 */
+    private static String ensureFallbackSubject(Db db, Map<String, String> subjMap, String oldSid, Result r) {
+        String key = oldSid == null ? "" : oldSid;
+        String cached = subjMap.get(key);
+        if (cached != null) return cached;
+        String name = subjMap.containsKey("__fallback__") ? "导入的科目 " + subjMap.size() : "导入的科目";
+        String id = db.findSubjectIdByName(name);
+        if (id == null) {
+            id = db.addSubject(name).id;
+            r.subjects++;
+        }
+        subjMap.put(key, id);
+        subjMap.put("__fallback__", id);
+        return id;
     }
 
     private static String trimBasename(String p) {
