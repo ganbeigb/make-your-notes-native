@@ -180,18 +180,22 @@ public class Ui {
     public static TextView chip(Context c, String label, boolean primary) {
         TextView t = new TextView(c);
         t.setText(label);
-        t.setTextSize(12.5f * scale);
+        t.setTextSize(12f * scale);
         t.setSingleLine(true);
         t.setMaxLines(1);
         t.setGravity(android.view.Gravity.CENTER);
-        t.setMinHeight(dp(c, 32));
-        t.setPadding(dp(c, 12), 0, dp(c, 12), 0);
+        t.setMinHeight(dp(c, 28));
+        t.setPadding(dp(c, 11), 0, dp(c, 11), 0);
         if (primary) {
             t.setTextColor(0xFFFFFFFF);
             t.setBackground(button(c, "").getBackground());
         } else {
-            t.setTextColor(INK);
-            t.setBackground(card(c));
+            t.setTextColor(INK2);
+            android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+            g.setColor(CARD);
+            g.setStroke(dp(c, 1), LINE);
+            g.setCornerRadius(dp(c, 999));
+            t.setBackground(g);
         }
         android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT, android.widget.LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -220,6 +224,7 @@ public class Ui {
             h.setText(hint);
             h.setTextSize(11.5f * scale);
             h.setTextColor(MUTED);
+            h.setLineSpacing(0, 1.5f);
             h.setPadding(0, dp(c, 2), 0, 0);
             left.addView(h);
         }
