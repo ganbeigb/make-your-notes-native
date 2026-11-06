@@ -27,6 +27,11 @@ import java.util.List;
 public class SubjectActivity extends Activity {
 
     private static final int REQ_PICK = 1001;
+    private static final int REQ_SAVE = 1002;
+
+    private byte[] pendingBytes;
+    private String pendingName = "export";
+    private String pendingMime = "text/plain";
 
     private Db db;
     private Prefs prefs;
@@ -94,6 +99,21 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(imp);
+
+        TextView exp = Ui.text(this, "  导出  ", 14, Ui.INK);
+        exp.setBackground(Ui.card(this));
+        exp.setGravity(Gravity.CENTER);
+        exp.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams elp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        elp.leftMargin = Ui.dp(this, 8);
+        exp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openExportMenu();
+            }
+        });
+        tools.addView(exp, elp);
         root.addView(tools);
 
         list = new ListView(this);
@@ -204,6 +224,55 @@ public class SubjectActivity extends Activity {
         Intent i = new Intent(this, NoteActivity.class);
         i.putExtra("noteId", noteId);
         startActivity(i);
+    }
+
+private void openExportMenu() {
+        final String[] items = {"Markdown 笔记", "HTML 笔记（含公式图片）", "公式合集（HTML）", "完整备份（zip）"};
+        new AlertDialog.Builder(this)
+                .setTitle("导出")
+                .setItems(items, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startExport(which);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private String safeName() {
+        String base = subjectName == null ? "notes" : subjectName.replaceAll("[\\\\/:*?\"<>|]", "_");
+        return base.isEmpty() ? "notes" : base;
+    }
+
+    private void startExport(int kind) {
+        try {
+            if (kind == 0) {
+                pendingBytes = Exporter.markdown(db, subjectId).getBytes("UTF-8");
+                pendingName = safeName() + "-笔记.md";
+                pendingMime = "text/markdown";
+            } else if (kind == 1) {
+                pendingBytes = Exporter.html(this, db, subjectId).getBytes("UTF-8");
+                pendingName = safeName() + "-笔记.html";
+                pendingMime = "text/html";
+            } else if (kind == 2) {
+                pendingBytes = Exporter.formulas(this, db, subjectId).getBytes("UTF-8");
+                pendingName = safeName() + "-公式合集.html";
+                pendingMime = "text/html";
+            } else {
+                pendingBytes = Exporter.backup(db, this);
+                pendingName = safeName() + "-备份.zip";
+                pendingMime = "application/zip";
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "生成失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType(pendingMime);
+        i.putExtra(Intent.EXTRA_TITLE, pendingName);
+        startActivityForResult(i, REQ_SAVE);
     }
 
     private void pickImages() {

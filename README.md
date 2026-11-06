@@ -7,7 +7,8 @@ Android 原生 View 实现，**不加载网页、不跑本地 Node 服务**。�
 | 版本 | 内容 |
 |---|---|
 | v0.1.0 | 骨架：科目 / 知识点 / SQLite |
-| **v0.2.0** | 课件截图导入（AI 识图）、公式渲染、设置页（Key / 模型 / 推理档位） |
+| v0.2.0 | 课件截图导入（AI 识图）、公式渲染、设置页 |
+| **v0.3.0** | 导出：Markdown / HTML（公式转内联 PNG）/ 公式合集 / 完整备份 zip |
 
 ## 架构
 
@@ -19,6 +20,12 @@ Android 原生 View 实现，**不加载网页、不跑本地 Node 服务**。�
 | 公式 | KaTeX（浏览器 JS） | 自写 Canvas 渲染器 |
 | 打包 | nodejs-mobile + JNI | aapt2 + javac + d8（无 Gradle） |
 | 体积 | 约 20 MB | 约 40 KB |
+
+## v0.3.0 新增
+
+- 导出菜单：Markdown / HTML 笔记 / 公式合集 / 备份 zip
+- HTML 里的公式渲染成内联 PNG，离线打开也能看，可直接打印成 PDF
+- 保存走系统文件选择器（ACTION_CREATE_DOCUMENT），不需要存储权限
 
 ## v0.2.0 功能
 
