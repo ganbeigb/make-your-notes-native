@@ -1,0 +1,127 @@
+# 逐项对照清单（网页版 → 原生版）
+
+> 依据：网页版 `public/app.js` 里 80 个 `data-act`、`draw.js` 的画板动作、`styles.css` 的设计变量。
+> 状态：✅ 已复刻 / 🟡 等价实现 / ⚪ 不适用（服务器专属）
+
+## 一、科目与视图
+
+| 网页版动作 | 原生实现 | 状态 |
+|---|---|---|
+| new-subject | 主页「＋ 新建」 | ✅ |
+| select-subject | 主页科目行 | ✅ |
+| rename-subject / delete-subject | 长按科目行菜单 | ✅ |
+| toggle-subject-menu | 主页「⋯」 | ✅ |
+| view（课件/知识点 tab） | 科目页「课件 / 知识点」切换 | ✅ |
+| filter | 分类页胶囊筛选 | ✅ |
+
+## 二、导入与识别
+
+| 动作 | 原生实现 | 状态 |
+|---|---|---|
+| upload | 「导入课件」多选图片 | ✅ |
+| extract-slide / extract-all / extract-deck | 导入即逐页识别；「重试失败」补漏 | ✅ |
+| refine-slide | 页面菜单「让 AI 重做这一页」 | ✅ |
+| digest-slide | 页面菜单「生成该页汇总」 | ✅ |
+| summarize-deck | 课件菜单「本节总结（AI）」 | ✅ |
+| open-slide | 详情页「查看课件原图」 | ✅ |
+| delete-slide | 页面菜单「删除这一页」 | ✅ |
+| rename-deck / delete-deck | 课件头长按菜单 | ✅ |
+| toggle-deck | 点课件头折叠 / 工具栏「折叠」 | ✅ |
+| note-imp | 详情页重要度 1–5 | ✅ |
+
+## 三、AI 能力
+
+| 动作 | 原生实现 | 状态 |
+|---|---|---|
+| ai-compose | 详情页顶部「让 AI 起草」内嵌块 | ✅ |
+| refine-item / submit-refine | 详情页「✨ 让 AI 改这条」+ 快捷建议 | ✅ |
+| refine-suggest | AI 修改弹窗里的 5 个快捷建议 | ✅ |
+| revert-item | 详情页「撤销 AI 修改」 | ✅ |
+| organize | 科目页「整理」 | ✅ |
+| open-criteria / save-criteria | 科目页「标准」 | ✅ |
+| fix-ext-names | 科目页「标题」（批量改写空泛标题，含拓展） | 🟡 |
+| test-key | 设置「测试 Key」 | ✅ |
+| repair-drawings | 设置「修复配图」 | 🟡（清理失效引用，不重绘） |
+
+## 四、知识点
+
+| 动作 | 原生实现 | 状态 |
+|---|---|---|
+| new-note / note-save / edit-note | 详情页 | ✅ |
+| note-kind | 详情页「知识点 / 拓展」 | ✅ |
+| copy-item | 详情页「复制」 | ✅ |
+| delete-item | 长按列表条目 | ✅ |
+| expand-card | 列表「展开全文 / 收起」 | ✅ |
+| select-on / select-off / select-all / toggle-select | 科目页「批量」 | ✅ |
+| mm-selected（选中生成导图） | 目前导图按整科生成 | ⬜ |
+| drop-figure / edit-figure / draw-figure | 详情页「配图」+ 画板 | ✅ |
+
+## 五、画板（draw.js）
+
+| 功能 | 原生实现 | 状态 |
+|---|---|---|
+| 41 个元件符号 + 引脚坐标 | `Symbols.java`（从 symbols.js 移植） | ✅ |
+| 元件图标面板 | 横滑图标格 | ✅ |
+| sym-tab（符号分组） | 单行平铺（未分组标签） | 🟡 |
+| 画笔 / 文字 / 图形 / 元件 / 芯片 | BoardView 工具 | ✅ |
+| 直角 A\* 走线 | `astarPath` | ✅ |
+| 引脚吸附 / 显示网格 / 拖动吸网格 | 画板设置 | ✅ |
+| 结点（junction） | 交叉自动画点 | ✅ |
+| 样式：颜色 / 粗细 / 透明度 | 样式面板 | ✅ |
+| 分组 / 拆开 / 框选 / 多选 | 选择工具 + 组合按钮 | ✅ |
+| 旋转 90° | 旋转按钮 | ✅ |
+| 方向优先（↑→↓←） | 导线工具下方向条 | ✅ |
+| 撤销 / 重做 / 清空 | 顶栏按钮 | ✅ |
+
+## 六、导出与备份
+
+| 动作 | 原生实现 | 状态 |
+|---|---|---|
+| export-md / export-notes | 导出 Markdown | ✅ |
+| export-notes-html | 导出 HTML（公式与配图内联） | ✅ |
+| export-formulas | 导出公式合集 | ✅ |
+| export-json | 导出 JSON（仅文字） | ✅ |
+| export-map / mm-export | 导图导出 PNG | ✅ |
+| export-backup / restore-backup | 备份（固定目录）+ 恢复（自动列出） | ✅ |
+| 网页版备份导入 | 自动识别 manifest.json，含 svg 画图渲染 | ✅ |
+| reset-data | 设置「清空全部数据」 | ✅ |
+
+## 七、用量与设置
+
+| 动作 | 原生实现 | 状态 |
+|---|---|---|
+| open-usage / usage-range | 用量页 7/30/90/天全部 | ✅ |
+| 费用估算 | 设置单价 + 用量页显示 | ✅ |
+| provider / reasoning / ui-scale / toggle-strict | 设置页 | ✅ |
+| open-settings / save-settings | 设置页 | ✅ |
+| 演示模式（mock） | 设置「演示模式」 | ✅ |
+| 自动整理（autoOrganize） | 设置「导入后自动整理」 | ✅ |
+
+## 八、不适用（网页版服务器专属）
+
+| 动作 | 原因 |
+|---|---|
+| open-phone | 网页版用局域网链接让手机访问电脑；原生本身就是手机 App |
+| rotate-token | 同上，访问令牌无对应物 |
+
+## 九、界面
+
+| 项 | 状态 |
+|---|---|
+| 配色（bg/paper/ink/line/accent/gold/red） | ✅ 与 styles.css `:root` 一致 |
+| 圆角 16 / 按钮 34dp / 小按钮 28dp | ✅ |
+| 主页品牌区（Make Your Notes / Local · DeepSeek） | ✅ |
+| 科目配色圆点 | ✅ |
+| 科目页统计行（课件/页/知识点） | ✅ |
+| 空态（标题 + 说明 + 文字按钮） | ✅ |
+| 设置页「一行一设置」 | ✅ |
+| 详情页字段顺序 | ✅ |
+| 分类胶囊选中态（浅底 + 主色字） | ✅ |
+| 符号面板分组标签 | 🟡 单行平铺 |
+
+## 剩余待办（按价值排序）
+
+1. `mm-selected`：多选后只给选中项生成导图
+2. 符号面板按类别分组（网页版 `SYMBOLS` 分组标签）
+3. 导图节点样式微调（网页版圆角胶囊）
+4. 逐屏像素级复核（需要你截图对照）

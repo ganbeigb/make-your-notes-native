@@ -49,6 +49,8 @@ public class SubjectActivity extends BaseActivity {
     private final List<Uri> failedUris = new ArrayList<>();
     private TextView retryBtn;
     private boolean selecting = false;
+    private String viewMode = "decks";
+    private final java.util.Set<String> expanded = new java.util.HashSet<>();
     private final java.util.Set<String> picked = new java.util.HashSet<>();
     private LinearLayout batchRow;
     private TextView selectCount;
@@ -173,6 +175,27 @@ public class SubjectActivity extends BaseActivity {
             }
         });
         tools.addView(cat);
+
+        final TextView[] tabs = new TextView[2];
+        tabs[0] = Ui.chip(this, "课件", true);
+        tabs[1] = Ui.chip(this, "知识点", false);
+        for (int ti = 0; ti < 2; ti++) {
+            final int idx = ti;
+            tabs[ti].setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    viewMode = idx == 0 ? "decks" : "items";
+                    for (int k = 0; k < tabs.length; k++) {
+                        boolean on = k == idx;
+                        tabs[k].setBackground(Ui.chip(SubjectActivity.this, "x", on).getBackground());
+                        tabs[k].setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                    }
+                    buildRows();
+                    adapter.notifyDataSetChanged();
+                }
+            });
+            tools.addView(tabs[ti]);
+        }
 
         TextView bulk = Ui.chip(this, "批量", false);
         bulk.setOnClickListener(new View.OnClickListener() {
@@ -332,7 +355,26 @@ public class SubjectActivity extends BaseActivity {
                 Db.Note n = (Db.Note) o;
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
                 if ("extension".equals(n.kind)) path = path.isEmpty() ? "拓展" : path + " · 拓展";
-                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines(), n.importance);
+                boolean isExpanded = expanded.contains(n.id);
+                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content,
+                        isExpanded ? -1 : prefs.cardLines(), n.importance);
+                boolean longContent = prefs.cardLines() > 0 && n.content != null
+                        && n.content.length() > prefs.cardLines() * 24;
+                if (row.more != null) {
+                    row.more.setVisibility(longContent ? View.VISIBLE : View.GONE);
+                    if (longContent) {
+                        row.more.setText(isExpanded ? "收起" : "展开全文");
+                        final String noteId = n.id;
+                        row.more.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                if (expanded.contains(noteId)) expanded.remove(noteId);
+                                else expanded.add(noteId);
+                                adapter.notifyDataSetChanged();
+                            }
+                        });
+                    }
+                }
                 if (selecting && picked.contains(n.id)) {
                     row.card.setBackground(Ui.cardSelected(SubjectActivity.this));
                 }
@@ -429,6 +471,10 @@ public class SubjectActivity extends BaseActivity {
                 if (!byDeck.containsKey(deckId)) byDeck.put(deckId, new ArrayList<Db.Note>());
                 byDeck.get(deckId).add(n);
             }
+        }
+        if ("items".equals(viewMode)) {
+            for (Db.Note n : data) rows.add(n);
+            return;
         }
         for (Db.Deck d : decks) {
             java.util.List<Db.Note> list = byDeck.get(d.id);

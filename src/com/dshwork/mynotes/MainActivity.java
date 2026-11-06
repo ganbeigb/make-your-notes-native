@@ -47,9 +47,16 @@ public class MainActivity extends BaseActivity {
         bar.setGravity(Gravity.CENTER_VERTICAL);
         bar.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 10));
 
-        TextView title = Ui.text(this, "我的科目", 22, Ui.INK);
+        LinearLayout brand = new LinearLayout(this);
+        brand.setOrientation(LinearLayout.VERTICAL);
+        TextView title = Ui.text(this, "Make Your Notes", 18, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        brand.addView(title);
+        TextView brandSub = Ui.text(this, "Local · DeepSeek", 11.5f, Ui.MUTED);
+        brandSub.setPadding(0, Ui.dp(this, 1), 0, 0);
+        brand.addView(brandSub);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        bar.addView(brand, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         TextView add = Ui.button(this, "＋ 新建");
         add.setOnClickListener(new View.OnClickListener() {

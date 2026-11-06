@@ -201,7 +201,7 @@ public class CategoryActivity extends BaseActivity {
         t.setText(label);
         t.setTextSize(13);
         boolean active = (id == null && filterId == null) || (id != null && id.equals(filterId));
-        t.setTextColor(active ? 0xFFFFFFFF : Ui.INK);
+        t.setTextColor(active ? Ui.ACCENT : Ui.INK2);
         t.setGravity(Gravity.CENTER);
         t.setPadding(Ui.dp(this, 12), Ui.dp(this, 7), Ui.dp(this, 12), Ui.dp(this, 7));
         t.setBackground(active ? Ui.button(this, "").getBackground() : Ui.card(this));

@@ -208,3 +208,5 @@ git tag -a vX.Y.Z -m "说明"
 推送到 GitHub、打 Release 的完整命令见 [PUSH.md](PUSH.md)。
 
 装机自检清单见 [VERIFY.md](VERIFY.md)。
+
+逐项对照见 [PARITY.md](PARITY.md)。
