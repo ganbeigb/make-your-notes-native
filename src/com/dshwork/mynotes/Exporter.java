@@ -179,6 +179,33 @@ public class Exporter {
         return sb.toString();
     }
 
+    /* ---------------- JSON（仅文字） ---------------- */
+
+    public static String json(Db db, String subjectId) throws Exception {
+        Db.Subject s = db.subject(subjectId);
+        org.json.JSONObject root = new org.json.JSONObject();
+        root.put("app", "MakeYourNotes-native");
+        root.put("exportedAt", System.currentTimeMillis());
+        root.put("subject", s == null ? "" : s.name);
+
+        org.json.JSONArray arr = new org.json.JSONArray();
+        for (Db.Note n : db.notes(subjectId)) {
+            org.json.JSONObject o = new org.json.JSONObject();
+            o.put("name", n.name);
+            o.put("category", n.categoryId == null ? "" : db.categoryPath(n.categoryId));
+            o.put("formula", n.formula == null ? "" : n.formula);
+            o.put("content", n.content == null ? "" : n.content);
+            o.put("quote", n.quote == null ? "" : n.quote);
+            o.put("tags", n.tags == null ? "" : n.tags);
+            o.put("importance", n.importance);
+            o.put("source", n.source == null ? "" : n.source);
+            o.put("page", n.slidePage);
+            arr.put(o);
+        }
+        root.put("notes", arr);
+        return root.toString(2);
+    }
+
     /* ---------------- 备份 zip ---------------- */
 
     public static byte[] backup(Db db, Context ctx) throws Exception {

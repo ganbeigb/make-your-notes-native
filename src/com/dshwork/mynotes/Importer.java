@@ -19,6 +19,8 @@ public class Importer {
 
     public interface Progress {
         void onStep(int done, int total, String message);
+
+        boolean cancelled();
     }
 
     public static class Outcome {
@@ -51,6 +53,7 @@ public class Importer {
         }
 
         for (int i = 0; i < uris.size(); i++) {
+            if (cb != null && cb.cancelled()) break;
             Uri uri = uris.get(i);
             if (cb != null) cb.onStep(i, uris.size(), "正在识别第 " + (i + 1) + " / " + uris.size() + " 页");
             try {
