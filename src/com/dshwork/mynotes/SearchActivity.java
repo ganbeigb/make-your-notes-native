@@ -30,7 +30,7 @@ public class SearchActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        Ui.setScale(new Prefs(this).uiScale());
+        Ui.apply(this);
         db = new Db(this);
 
         LinearLayout root = new LinearLayout(this);

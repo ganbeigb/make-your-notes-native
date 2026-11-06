@@ -26,7 +26,7 @@ public class MindMapActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        Ui.setScale(new Prefs(this).uiScale());
+        Ui.apply(this);
         db = new Db(this);
         String subjectId = getIntent().getStringExtra("subjectId");
         String subjectName = getIntent().getStringExtra("subjectName");

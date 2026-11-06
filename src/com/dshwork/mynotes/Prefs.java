@@ -47,6 +47,15 @@ public class Prefs {
         sp.edit().putString("textModel", v.trim()).apply();
     }
 
+    /** light | dark | system */
+    public String theme() {
+        return sp.getString("theme", "system");
+    }
+
+    public void setTheme(String v) {
+        sp.edit().putString("theme", v).apply();
+    }
+
     /** off | low | high | max */
     public String reasoning() {
         return sp.getString("reasoning", "off");
