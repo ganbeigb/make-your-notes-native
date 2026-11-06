@@ -207,6 +207,41 @@ public class SettingsActivity extends BaseActivity {
             }
         });
         actions.addView(relink);
+
+        TextView clean = Ui.chip(this, "清理孤立图片", false);
+        clean.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Db db = new Db(SettingsActivity.this);
+                java.io.File figDir = new java.io.File(getFilesDir(), "figures");
+                java.io.File slideDir = new java.io.File(getFilesDir(), "slides");
+                int[] a = db.orphanFiles(figDir);
+                int[] b = db.orphanFiles(slideDir);
+                final int totalOrphan = a[0] + b[0];
+                if (totalOrphan == 0) {
+                    Toast.makeText(SettingsActivity.this, "没有孤立文件（共 " + (a[1] + b[1]) + " 个文件都在用）",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                new AlertDialog.Builder(SettingsActivity.this)
+                        .setTitle("清理孤立图片")
+                        .setMessage("有 " + totalOrphan + " 个图片文件没有被任何知识点引用，删除可释放空间。")
+                        .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                int n = 0;
+                                java.util.Set<String> used = new java.util.HashSet<>();
+                                new Db(SettingsActivity.this);
+                                n += deleteOrphans(new java.io.File(getFilesDir(), "figures"));
+                                n += deleteOrphans(new java.io.File(getFilesDir(), "slides"));
+                                Toast.makeText(SettingsActivity.this, "已清理 " + n + " 个文件", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        actions.addView(clean);
         form.addView(Ui.section(this, "数据维护"));
         form.addView(actions);
         this.keepFormulaBox = keepFormulaBox;
@@ -266,6 +301,33 @@ public class SettingsActivity extends BaseActivity {
                 });
             }
         }).start();
+    }
+
+    /** 删除目录里没有被引用的文件，返回删除数 */
+    private int deleteOrphans(java.io.File dir) {
+        if (dir == null || !dir.exists()) return 0;
+        Db db = new Db(this);
+        int[] stat = db.orphanFiles(dir);
+        int removed = 0;
+        java.util.Set<String> used = new java.util.HashSet<>();
+        android.database.Cursor c = db.getReadableDatabase().rawQuery("SELECT figure, slide_path FROM notes", null);
+        try {
+            while (c.moveToNext()) {
+                String f = c.getString(0);
+                String s = c.getString(1);
+                if (f != null && !f.isEmpty()) used.add(new java.io.File(f).getName());
+                if (s != null && !s.isEmpty()) used.add(new java.io.File(s).getName());
+            }
+        } finally {
+            c.close();
+        }
+        java.io.File[] files = dir.listFiles();
+        if (files != null) {
+            for (java.io.File f : files) {
+                if (f.isFile() && !used.contains(f.getName()) && f.delete()) removed++;
+            }
+        }
+        return removed;
     }
 
     private float parseFloat(String s) {
