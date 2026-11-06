@@ -42,11 +42,13 @@ public class Db extends SQLiteOpenHelper {
         public String source;
         public int importance;
         public String figure;
+        public String slidePath;
+        public int slidePage;
         public long createdAt;
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -59,6 +61,7 @@ public class Db extends SQLiteOpenHelper {
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
                 "name TEXT NOT NULL, content TEXT, formula TEXT, tags TEXT, source TEXT, figure TEXT, " +
+                "slide_path TEXT, slide_page INTEGER NOT NULL DEFAULT 0, " +
                 "importance INTEGER NOT NULL DEFAULT 2, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE usage_log (id TEXT PRIMARY KEY, ts INTEGER NOT NULL, kind TEXT, " +
                 "subject_id TEXT, in_tok INTEGER NOT NULL DEFAULT 0, out_tok INTEGER NOT NULL DEFAULT 0)");
@@ -68,6 +71,10 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 4) {
+            tryAdd(db, "notes", "slide_path", "TEXT");
+            tryAdd(db, "notes", "slide_page", "INTEGER NOT NULL DEFAULT 0");
+        }
         if (oldVersion < 3) {
             tryAdd(db, "notes", "figure", "TEXT");
         }
@@ -250,7 +257,7 @@ public class Db extends SQLiteOpenHelper {
     public List<Note> notes(String subjectId) {
         List<Note> out = new ArrayList<>();
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
                         "FROM notes WHERE subject_id = ? ORDER BY created_at DESC", new String[]{subjectId});
         try {
             while (c.moveToNext()) out.add(readNote(c));
@@ -263,7 +270,7 @@ public class Db extends SQLiteOpenHelper {
     /** 按标题或重要度排序 */
     public List<Note> notesSorted(String subjectId, String order) {
         List<Note> out = new ArrayList<>();
-        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
+        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
                 "FROM notes WHERE subject_id = ? ";
         if ("title".equals(order)) sql += "ORDER BY name COLLATE NOCASE ASC";
         else if ("importance".equals(order)) sql += "ORDER BY importance DESC, created_at DESC";
@@ -290,12 +297,14 @@ public class Db extends SQLiteOpenHelper {
         n.importance = c.getInt(8);
         n.createdAt = c.getLong(9);
         n.figure = c.getString(10);
+        n.slidePath = c.getString(11);
+        n.slidePage = c.getInt(12);
         return n;
     }
 
     public Note note(String id) {
         Cursor c = getReadableDatabase().rawQuery(
-                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
+                "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure, slide_path, slide_page " +
                         "FROM notes WHERE id = ?", new String[]{id});
         try {
             if (!c.moveToFirst()) return null;
@@ -343,6 +352,8 @@ public class Db extends SQLiteOpenHelper {
         v.put("importance", n.importance);
         v.put("category_id", n.categoryId);
         v.put("figure", n.figure);
+        v.put("slide_path", n.slidePath);
+        v.put("slide_page", n.slidePage);
         getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});
     }
 
@@ -397,6 +408,117 @@ public class Db extends SQLiteOpenHelper {
             c.close();
         }
         return out;
+    }
+
+    /** 导入备份（按名称合并科目，重复跳过） */
+    public int[] importBackup(org.json.JSONObject root) {
+        int subjCount = 0, catCount = 0, noteCount = 0;
+        try {
+            org.json.JSONArray subjects = root.optJSONArray("subjects");
+            org.json.JSONArray cats = root.optJSONArray("categories");
+            org.json.JSONArray notes = root.optJSONArray("notes");
+
+            java.util.Map<String, String> subjMap = new java.util.HashMap<>();
+            if (subjects != null) {
+                for (int i = 0; i < subjects.length(); i++) {
+                    org.json.JSONObject s = subjects.optJSONObject(i);
+                    if (s == null) continue;
+                    String name = s.optString("name", "").trim();
+                    if (name.isEmpty()) continue;
+                    String id = findSubjectByName(name);
+                    if (id == null) {
+                        Subject created = addSubject(name);
+                        id = created.id;
+                        subjCount++;
+                    }
+                    subjMap.put(s.optString("id"), id);
+                }
+            }
+
+            java.util.Map<String, String> catMap = new java.util.HashMap<>();
+            if (cats != null) {
+                for (int i = 0; i < cats.length(); i++) {
+                    org.json.JSONObject c = cats.optJSONObject(i);
+                    if (c == null) continue;
+                    String newSubj = subjMap.get(c.optString("subjectId"));
+                    if (newSubj == null) continue;
+                    String oldParent = c.optString("parentId", null);
+                    String newParent = oldParent == null || oldParent.isEmpty() ? null : catMap.get(oldParent);
+                    String name = c.optString("name", "").trim();
+                    if (name.isEmpty()) continue;
+                    String existing = findCategory(newSubj, newParent, name);
+                    if (existing == null) {
+                        Category k = new Category();
+                        k.id = UUID.randomUUID().toString();
+                        k.subjectId = newSubj;
+                        k.parentId = newParent;
+                        k.name = name;
+                        k.orderNo = c.optInt("orderNo", 0);
+                        ContentValues v = new ContentValues();
+                        v.put("id", k.id);
+                        v.put("subject_id", newSubj);
+                        v.put("parent_id", newParent);
+                        v.put("name", name);
+                        v.put("order_no", k.orderNo);
+                        v.put("created_at", System.currentTimeMillis());
+                        getWritableDatabase().insert("categories", null, v);
+                        existing = k.id;
+                        catCount++;
+                    }
+                    catMap.put(c.optString("id"), existing);
+                }
+            }
+
+            if (notes != null) {
+                for (int i = 0; i < notes.length(); i++) {
+                    org.json.JSONObject n = notes.optJSONObject(i);
+                    if (n == null) continue;
+                    String newSubj = subjMap.get(n.optString("subjectId"));
+                    if (newSubj == null) continue;
+                    String name = n.optString("name", "").trim();
+                    if (name.isEmpty()) continue;
+                    if (noteExists(newSubj, name)) continue;
+
+                    String catId = n.optString("categoryId", null);
+                    String newCat = catId == null || catId.isEmpty() ? null : catMap.get(catId);
+
+                    ContentValues v = new ContentValues();
+                    v.put("id", UUID.randomUUID().toString());
+                    v.put("subject_id", newSubj);
+                    v.put("category_id", newCat);
+                    v.put("name", name);
+                    v.put("content", n.optString("content", ""));
+                    v.put("formula", n.optString("formula", ""));
+                    v.put("tags", n.optString("tags", ""));
+                    v.put("source", n.optString("source", ""));
+                    v.put("importance", n.optInt("importance", 2));
+                    v.put("created_at", n.optLong("createdAt", System.currentTimeMillis()));
+                    getWritableDatabase().insert("notes", null, v);
+                    noteCount++;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return new int[]{subjCount, catCount, noteCount};
+    }
+
+    private String findSubjectByName(String name) {
+        Cursor c = getReadableDatabase().rawQuery("SELECT id FROM subjects WHERE name = ?", new String[]{name});
+        try {
+            return c.moveToFirst() ? c.getString(0) : null;
+        } finally {
+            c.close();
+        }
+    }
+
+    private boolean noteExists(String subjectId, String name) {
+        Cursor c = getReadableDatabase().rawQuery(
+                "SELECT 1 FROM notes WHERE subject_id = ? AND name = ? LIMIT 1", new String[]{subjectId, name});
+        try {
+            return c.moveToFirst();
+        } finally {
+            c.close();
+        }
     }
 
     public long[] usageTotals() {
