@@ -56,6 +56,33 @@ public class Prefs {
         sp.edit().putString("reasoning", v).apply();
     }
 
+    /** 界面字号：0.9 小 / 1 标准 / 1.15 大 / 1.3 特大 */
+    public float uiScale() {
+        return sp.getFloat("uiScale", 1f);
+    }
+
+    public void setUiScale(float v) {
+        sp.edit().putFloat("uiScale", v).apply();
+    }
+
+    /** 卡片正文显示行数，0 = 不显示 */
+    public int cardLines() {
+        return sp.getInt("cardLines", 3);
+    }
+
+    public void setCardLines(int v) {
+        sp.edit().putInt("cardLines", v).apply();
+    }
+
+    /** recent | title | importance */
+    public String sort() {
+        return sp.getString("sort", "recent");
+    }
+
+    public void setSort(String v) {
+        sp.edit().putString("sort", v).apply();
+    }
+
     public boolean strict() {
         return sp.getBoolean("strict", false);
     }

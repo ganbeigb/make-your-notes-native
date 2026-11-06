@@ -260,6 +260,23 @@ public class Db extends SQLiteOpenHelper {
         return out;
     }
 
+    /** 按标题或重要度排序 */
+    public List<Note> notesSorted(String subjectId, String order) {
+        List<Note> out = new ArrayList<>();
+        String sql = "SELECT id, subject_id, category_id, name, content, formula, tags, source, importance, created_at, figure " +
+                "FROM notes WHERE subject_id = ? ";
+        if ("title".equals(order)) sql += "ORDER BY name COLLATE NOCASE ASC";
+        else if ("importance".equals(order)) sql += "ORDER BY importance DESC, created_at DESC";
+        else sql += "ORDER BY created_at DESC";
+        Cursor c = getReadableDatabase().rawQuery(sql, new String[]{subjectId});
+        try {
+            while (c.moveToNext()) out.add(readNote(c));
+        } finally {
+            c.close();
+        }
+        return out;
+    }
+
     private Note readNote(Cursor c) {
         Note n = new Note();
         n.id = c.getString(0);

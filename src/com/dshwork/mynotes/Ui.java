@@ -15,6 +15,16 @@ public class Ui {
     public static final int LINE = 0xFFE6DDC8;
     public static final int ACCENT = 0xFF2F5D4B;
 
+    private static float scale = 1f;
+
+    public static void setScale(float s) {
+        scale = s <= 0 ? 1f : s;
+    }
+
+    public static float scale() {
+        return scale;
+    }
+
     public static int dp(Context c, float v) {
         return Math.round(v * c.getResources().getDisplayMetrics().density);
     }
@@ -30,7 +40,7 @@ public class Ui {
     public static TextView text(Context c, String s, float size, int color) {
         TextView t = new TextView(c);
         t.setText(s);
-        t.setTextSize(size);
+        t.setTextSize(size * scale);
         t.setTextColor(color);
         return t;
     }
