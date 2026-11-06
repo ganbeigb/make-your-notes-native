@@ -310,17 +310,40 @@ public class MainActivity extends BaseActivity {
     }
 
     private void exportAllBackup() {
-        try {
-            byte[] data = Exporter.backupAll(db, this);
-            java.io.File saved = Backups.save(this, "全部科目-备份-" + Backups.stamp() + ".zip", data);
-            new AlertDialog.Builder(this)
-                    .setTitle("全部科目已备份")
-                    .setMessage("文件：\n" + saved.getName() + "\n\n位置：\n" + Backups.dirHint(this))
-                    .setPositiveButton("好", null)
-                    .show();
-        } catch (Exception e) {
-            Toast.makeText(this, "备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在打包全部科目…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String err = null;
+                java.io.File saved = null;
+                try {
+                    byte[] data = Exporter.backupAll(db, MainActivity.this);
+                    saved = Backups.save(MainActivity.this, "全部科目-备份-" + Backups.stamp() + ".zip", data);
+                } catch (Exception e) {
+                    err = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+                }
+                final String finalErr = err;
+                final java.io.File zip = saved;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        if (finalErr != null) {
+                            Toast.makeText(MainActivity.this, "备份失败：" + finalErr, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        new AlertDialog.Builder(MainActivity.this)
+                                .setTitle("全部科目已备份")
+                                .setMessage("文件：\n" + zip.getName() + "\n\n位置：\n" + Backups.dirHint(MainActivity.this))
+                                .setPositiveButton("好", null)
+                                .show();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void showAbout() {
