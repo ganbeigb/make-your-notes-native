@@ -58,7 +58,7 @@ public class MainActivity extends BaseActivity {
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(brand, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
-        TextView add = Ui.button(this, "＋ 新建");
+        TextView add = Ui.iconButton(this, "＋");
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,8 +81,8 @@ public class MainActivity extends BaseActivity {
                 pickBackup();
             }
         });
-        TextView more = Ui.text(this, "⋯", 20, Ui.ACCENT);
-        more.setPadding(0, 0, Ui.dp(this, 12), 0);
+        TextView more = Ui.iconButton(this, "⋯");
+
         more.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

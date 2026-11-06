@@ -332,6 +332,23 @@ public class Ui {
         return t;
     }
 
+    /** 顶栏图标按钮（网页 .icon-btn） */
+    public static TextView iconButton(Context c, String glyph) {
+        TextView t = new TextView(c);
+        t.setText(glyph);
+        t.setTextSize(17 * scale);
+        t.setTextColor(INK);
+        t.setGravity(android.view.Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(CARD);
+        g.setCornerRadius(dp(c, 10));
+        g.setStroke(dp(c, 1), LINE);
+        t.setBackground(g);
+        t.setMinWidth(dp(c, 34));
+        t.setMinHeight(dp(c, 34));
+        return t;
+    }
+
     public static View divider(Context c) {
         View v = new View(c);
         v.setBackgroundColor(LINE);
