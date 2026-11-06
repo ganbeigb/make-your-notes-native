@@ -296,7 +296,17 @@ public class MainActivity extends BaseActivity {
             version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
         } catch (Exception ignored) {
         }
+        int[] stat = new int[]{0, 0};
+        try {
+            for (Db.Subject s : db.subjects()) {
+                stat[0]++;
+                stat[1] += db.notes(s.id).size();
+            }
+        } catch (Exception ignored) {
+        }
         String msg = "Make Your Notes · 原生版 " + version + "\n\n"
+                + "本机数据：" + stat[0] + " 个科目 · " + stat[1] + " 条知识点\n"
+                + "备份目录：" + Backups.dirHint(this) + "\n\n"
                 + "全部数据保存在本机 SQLite，不上传服务器；只有导入课件和 AI 整理时会把图片/文字发给模型。\n\n"
                 + "功能：课件截图提取、自动分类、公式渲染、画板配图、思维导图、导出与备份、用量统计、全局搜索。";
         new AlertDialog.Builder(this)
