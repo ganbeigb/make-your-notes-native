@@ -125,8 +125,8 @@ public class BoardView extends View {
 
     public BoardView(Context c) {
         super(c);
-        setBackgroundColor(0xFFFFFDF8);
-        gridPaint.setColor(0xFFEFE8D8);
+        setBackgroundColor(Ui.dark ? 0xFF141A16 : 0xFFFFFDF8);
+        gridPaint.setColor(Ui.dark ? 0xFF24302A : 0xFFEFE8D8);
         gridPaint.setStrokeWidth(1);
         textPaint.setColor(color);
         textPaint.setTextSize(Ui.dp(c, 14));
@@ -888,7 +888,7 @@ public class BoardView extends View {
         int h = (int) Math.min(2400, Math.max(240, b.height()));
         Bitmap bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         Canvas c = new Canvas(bmp);
-        c.drawColor(0xFFFFFDF8);
+        c.drawColor(Ui.dark ? 0xFF141A16 : 0xFFFFFDF8);
         c.translate(-b.left, -b.top);
         for (Item it : items) drawItem(c, it);
         return bmp;

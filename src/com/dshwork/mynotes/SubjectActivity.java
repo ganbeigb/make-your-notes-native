@@ -46,7 +46,7 @@ public class SubjectActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        Ui.setScale(new Prefs(this).uiScale());
+        Ui.apply(this);
         db = new Db(this);
         prefs = new Prefs(this);
         subjectId = getIntent().getStringExtra("subjectId");

@@ -25,8 +25,8 @@ $env:PATH = (Join-Path $Jdk 'bin') + ';' + $env:PATH
 
 $MinSdk = 24
 $TargetSdk = 35
-$VersionCode = 17
-$VersionName = '0.12.0'
+$VersionCode = 18
+$VersionName = '0.12.1'
 
 $Build = Join-Path $Work 'build'
 $Gen = Join-Path $Build 'gen'
@@ -37,7 +37,7 @@ $Keystore = Join-Path $Build 'mynotes.keystore'
 $StorePass = 'mynotes'
 $Alias = 'mynotes'
 $FinalApk = Join-Path $Build 'MyNotes.apk'
-$Deliverable = Join-Path $App 'MakeYourNotes-native-v0.12.0.apk'
+$Deliverable = Join-Path $App 'MakeYourNotes-native-v0.12.1.apk'
 
 function Step($m) { Write-Host "
 === $m ===" -ForegroundColor Cyan }

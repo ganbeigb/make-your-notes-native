@@ -28,6 +28,7 @@ public class SettingsActivity extends Activity {
     private Spinner scaleSpinner;
     private Spinner linesSpinner;
     private Spinner sortSpinner;
+    private Spinner themeSpinner;
     private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
@@ -36,13 +37,15 @@ public class SettingsActivity extends Activity {
     private final String[] lineOptions = {"不显示正文", "1 行", "2 行", "3 行", "4 行", "6 行"};
     private final int[] lineValues = {0, 1, 2, 3, 4, 6};
     private final String[] sorts = {"最近创建", "标题", "重要度"};
+    private final String[] themes = {"跟随系统", "浅色", "深色"};
+    private final String[] themeKeys = {"system", "light", "dark"};
     private final String[] sortKeys = {"recent", "title", "importance"};
     private final String[] reasonings = {"off", "low", "high", "max"};
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        Ui.setScale(new Prefs(this).uiScale());
+        Ui.apply(this);
         prefs = new Prefs(this);
 
         LinearLayout root = new LinearLayout(this);
@@ -95,6 +98,8 @@ public class SettingsActivity extends Activity {
         linesSpinner = spinner(form, "卡片正文行数", lineOptions, li);
 
         sortSpinner = spinner(form, "知识点排序", sorts, Math.max(0, indexOf(sortKeys, prefs.sort())));
+
+        themeSpinner = spinner(form, "主题", themes, Math.max(0, indexOf(themeKeys, prefs.theme())));
 
         strictBox = new android.widget.CheckBox(this);
         strictBox.setText("严格校对：每页识别完再用原图核对一次（会多花一次调用）");
@@ -157,8 +162,9 @@ public class SettingsActivity extends Activity {
         prefs.setUiScale(scaleValues[scaleSpinner.getSelectedItemPosition()]);
         prefs.setCardLines(lineValues[linesSpinner.getSelectedItemPosition()]);
         prefs.setSort(sortKeys[sortSpinner.getSelectedItemPosition()]);
+        prefs.setTheme(themeKeys[themeSpinner.getSelectedItemPosition()]);
         prefs.setStrict(strictBox.isChecked());
-        Ui.setScale(prefs.uiScale());
+        Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
         finish();
     }

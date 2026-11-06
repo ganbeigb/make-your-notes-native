@@ -35,7 +35,7 @@ public class NoteActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        Ui.setScale(new Prefs(this).uiScale());
+        Ui.apply(this);
         db = new Db(this);
         note = db.note(getIntent().getStringExtra("noteId"));
         if (note == null) {

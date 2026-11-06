@@ -34,7 +34,7 @@ public class FormulaView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private String tex = "";
     private Box root;
-    private int color = 0xFF23302A;
+    private int color = Ui.INK;
     private float spSize = 17f;
 
     public FormulaView(Context c) {
@@ -43,7 +43,8 @@ public class FormulaView extends View {
 
     public FormulaView(Context c, AttributeSet a) {
         super(c, a);
-        paint.setColor(color);
+        paint.setColor(Ui.INK);
+        color = Ui.INK;
         paint.setTextSize(spSize * c.getResources().getDisplayMetrics().scaledDensity);
         paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
     }
