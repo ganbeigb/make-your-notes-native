@@ -195,7 +195,7 @@ public class MainActivity extends Activity {
     }
 
     private void openMenu() {
-        final String[] items = {"搜索", "用量", "设置", "恢复备份", "关于"};
+        final String[] items = {"搜索", "用量", "设置", "恢复备份", "自检", "关于"};
         new AlertDialog.Builder(this)
                 .setItems(items, new DialogInterface.OnClickListener() {
                     @Override
@@ -204,6 +204,7 @@ public class MainActivity extends Activity {
                         else if (which == 1) startActivity(new Intent(MainActivity.this, UsageActivity.class));
                         else if (which == 2) startActivity(new Intent(MainActivity.this, SettingsActivity.class));
                         else if (which == 3) pickBackup();
+                        else if (which == 4) startActivity(new Intent(MainActivity.this, SelfCheckActivity.class));
                         else showAbout();
                     }
                 })
