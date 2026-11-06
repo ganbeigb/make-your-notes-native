@@ -176,26 +176,61 @@ public class SubjectActivity extends BaseActivity {
         });
         tools.addView(cat);
 
+        final LinearLayout tabHolder = new LinearLayout(this);
+        tabHolder.setOrientation(LinearLayout.HORIZONTAL);
+        tabHolder.setPadding(0, 0, Ui.dp(this, 8), 0);
+
+        final LinearLayout segContainer = new LinearLayout(this);
+        segContainer.setOrientation(LinearLayout.HORIZONTAL);
+
         final TextView[] tabs = new TextView[2];
-        tabs[0] = Ui.chip(this, "课件", true);
-        tabs[1] = Ui.chip(this, "知识点", false);
+        tabs[0] = Ui.text(this, "课件", 12.5f, Ui.INK);
+        tabs[1] = Ui.text(this, "知识点", 12.5f, Ui.INK2);
         for (int ti = 0; ti < 2; ti++) {
             final int idx = ti;
-            tabs[ti].setOnClickListener(new View.OnClickListener() {
+            final TextView tabView = tabs[ti];
+            tabView.setGravity(Gravity.CENTER);
+            tabView.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+            tabView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     viewMode = idx == 0 ? "decks" : "items";
-                    for (int k = 0; k < tabs.length; k++) {
+                    for (int k = 0; k < 2; k++) {
                         boolean on = k == idx;
-                        tabs[k].setBackground(Ui.chip(SubjectActivity.this, "x", on).getBackground());
-                        tabs[k].setTextColor(on ? 0xFFFFFFFF : Ui.INK);
+                        tabs[k].setTextColor(on ? Ui.INK : Ui.INK2);
+                        if (on) {
+                            android.graphics.drawable.GradientDrawable d = new android.graphics.drawable.GradientDrawable();
+                            d.setColor(Ui.CARD);
+                            d.setCornerRadius(Ui.dp(SubjectActivity.this, 7));
+                            d.setStroke(Ui.dp(SubjectActivity.this, 1), Ui.LINE_STRONG);
+                            tabs[k].setBackground(d);
+                        } else {
+                            tabs[k].setBackground(null);
+                        }
                     }
                     buildRows();
                     adapter.notifyDataSetChanged();
                 }
             });
-            tools.addView(tabs[ti]);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            tlp.rightMargin = Ui.dp(this, 2);
+            segContainer.addView(tabView, tlp);
         }
+        android.graphics.drawable.GradientDrawable segBg = new android.graphics.drawable.GradientDrawable();
+        segBg.setColor(0xFFEBE5D8);
+        segBg.setCornerRadius(Ui.dp(this, 9));
+        segContainer.setBackground(segBg);
+        segContainer.setPadding(Ui.dp(this, 3), Ui.dp(this, 3), Ui.dp(this, 3), Ui.dp(this, 3));
+        // 初始高亮「课件」
+        android.graphics.drawable.GradientDrawable sel0 = new android.graphics.drawable.GradientDrawable();
+        sel0.setColor(Ui.CARD);
+        sel0.setCornerRadius(Ui.dp(this, 7));
+        sel0.setStroke(Ui.dp(this, 1), Ui.LINE_STRONG);
+        tabs[0].setBackground(sel0);
+
+        tabHolder.addView(segContainer);
+        tools.addView(tabHolder);
 
         TextView bulk = Ui.chip(this, "批量", false);
         bulk.setOnClickListener(new View.OnClickListener() {
@@ -507,7 +542,7 @@ public class SubjectActivity extends BaseActivity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.HORIZONTAL);
         box.setGravity(Gravity.CENTER_VERTICAL);
-        box.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        box.setPadding(Ui.dp(this, 18), Ui.dp(this, 12), Ui.dp(this, 18), Ui.dp(this, 12));
 
         boolean open = !collapsedDecks.contains(d.id);
         TextView arrow = Ui.text(this, open ? "▾" : "▸", 14, Ui.ACCENT);
