@@ -134,6 +134,10 @@ public class MainActivity extends BaseActivity {
                             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                     lp.bottomMargin = Ui.dp(MainActivity.this, 10);
                     row.card.setLayoutParams(lp);
+                    try {
+                        row.card.setElevation(Ui.dp(MainActivity.this, 1));
+                    } catch (Exception ignored) {
+                    }
 
                     LinearLayout head = new LinearLayout(MainActivity.this);
                     head.setOrientation(LinearLayout.HORIZONTAL);

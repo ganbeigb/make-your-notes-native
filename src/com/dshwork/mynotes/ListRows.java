@@ -35,6 +35,10 @@ public class ListRows {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.bottomMargin = Ui.dp(c, 14);
         row.card.setLayoutParams(lp);
+        try {
+            row.card.setElevation(Ui.dp(c, 1));
+        } catch (Exception ignored) {
+        }
 
         LinearLayout head = new LinearLayout(c);
         head.setOrientation(LinearLayout.HORIZONTAL);

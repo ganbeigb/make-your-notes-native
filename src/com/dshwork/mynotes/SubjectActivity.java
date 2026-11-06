@@ -625,6 +625,10 @@ public class SubjectActivity extends BaseActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         dlp.bottomMargin = Ui.dp(this, 10);
         box.setLayoutParams(dlp);
+        try {
+            box.setElevation(Ui.dp(this, 1));
+        } catch (Exception ignored) {
+        }
 
         boolean open = !collapsedDecks.contains(d.id);
         TextView arrow = Ui.text(this, open ? "▾" : "▸", 14, Ui.ACCENT);
