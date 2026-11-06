@@ -73,7 +73,15 @@ public class Exporter {
                     sb.append("![配图](").append(new java.io.File(n.figure).getName()).append(")\n\n");
                 }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
-                    sb.append("标签：").append(n.tags).append("\n\n");
+                    if ("extension".equals(n.kind)) {
+                    sb.append("> 类型：拓展（AI 补充，请核对）\n\n");
+                }
+                if (n.importance > 0) {
+                    StringBuilder stars = new StringBuilder();
+                    for (int k = 0; k < n.importance; k++) stars.append('*');
+                    sb.append("重要度：").append(stars).append("\n\n");
+                }
+                sb.append("标签：").append(n.tags).append("\n\n");
                 }
             }
         }
@@ -128,6 +136,14 @@ public class Exporter {
                         sb.append("<div class=\"fx\"><img alt=\"figure\" src=\"data:image/png;base64,")
                                 .append(fig).append("\"></div>");
                     }
+                }
+                if ("extension".equals(n.kind)) {
+                    sb.append("<div class=\"tag\">拓展 · AI 补充，请核对</div>");
+                }
+                if (n.importance > 0) {
+                    StringBuilder stars = new StringBuilder();
+                    for (int k = 0; k < n.importance; k++) stars.append('●');
+                    sb.append("<div class=\"tag\">重要度：").append(stars).append("</div>");
                 }
                 if (n.tags != null && !n.tags.trim().isEmpty()) {
                     sb.append("<div class=\"tag\">标签：").append(esc(n.tags)).append("</div>");
@@ -208,6 +224,7 @@ public class Exporter {
             o.put("quote", n.quote == null ? "" : n.quote);
             o.put("tags", n.tags == null ? "" : n.tags);
             o.put("importance", n.importance);
+            o.put("kind", n.kind == null ? "point" : n.kind);
             o.put("source", n.source == null ? "" : n.source);
             o.put("page", n.slidePage);
             arr.put(o);
