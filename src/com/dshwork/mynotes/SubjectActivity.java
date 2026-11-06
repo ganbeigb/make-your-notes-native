@@ -147,6 +147,21 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(tidy, tlp);
+
+        TextView rename = Ui.text(this, "  标题  ", 14, Ui.INK);
+        rename.setBackground(Ui.card(this));
+        rename.setGravity(Gravity.CENTER);
+        rename.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nlp.leftMargin = Ui.dp(this, 8);
+        rename.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmTitles();
+            }
+        });
+        tools.addView(rename, nlp);
         root.addView(tools);
 
         list = new ListView(this);
@@ -324,6 +339,61 @@ private void openExportMenu() {
                 })
                 .setNegativeButton("取消", null)
                 .show();
+    }
+
+    private void confirmTitles() {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("改写标题")
+                .setMessage("把「拓展 / 考点 / 易错点」这类空泛标题改写成能看出内容的概括标题（一次最多 15 条）。")
+                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        runTitles();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void runTitles() {
+        final ProgressDialog dlg = new ProgressDialog(this);
+        dlg.setTitle("正在生成标题");
+        dlg.setMessage("准备中…");
+        dlg.setCancelable(false);
+        dlg.show();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Titles.Result r = Titles.run(db, prefs, subjectId, new Titles.Progress() {
+                    @Override
+                    public void onStep(final String message) {
+                        ui.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                dlg.setMessage(message);
+                            }
+                        });
+                    }
+                });
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        reload();
+                        if (r.error != null) {
+                            Toast.makeText(SubjectActivity.this, r.error, Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(SubjectActivity.this, "已改写 " + r.updated + " 条标题", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }).start();
     }
 
     private void runOrganize() {
