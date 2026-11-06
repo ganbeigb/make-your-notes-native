@@ -234,6 +234,42 @@ public class Ui {
         return row;
     }
 
+    /** 网页版 .empty：粗体标题 + 灰色说明 +（可选）文字按钮 */
+    public static android.widget.LinearLayout emptyState(Context c, String title, String hint,
+                                                        String action, android.view.View.OnClickListener onClick) {
+        android.widget.LinearLayout box = new android.widget.LinearLayout(c);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        box.setGravity(android.view.Gravity.CENTER);
+        box.setPadding(dp(c, 24), dp(c, 40), dp(c, 24), dp(c, 24));
+
+        android.widget.TextView t = new android.widget.TextView(c);
+        t.setText(title);
+        t.setTextSize(14.5f * scale);
+        t.setTextColor(INK);
+        t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        box.addView(t);
+
+        if (hint != null && !hint.isEmpty()) {
+            android.widget.TextView h = new android.widget.TextView(c);
+            h.setText(hint);
+            h.setTextSize(12.5f * scale);
+            h.setTextColor(MUTED);
+            h.setGravity(android.view.Gravity.CENTER);
+            h.setPadding(0, dp(c, 6), 0, 0);
+            box.addView(h);
+        }
+        if (action != null && !action.isEmpty()) {
+            android.widget.TextView a = new android.widget.TextView(c);
+            a.setText(action);
+            a.setTextSize(13f * scale);
+            a.setTextColor(ACCENT);
+            a.setPadding(0, dp(c, 12), 0, 0);
+            if (onClick != null) a.setOnClickListener(onClick);
+            box.addView(a);
+        }
+        return box;
+    }
+
     public static View divider(Context c) {
         View v = new View(c);
         v.setBackgroundColor(LINE);
