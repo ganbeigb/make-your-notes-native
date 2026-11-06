@@ -48,7 +48,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 4;
+    private static final int VERSION = 5;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -56,7 +56,7 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE subjects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE subjects (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, criteria TEXT)");
         db.execSQL("CREATE TABLE categories (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, parent_id TEXT, " +
                 "name TEXT NOT NULL, order_no INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE notes (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, category_id TEXT, " +
@@ -71,6 +71,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 5) {
+            tryAdd(db, "subjects", "criteria", "TEXT");
+        }
         if (oldVersion < 4) {
             tryAdd(db, "notes", "slide_path", "TEXT");
             tryAdd(db, "notes", "slide_page", "INTEGER NOT NULL DEFAULT 0");
@@ -136,6 +139,21 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().delete("notes", "subject_id = ?", new String[]{id});
         getWritableDatabase().delete("categories", "subject_id = ?", new String[]{id});
         getWritableDatabase().delete("subjects", "id = ?", new String[]{id});
+    }
+
+    public String subjectCriteria(String subjectId) {
+        Cursor c = getReadableDatabase().rawQuery("SELECT criteria FROM subjects WHERE id = ?", new String[]{subjectId});
+        try {
+            return c.moveToFirst() ? c.getString(0) : null;
+        } finally {
+            c.close();
+        }
+    }
+
+    public void setSubjectCriteria(String subjectId, String text) {
+        ContentValues v = new ContentValues();
+        v.put("criteria", text == null ? "" : text.trim());
+        getWritableDatabase().update("subjects", v, "id = ?", new String[]{subjectId});
     }
 
     public Subject subject(String id) {
