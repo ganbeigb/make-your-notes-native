@@ -45,6 +45,10 @@ public class SubjectActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final List<Uri> failedUris = new ArrayList<>();
     private TextView retryBtn;
+    private boolean selecting = false;
+    private final java.util.Set<String> picked = new java.util.HashSet<>();
+    private LinearLayout batchRow;
+    private TextView selectCount;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -92,6 +96,22 @@ public class SubjectActivity extends Activity {
         LinearLayout tools = new LinearLayout(this);
         tools.setOrientation(LinearLayout.HORIZONTAL);
         tools.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 8));
+        TextView bulk = Ui.text(this, "  批量  ", 14, Ui.INK);
+        bulk.setBackground(Ui.card(this));
+        bulk.setGravity(Gravity.CENTER);
+        bulk.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        blp.leftMargin = Ui.dp(this, 8);
+        bulk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (selecting) exitSelect();
+                else enterSelect();
+            }
+        });
+        tools.addView(bulk, blp);
+
         TextView imp = Ui.text(this, "  导入课件截图  ", 14, 0xFFFFFFFF);
         imp.setBackground(Ui.button(this, "  导入课件截图  ").getBackground());
         imp.setGravity(Gravity.CENTER);
@@ -220,6 +240,70 @@ public class SubjectActivity extends Activity {
         tools.addView(rule, rlp);
         root.addView(tools);
 
+        batchRow = new LinearLayout(this);
+        batchRow.setOrientation(LinearLayout.HORIZONTAL);
+        batchRow.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 8));
+        batchRow.setVisibility(View.GONE);
+
+        selectCount = Ui.text(this, "已选 0", 13, Ui.INK2);
+        selectCount.setPadding(Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+        batchRow.addView(selectCount);
+
+        TextView pickAll = batchChip("全选");
+        pickAll.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                picked.clear();
+                for (Db.Note n : data) picked.add(n.id);
+                refreshBatch();
+            }
+        });
+        batchRow.addView(pickAll);
+
+        TextView delPicked = batchChip("删除");
+        delPicked.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (picked.isEmpty()) return;
+                new AlertDialog.Builder(SubjectActivity.this)
+                        .setTitle("删除选中")
+                        .setMessage("将删除 " + picked.size() + " 条知识点，不可恢复。")
+                        .setPositiveButton("删除", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                db.bulkDelete(new ArrayList<>(picked));
+                                picked.clear();
+                                exitSelect();
+                                reload();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        batchRow.addView(delPicked);
+
+        TextView movePicked = batchChip("改分类");
+        movePicked.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (picked.isEmpty()) return;
+                askCategoryForPicked();
+            }
+        });
+        batchRow.addView(movePicked);
+
+        TextView cancel = batchChip("取消");
+        cancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                exitSelect();
+            }
+        });
+        batchRow.addView(cancel);
+
+        root.addView(batchRow);
+
         list = new ListView(this);
         list.setDivider(null);
         list.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 12));
@@ -253,6 +337,9 @@ public class SubjectActivity extends Activity {
                 Db.Note n = data.get(position);
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
                 ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines());
+                if (selecting && picked.contains(n.id)) {
+                    row.card.setBackground(Ui.cardSelected(SubjectActivity.this));
+                }
                 return row.card;
             }
         };
@@ -260,7 +347,15 @@ public class SubjectActivity extends Activity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                openNote(data.get(position).id);
+                Db.Note n = data.get(position);
+                if (selecting) {
+                    if (picked.contains(n.id)) picked.remove(n.id);
+                    else picked.add(n.id);
+                    refreshBatch();
+                    adapter.notifyDataSetChanged();
+                    return;
+                }
+                openNote(n.id);
             }
         });
         list.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -302,6 +397,62 @@ public class SubjectActivity extends Activity {
         boolean isEmpty = data.isEmpty();
         empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         list.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+    }
+
+    private TextView batchChip(String label) {
+        TextView t = new TextView(this);
+        t.setText(label);
+        t.setTextSize(13);
+        t.setTextColor(Ui.INK);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
+        t.setBackground(Ui.card(this));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.leftMargin = Ui.dp(this, 8);
+        t.setLayoutParams(lp);
+        return t;
+    }
+
+    private void enterSelect() {
+        selecting = true;
+        picked.clear();
+        batchRow.setVisibility(View.VISIBLE);
+        refreshBatch();
+        adapter.notifyDataSetChanged();
+    }
+
+    private void exitSelect() {
+        selecting = false;
+        picked.clear();
+        batchRow.setVisibility(View.GONE);
+        adapter.notifyDataSetChanged();
+    }
+
+    private void refreshBatch() {
+        if (selectCount != null) selectCount.setText("已选 " + picked.size());
+    }
+
+    private void askCategoryForPicked() {
+        final EditText input = new EditText(this);
+        input.setHint("分类路径，例如 力学/运动学");
+        new AlertDialog.Builder(this)
+                .setTitle("把 " + picked.size() + " 条移到…")
+                .setView(input)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String path = input.getText().toString().trim();
+                        String catId = path.isEmpty() ? null : db.ensureCategoryPath(subjectId, path);
+                        db.bulkSetCategory(new ArrayList<>(picked), catId);
+                        picked.clear();
+                        exitSelect();
+                        reload();
+                        Toast.makeText(SubjectActivity.this, "已更新分类", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     private void openNote(String noteId) {

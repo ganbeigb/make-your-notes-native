@@ -407,6 +407,28 @@ public class Db extends SQLiteOpenHelper {
         getWritableDatabase().update("notes", v, "id = ?", new String[]{n.id});
     }
 
+    public void bulkDelete(java.util.Collection<String> ids) {
+        if (ids == null || ids.isEmpty()) return;
+        StringBuilder q = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) q.append(i == 0 ? "?" : ",?");
+        String[] args = new String[ids.size()];
+        int i = 0;
+        for (String id : ids) args[i++] = id;
+        getWritableDatabase().delete("notes", "id IN (" + q + ")", args);
+    }
+
+    public void bulkSetCategory(java.util.Collection<String> ids, String categoryId) {
+        if (ids == null || ids.isEmpty()) return;
+        ContentValues v = new ContentValues();
+        v.put("category_id", categoryId);
+        StringBuilder q = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) q.append(i == 0 ? "?" : ",?");
+        String[] args = new String[ids.size()];
+        int i = 0;
+        for (String id : ids) args[i++] = id;
+        getWritableDatabase().update("notes", v, "id IN (" + q + ")", args);
+    }
+
     public void deleteNote(String id) {
         getWritableDatabase().delete("notes", "id = ?", new String[]{id});
     }

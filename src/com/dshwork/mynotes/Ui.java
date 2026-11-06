@@ -87,6 +87,14 @@ public class Ui {
         return d;
     }
 
+    public static GradientDrawable cardSelected(Context c) {
+        GradientDrawable d = new GradientDrawable();
+        d.setColor(CARD);
+        d.setCornerRadius(dp(c, 12));
+        d.setStroke(dp(c, 2), ACCENT);
+        return d;
+    }
+
     public static TextView text(Context c, String s, float size, int color) {
         TextView t = new TextView(c);
         t.setText(s);
