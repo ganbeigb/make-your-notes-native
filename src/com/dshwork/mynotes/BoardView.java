@@ -49,6 +49,7 @@ public class BoardView extends View {
         List<PointF> pts = new ArrayList<>();
         String text;
         String sym;
+        String group;
         int shape; // 0 矩形 1 椭圆 2 直线
         int color = 0xFF243029;
         float width = 2.5f;
@@ -129,6 +130,12 @@ public class BoardView extends View {
     private OnEditText textEditor;
     private String chipName = "IC";
     private int chipPerSide = 3;
+    private final java.util.Set<Item> extraSel = new java.util.HashSet<>();
+    private boolean boxing = false;
+    private float boxX0, boxY0, boxX1, boxY1;
+    public boolean snapPins = true;
+    public boolean showGrid = true;
+    public boolean snapDrag = false;
 
     public BoardView(Context c) {
         super(c);
@@ -296,6 +303,24 @@ public class BoardView extends View {
     }
 
     /** 删除：选中段只删这一段，剩下的拆成两条导线 */
+    private android.graphics.RectF boundsOf(Item it) {
+        if (it.pts.isEmpty()) return null;
+        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+        for (PointF p : it.pts) {
+            minX = Math.min(minX, p.x);
+            maxX = Math.max(maxX, p.x);
+            minY = Math.min(minY, p.y);
+            maxY = Math.max(maxY, p.y);
+        }
+        if (it.kind == K_CHIP) {
+            minX = it.pts.get(0).x;
+            minY = it.pts.get(0).y;
+            maxX = minX + it.w;
+            maxY = minY + it.h;
+        }
+        return new android.graphics.RectF(minX - 4, minY - 4, maxX + 4, maxY + 4);
+    }
+
     public boolean deleteSelected() {
         if (selected == null) return false;
         snapshot();
@@ -336,13 +361,30 @@ public class BoardView extends View {
     @Override
     protected void onDraw(Canvas c) {
         super.onDraw(c);
-        drawGrid(c);
+        if (showGrid) drawGrid(c);
         c.save();
         c.translate(tx, ty);
         c.scale(scale, scale);
         for (Item it : items) drawItem(c, it);
         drawJunctions(c);
         if (draft != null) drawItem(c, draft);
+        if (boxing) {
+            Paint box = new Paint(Paint.ANTI_ALIAS_FLAG);
+            box.setStyle(Paint.Style.STROKE);
+            box.setStrokeWidth(1.2f / scale);
+            box.setColor(0xFF3D7A61);
+            box.setPathEffect(new android.graphics.DashPathEffect(new float[]{6 / scale, 4 / scale}, 0));
+            c.drawRect(Math.min(boxX0, boxX1), Math.min(boxY0, boxY1),
+                    Math.max(boxX0, boxX1), Math.max(boxY0, boxY1), box);
+        }
+        for (Item extra : extraSel) {
+            Paint ep = new Paint(Paint.ANTI_ALIAS_FLAG);
+            ep.setStyle(Paint.Style.STROKE);
+            ep.setStrokeWidth(1.2f / scale);
+            ep.setColor(0xFF3D7A61);
+            android.graphics.RectF b = boundsOf(extra);
+            if (b != null) c.drawRect(b, ep);
+        }
         if (selected != null) {
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
             p.setStyle(Paint.Style.STROKE);
@@ -404,6 +446,86 @@ public class BoardView extends View {
         float minX = Math.min(p1.x, p2.x) - 0.6f, maxX = Math.max(p1.x, p2.x) + 0.6f;
         float minY = Math.min(p1.y, p2.y) - 0.6f, maxY = Math.max(p1.y, p2.y) + 0.6f;
         return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    /** 框选：落在矩形内的元素全部选中 */
+    private void selectInBox() {
+        float minX = Math.min(boxX0, boxX1), maxX = Math.max(boxX0, boxX1);
+        float minY = Math.min(boxY0, boxY1), maxY = Math.max(boxY0, boxY1);
+        if (maxX - minX < 6 && maxY - minY < 6) return;
+        extraSel.clear();
+        selected = null;
+        java.util.Set<String> groups = new java.util.HashSet<>();
+        for (Item it : items) {
+            for (PointF pt : it.pts) {
+                if (pt.x >= minX && pt.x <= maxX && pt.y >= minY && pt.y <= maxY) {
+                    if (selected == null) selected = it;
+                    else extraSel.add(it);
+                    if (it.group != null) groups.add(it.group);
+                    break;
+                }
+            }
+        }
+        if (!groups.isEmpty()) {
+            for (Item it : items) {
+                if (it.group != null && groups.contains(it.group) && it != selected) extraSel.add(it);
+            }
+        }
+        invalidate();
+    }
+
+    private void moveAll(float dx, float dy) {
+        java.util.List<Item> all = new java.util.ArrayList<>();
+        if (selected != null) all.add(selected);
+        all.addAll(extraSel);
+        for (Item it : all) {
+            for (PointF p : it.pts) {
+                p.x += dx;
+                p.y += dy;
+            }
+        }
+        if (snapDrag) {
+            for (Item it : all) {
+                for (PointF p : it.pts) {
+                    p.x = Math.round(p.x / 10f) * 10f;
+                    p.y = Math.round(p.y / 10f) * 10f;
+                }
+            }
+        }
+    }
+
+    /** 组合选中项 */
+    public boolean groupSelected() {
+        java.util.List<Item> all = new java.util.ArrayList<>();
+        if (selected != null) all.add(selected);
+        all.addAll(extraSel);
+        if (all.size() < 2) return false;
+        snapshot();
+        String gid = "g" + System.currentTimeMillis();
+        for (Item it : all) it.group = gid;
+        invalidate();
+        return true;
+    }
+
+    /** 拆开选中项 */
+    public boolean ungroupSelected() {
+        java.util.List<Item> all = new java.util.ArrayList<>();
+        if (selected != null) all.add(selected);
+        all.addAll(extraSel);
+        boolean any = false;
+        for (Item it : all) {
+            if (it.group != null) {
+                if (!any) snapshot();
+                any = true;
+                it.group = null;
+            }
+        }
+        invalidate();
+        return any;
+    }
+
+    public int selectionCount() {
+        return (selected == null ? 0 : 1) + extraSel.size();
     }
 
     private void drawItem(Canvas c, Item it) {
@@ -547,7 +669,7 @@ public class BoardView extends View {
                     items.add(it);
                     invalidate();
                 } else if (tool == T_WIRE) {
-                    PointF snapped = snapToPin(w0);
+                    PointF snapped = snapPins ? snapToPin(w0) : w0;
                     if (wireStart == null) {
                         wireStart = snapped;
                     } else {
@@ -562,10 +684,26 @@ public class BoardView extends View {
                     }
                     invalidate();
                 } else {
-                    selected = hitTest(w0);
+                    Item hit = hitTest(w0);
                     selSeg = -1;
                     dragMode = 0;
                     dragIndex = -1;
+                    if (hit == null) {
+                        selected = null;
+                        extraSel.clear();
+                        boxing = true;
+                        boxX0 = boxX1 = w0.x;
+                        boxY0 = boxY1 = w0.y;
+                        invalidate();
+                        return true;
+                    }
+                    selected = hit;
+                    extraSel.clear();
+                    if (hit.group != null) {
+                        for (Item other : items) {
+                            if (other != hit && hit.group.equals(other.group)) extraSel.add(other);
+                        }
+                    }
                     if (selected != null && selected.kind == K_WIRE) {
                         float tol = Math.max(8, selected.width + 5) / 1f;
                         int seg = hitSegment(selected, w0, tol);
@@ -622,6 +760,12 @@ public class BoardView extends View {
                     return true;
                 }
                 PointF w = toWorld(e.getX(), e.getY());
+                if (boxing) {
+                    boxX1 = w.x;
+                    boxY1 = w.y;
+                    invalidate();
+                    return true;
+                }
                 if (draft != null) {
                     if (draft.kind == K_STROKE) draft.pts.add(w);
                     else if (draft.pts.size() >= 2) draft.pts.set(1, w);
@@ -662,10 +806,7 @@ public class BoardView extends View {
                             else if (wasV && !wasH) next.x = v.x;
                         }
                     } else {
-                        for (PointF p : selected.pts) {
-                            p.x += dx;
-                            p.y += dy;
-                        }
+                        moveAll(dx, dy);
                     }
                     dragging = true;
                     invalidate();
@@ -689,6 +830,10 @@ public class BoardView extends View {
                     if (draft != null) items.add(draft);
                     draft = null;
                     invalidate();
+                }
+                if (boxing) {
+                    boxing = false;
+                    selectInBox();
                 }
                 pinchDist = 0;
                 return true;
