@@ -26,6 +26,7 @@ public class BoardActivity extends BaseActivity {
     private BoardView board;
     private LinearLayout shapeRow;
     private LinearLayout symbolRow;
+    private android.widget.HorizontalScrollView symbolScroll;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -163,7 +164,25 @@ public class BoardActivity extends BaseActivity {
         symbolRow = new LinearLayout(this);
         symbolRow.setOrientation(LinearLayout.HORIZONTAL);
         symbolRow.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 6));
+        final java.util.List<SymbolCell> cells = new java.util.ArrayList<>();
         for (int i = 0; i < Symbols.NAMES.length; i++) {
+            final String name = Symbols.NAMES[i];
+            final SymbolCell cell = new SymbolCell(this, name, Symbols.LABELS[i]);
+            cells.add(cell);
+            if (i == 0) cell.setSelected(true);
+            cell.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    for (SymbolCell c2 : cells) c2.setSelected(c2 == cell);
+                    board.setSymbolName(name);
+                }
+            });
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            clp.rightMargin = Ui.dp(this, 6);
+            symbolRow.addView(cell, clp);
+        }
+        if (false) for (int i = 0; i < Symbols.NAMES.length; i++) {
             final String name = Symbols.NAMES[i];
             TextView b = chip(Symbols.LABELS[i]);
             b.setOnClickListener(new View.OnClickListener() {
@@ -175,7 +194,12 @@ public class BoardActivity extends BaseActivity {
             symbolRow.addView(b);
         }
         symbolRow.setVisibility(View.GONE);
-        root.addView(symbolRow);
+        android.widget.HorizontalScrollView symScroll = new android.widget.HorizontalScrollView(this);
+        symScroll.setHorizontalScrollBarEnabled(false);
+        symScroll.addView(symbolRow);
+        symScroll.setVisibility(View.GONE);
+        root.addView(symScroll);
+        symbolScroll = symScroll;
 
         board = new BoardView(this);
         board.setTextEditor(new BoardView.OnEditText() {
@@ -227,7 +251,7 @@ public class BoardActivity extends BaseActivity {
                     ((TextView) c).setTextColor(c == b ? 0xFFFFFFFF : Ui.INK);
                 }
                 shapeRow.setVisibility(tool == BoardView.T_SHAPE ? View.VISIBLE : View.GONE);
-                symbolRow.setVisibility(tool == BoardView.T_SYMBOL ? View.VISIBLE : View.GONE);
+                if (symbolScroll != null) symbolScroll.setVisibility(tool == BoardView.T_SYMBOL ? View.VISIBLE : View.GONE);
             }
         });
         return b;
