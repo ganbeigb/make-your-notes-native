@@ -641,7 +641,7 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void deckMenu(final Db.Deck d) {
-        final String[] items = {"本节总结（AI）", "重命名课件", "查看页面", "删除课件"};
+        final String[] items = {"本节总结（AI）", "重做整册（AI）", "重命名课件", "查看页面", "删除课件"};
         new AlertDialog.Builder(this)
                 .setTitle(d.title)
                 .setItems(items, new DialogInterface.OnClickListener() {
@@ -650,6 +650,8 @@ public class SubjectActivity extends BaseActivity {
                         if (which == 0) {
                             deckSummary(d);
                         } else if (which == 1) {
+                            redoDeckMenu(d);
+                        } else if (which == 2) {
                             final EditText input = new EditText(SubjectActivity.this);
                             input.setText(d.title);
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -664,7 +666,7 @@ public class SubjectActivity extends BaseActivity {
                                     })
                                     .setNegativeButton("取消", null)
                                     .show();
-                        } else if (which == 2) {
+                        } else if (which == 3) {
                             showSlides(d);
                         } else {
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -733,6 +735,75 @@ public class SubjectActivity extends BaseActivity {
                                 .setMessage(finalMsg)
                                 .setPositiveButton("好", null)
                                 .show();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    /** 整册重做：逐页重新识别 */
+    private void redoDeckMenu(final Db.Deck d) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("重做整册")
+                .setMessage("会把《" + d.title + "》里每一页重新识别一遍，覆盖该页现有知识点。\n共 "
+                        + d.slideCount + " 页，调用次数与页数相同。")
+                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        runRedoDeck(d);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void runRedoDeck(final Db.Deck d) {
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setTitle("正在重做整册");
+        dlg.setMessage("准备中…");
+        dlg.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
+        dlg.setMax(Math.max(1, d.slideCount));
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    int[] r = Importer.redoDeck(SubjectActivity.this, db, prefs, subjectId, d,
+                            new Importer.Progress() {
+                                @Override
+                                public void onStep(final int done, final int total, final String message) {
+                                    ui.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            dlg.setMax(total);
+                                            dlg.setProgress(done);
+                                            dlg.setMessage(message);
+                                        }
+                                    });
+                                }
+
+                                @Override
+                                public boolean cancelled() {
+                                    return false;
+                                }
+                            });
+                    msg = "整册重做完成：成功 " + r[0] + " 页" + (r[1] > 0 ? "，失败 " + r[1] + " 页" : "");
+                } catch (final Exception e) {
+                    msg = "失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        Toast.makeText(SubjectActivity.this, finalMsg, Toast.LENGTH_LONG).show();
+                        reload();
                     }
                 });
             }

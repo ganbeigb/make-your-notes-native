@@ -314,6 +314,30 @@ public class Importer {
         return insertPoints(db, subjectId, json, "第 " + slide.idx + " 页", saved, slide.idx, slide.id);
     }
 
+    /** 整册重做：逐页重新识别并替换该页知识点（对应网页 extract-deck） */
+    public static int[] redoDeck(Context ctx, Db db, Prefs prefs, String subjectId, Db.Deck deck,
+                                 Progress cb) throws Exception {
+        java.util.List<Db.Slide> slides = db.slides(deck.id);
+        int done = 0, failed = 0;
+        for (int idx = 0; idx < slides.size(); idx++) {
+            if (cb != null && cb.cancelled()) break;
+            Db.Slide s = slides.get(idx);
+            if (s.imagePath == null || !new java.io.File(s.imagePath).exists()) {
+                failed++;
+                continue;
+            }
+            if (cb != null) cb.onStep(idx + 1, slides.size(), "正在重做第 " + s.idx + " 页…");
+            try {
+                String json = extractFile(prefs, s.imagePath);
+                replaceSlide(ctx, db, prefs, subjectId, s, json);
+                done++;
+            } catch (Exception e) {
+                failed++;
+            }
+        }
+        return new int[]{done, failed};
+    }
+
     /** 给某一页生成汇总 */
     public static String digestSlide(Db db, Prefs prefs, String subjectId, Db.Slide slide) throws Exception {
         java.util.List<Db.Note> list = db.notesBySlide(slide.id);
