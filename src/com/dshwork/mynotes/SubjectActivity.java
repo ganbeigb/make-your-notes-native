@@ -132,6 +132,21 @@ public class SubjectActivity extends Activity {
             }
         });
         tools.addView(map, mlp);
+
+        TextView tidy = Ui.text(this, "  整理  ", 14, Ui.INK);
+        tidy.setBackground(Ui.card(this));
+        tidy.setGravity(Gravity.CENTER);
+        tidy.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        tlp.leftMargin = Ui.dp(this, 8);
+        tidy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmOrganize();
+            }
+        });
+        tools.addView(tidy, tlp);
         root.addView(tools);
 
         list = new ListView(this);
@@ -291,6 +306,61 @@ private void openExportMenu() {
         i.setType(pendingMime);
         i.putExtra(Intent.EXTRA_TITLE, pendingName);
         startActivityForResult(i, REQ_SAVE);
+    }
+
+    private void confirmOrganize() {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("自动整理")
+                .setMessage("让模型重新给所有知识点分类（会调用一次文本模型，按条计费）。")
+                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        runOrganize();
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
+    private void runOrganize() {
+        final ProgressDialog dlg = new ProgressDialog(this);
+        dlg.setTitle("正在整理");
+        dlg.setMessage("准备中…");
+        dlg.setCancelable(false);
+        dlg.show();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Organizer.Result r = Organizer.run(db, prefs, subjectId, new Organizer.Progress() {
+                    @Override
+                    public void onStep(final String message) {
+                        ui.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                dlg.setMessage(message);
+                            }
+                        });
+                    }
+                });
+                ui.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        reload();
+                        if (r.error != null) {
+                            Toast.makeText(SubjectActivity.this, "整理失败：" + r.error, Toast.LENGTH_LONG).show();
+                        } else {
+                            Toast.makeText(SubjectActivity.this, "已更新 " + r.updated + " 条分类", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }).start();
     }
 
     private void pickImages() {
