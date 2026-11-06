@@ -36,6 +36,8 @@ public class SettingsActivity extends BaseActivity {
     private EditText priceOutInput;
     private android.widget.CheckBox quoteBox;
     private android.widget.CheckBox keepFormulaBox;
+    private android.widget.CheckBox mockBox;
+    private android.widget.CheckBox autoOrgBox;
     private android.widget.CheckBox strictBox;
 
     private final String[] providers = {"deepseek", "zhipu"};
@@ -131,6 +133,22 @@ public class SettingsActivity extends BaseActivity {
         keepFormulaBox.setChecked(prefs.keepFormula());
         keepFormulaBox.setPadding(0, Ui.dp(this, 8), 0, 0);
         this.keepFormulaBox = keepFormulaBox;
+
+        mockBox = new android.widget.CheckBox(this);
+        mockBox.setText("演示模式（不调用 API，返回示例数据）");
+        mockBox.setTextSize(13);
+        mockBox.setTextColor(Ui.INK);
+        mockBox.setChecked(prefs.mock());
+        mockBox.setPadding(0, Ui.dp(this, 10), 0, 0);
+        form.addView(mockBox);
+
+        autoOrgBox = new android.widget.CheckBox(this);
+        autoOrgBox.setText("导入后自动整理目录");
+        autoOrgBox.setTextSize(13);
+        autoOrgBox.setTextColor(Ui.INK);
+        autoOrgBox.setChecked(prefs.autoOrganize());
+        autoOrgBox.setPadding(0, Ui.dp(this, 8), 0, 0);
+        form.addView(autoOrgBox);
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -291,6 +309,8 @@ public class SettingsActivity extends BaseActivity {
         prefs.setStrict(strictBox.isChecked());
         prefs.setShowQuote(quoteBox.isChecked());
         if (keepFormulaBox != null) prefs.setKeepFormula(keepFormulaBox.isChecked());
+        if (mockBox != null) prefs.setMock(mockBox.isChecked());
+        if (autoOrgBox != null) prefs.setAutoOrganize(autoOrgBox.isChecked());
         Ui.apply(this);
         Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
         setResult(RESULT_OK);
