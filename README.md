@@ -170,3 +170,30 @@ git tag -a vX.Y.Z -m "说明"
 5. 整理：AI 归类、去重、拓展标题
 6. 设置补全：严格校对、界面缩放、折叠行数、排序
 7. 手动笔记符号键盘
+
+
+## 安装
+
+1. 把 `MakeYourNotes-native-v*.apk` 传到手机
+2. 点击安装，允许「未知来源」
+3. 打开后「⋯ → 设置」填 API Key（识图选 zhipu，默认 glm-4.6v-flash 免费）
+
+## 代码结构
+
+| 文件 | 作用 |
+|---|---|
+| `MainActivity` | 科目列表、菜单、恢复备份 |
+| `SubjectActivity` | 知识点列表、导入、整理、标题、分类、导图、导出入口 |
+| `NoteActivity` | 知识点编辑、公式预览、符号键盘、配图、查看原图 |
+| `BoardActivity` / `BoardView` | 画板（元件、芯片、导线、A* 绕行、分段编辑） |
+| `FormulaView` | LaTeX 子集渲染 |
+| `MindMapActivity` / `MindMapView` | 思维导图与导出 |
+| `CategoryActivity` / `SearchActivity` / `UsageActivity` | 分类浏览、搜索、用量 |
+| `Db` | SQLite：科目 / 分类 / 知识点 / 用量 |
+| `AiClient` / `Importer` / `Organizer` / `Titles` | 模型调用与三个 AI 流程 |
+| `Exporter` | Markdown / HTML / 公式合集 / 备份 |
+| `Ui` / `ListRows` | 配色字号主题、列表行复用 |
+
+## 版本历史
+
+见 [CHANGELOG.md](CHANGELOG.md)，发布说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。

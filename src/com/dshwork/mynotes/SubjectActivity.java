@@ -212,58 +212,11 @@ public class SubjectActivity extends Activity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
-                Row row;
-                if (convertView == null) {
-                    row = new Row();
-                    row.card = new LinearLayout(SubjectActivity.this);
-                    row.card.setOrientation(LinearLayout.VERTICAL);
-                    row.card.setPadding(Ui.dp(SubjectActivity.this, 16), Ui.dp(SubjectActivity.this, 12),
-                            Ui.dp(SubjectActivity.this, 16), Ui.dp(SubjectActivity.this, 12));
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    lp.bottomMargin = Ui.dp(SubjectActivity.this, 10);
-                    row.card.setLayoutParams(lp);
-
-                    row.tag = Ui.text(SubjectActivity.this, "", 11, Ui.ACCENT);
-                    row.card.addView(row.tag);
-
-                    row.name = Ui.text(SubjectActivity.this, "", 16, Ui.INK);
-                    row.name.setTypeface(Typeface.DEFAULT_BOLD);
-                    row.card.addView(row.name);
-
-                    row.preview = Ui.text(SubjectActivity.this, "", 12, Ui.INK2);
-                    row.preview.setPadding(0, Ui.dp(SubjectActivity.this, 4), 0, 0);
-                    row.card.addView(row.preview);
-
-                    row.card.setTag(row);
-                } else {
-                    row = (Row) convertView.getTag();
-                }
-
+                ListRows.NoteRow row = ListRows.obtain(SubjectActivity.this, convertView);
                 Db.Note n = data.get(position);
-                row.card.setBackground(Ui.card(SubjectActivity.this));
-
                 String path = n.categoryId == null ? "" : db.categoryPath(n.categoryId);
-                row.tag.setText(path);
-                row.tag.setVisibility(path.isEmpty() ? View.GONE : View.VISIBLE);
-
-                row.name.setText(n.name);
-
-                int lines = prefs.cardLines();
-                String preview = n.content == null ? "" : n.content.replace("\n", " ").trim();
-                int limit = lines <= 0 ? 0 : lines * 24;
-                if (limit == 0) preview = "";
-                else if (preview.length() > limit) preview = preview.substring(0, limit) + "…";
-                row.preview.setText(preview);
-                row.preview.setVisibility(preview.isEmpty() ? View.GONE : View.VISIBLE);
+                ListRows.bind(SubjectActivity.this, row, path, n.name, n.content, prefs.cardLines());
                 return row.card;
-            }
-
-            class Row {
-                LinearLayout card;
-                TextView tag;
-                TextView name;
-                TextView preview;
             }
         };
         list.setAdapter(adapter);

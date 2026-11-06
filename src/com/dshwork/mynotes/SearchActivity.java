@@ -94,25 +94,10 @@ public class SearchActivity extends Activity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                ListRows.NoteRow row = ListRows.obtain(SearchActivity.this, convertView);
                 String[] h = hits.get(position);
-                LinearLayout card = new LinearLayout(SearchActivity.this);
-                card.setOrientation(LinearLayout.VERTICAL);
-                card.setBackground(Ui.card(SearchActivity.this));
-                card.setPadding(Ui.dp(SearchActivity.this, 16), Ui.dp(SearchActivity.this, 12),
-                        Ui.dp(SearchActivity.this, 16), Ui.dp(SearchActivity.this, 12));
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.bottomMargin = Ui.dp(SearchActivity.this, 10);
-                card.setLayoutParams(lp);
-
-                TextView name = Ui.text(SearchActivity.this, h[1], 16, Ui.INK);
-                name.setTypeface(Typeface.DEFAULT_BOLD);
-                card.addView(name);
-
-                TextView sub = Ui.text(SearchActivity.this, h[2], 12, Ui.INK2);
-                sub.setPadding(0, Ui.dp(SearchActivity.this, 4), 0, 0);
-                card.addView(sub);
-                return card;
+                ListRows.bind(SearchActivity.this, row, h[2], h[1], "", 0);
+                return row.card;
             }
         };
         list.setAdapter(adapter);

@@ -100,33 +100,11 @@ public class CategoryActivity extends Activity {
 
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                ListRows.NoteRow row = ListRows.obtain(CategoryActivity.this, convertView);
                 Db.Note n = shown.get(position);
-                LinearLayout card = new LinearLayout(CategoryActivity.this);
-                card.setOrientation(LinearLayout.VERTICAL);
-                card.setBackground(Ui.card(CategoryActivity.this));
-                card.setPadding(Ui.dp(CategoryActivity.this, 16), Ui.dp(CategoryActivity.this, 12),
-                        Ui.dp(CategoryActivity.this, 16), Ui.dp(CategoryActivity.this, 12));
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                lp.bottomMargin = Ui.dp(CategoryActivity.this, 10);
-                card.setLayoutParams(lp);
-
                 String path = n.categoryId == null ? "未分类" : db.categoryPath(n.categoryId);
-                TextView tag = Ui.text(CategoryActivity.this, path, 11, Ui.ACCENT);
-                card.addView(tag);
-
-                TextView name = Ui.text(CategoryActivity.this, n.name, 16, Ui.INK);
-                name.setTypeface(Typeface.DEFAULT_BOLD);
-                card.addView(name);
-
-                String preview = n.content == null ? "" : n.content.replace("\n", " ").trim();
-                if (preview.length() > 40) preview = preview.substring(0, 40) + "…";
-                if (!preview.isEmpty()) {
-                    TextView p = Ui.text(CategoryActivity.this, preview, 12, Ui.INK2);
-                    p.setPadding(0, Ui.dp(CategoryActivity.this, 4), 0, 0);
-                    card.addView(p);
-                }
-                return card;
+                ListRows.bind(CategoryActivity.this, row, path, n.name, n.content, 2);
+                return row.card;
             }
         };
         list.setAdapter(adapter);
