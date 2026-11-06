@@ -216,21 +216,64 @@ public class MainActivity extends BaseActivity {
     }
 
     private void openMenu() {
-        final String[] items = {"搜索", "用量", "设置", "恢复备份", "导出全部备份", "自检", "关于"};
+        final String[] titles = {"搜索", "用量", "设置", "恢复备份", "导出全部备份", "自检", "关于"};
+        final String[] hints = {
+                "跨科目按标题、正文、公式查",
+                "调用次数、token 与花费",
+                "服务商、模型、主题、字号",
+                "从备份目录挑一个 zip 恢复",
+                "把全部科目打包成一个 zip",
+                "跑 7 项运行期检查",
+                "版本、数据说明、功能清单"
+        };
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 8));
+        for (int i = 0; i < titles.length; i++) {
+            final int which = i;
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.VERTICAL);
+            row.setPadding(Ui.dp(this, 14), Ui.dp(this, 11), Ui.dp(this, 14), Ui.dp(this, 11));
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(Ui.CARD);
+            bg.setCornerRadius(Ui.dp(this, 10));
+            row.setBackground(bg);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = Ui.dp(this, 6);
+            row.setLayoutParams(lp);
+
+            TextView title = Ui.text(this, titles[i], 14, Ui.INK);
+            title.setTypeface(Typeface.DEFAULT_BOLD);
+            row.addView(title);
+            TextView hint = Ui.text(this, hints[i], 11.5f, Ui.MUTED);
+            hint.setPadding(0, Ui.dp(this, 2), 0, 0);
+            row.addView(hint);
+
+            row.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    menuAction(which);
+                }
+            });
+            box.addView(row);
+        }
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(box);
         new AlertDialog.Builder(this)
-                .setItems(items, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) startActivity(new Intent(MainActivity.this, SearchActivity.class));
-                        else if (which == 1) startActivity(new Intent(MainActivity.this, UsageActivity.class));
-                        else if (which == 2) startActivity(new Intent(MainActivity.this, SettingsActivity.class));
-                        else if (which == 3) pickBackup();
-                        else if (which == 4) exportAllBackup();
-                        else if (which == 5) startActivity(new Intent(MainActivity.this, SelfCheckActivity.class));
-                        else showAbout();
-                    }
-                })
+                .setView(sc)
+                .setNegativeButton("关闭", null)
                 .show();
+    }
+
+    private void menuAction(int which) {
+        if (which == 0) startActivity(new Intent(MainActivity.this, SearchActivity.class));
+        else if (which == 1) startActivity(new Intent(MainActivity.this, UsageActivity.class));
+        else if (which == 2) startActivity(new Intent(MainActivity.this, SettingsActivity.class));
+        else if (which == 3) pickBackup();
+        else if (which == 4) exportAllBackup();
+        else if (which == 5) startActivity(new Intent(MainActivity.this, SelfCheckActivity.class));
+        else showAbout();
     }
 
     private void exportAllBackup() {
