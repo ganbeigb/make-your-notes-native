@@ -86,6 +86,26 @@ public class BoardActivity extends Activity {
         });
         bar.addView(del);
 
+        TextView clear = Ui.text(this, "清空", 14, 0xFFC0392B);
+        clear.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        clear.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(BoardActivity.this)
+                        .setTitle("清空画布")
+                        .setMessage("会删掉画布上所有内容（可撤销）。")
+                        .setPositiveButton("清空", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                board.clearAll();
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+        bar.addView(clear);
+
         TextView done = Ui.button(this, "完成");
         done.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -158,6 +178,26 @@ public class BoardActivity extends Activity {
         root.addView(symbolRow);
 
         board = new BoardView(this);
+        board.setTextEditor(new BoardView.OnEditText() {
+            @Override
+            public void edit(String current, final BoardView.TextSink sink) {
+                final EditText input = new EditText(BoardActivity.this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                input.setText(current);
+                new AlertDialog.Builder(BoardActivity.this)
+                        .setTitle("修改文字")
+                        .setView(input)
+                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                sink.onText(input.getText().toString());
+                            }
+                        })
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
+        });
+
         board.setTextAsker(new BoardView.OnNeedsText() {
             @Override
             public void ask(android.graphics.PointF at, final BoardView.TextSink sink) {

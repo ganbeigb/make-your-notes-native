@@ -40,6 +40,10 @@ public class BoardView extends View {
         void onText(String text);
     }
 
+    public interface OnEditText {
+        void edit(String current, TextSink sink);
+    }
+
     static class Item {
         int kind;
         List<PointF> pts = new ArrayList<>();
@@ -120,6 +124,7 @@ public class BoardView extends View {
     private int dragMode = 0; // 0 无 1 整体 2 段 3 顶点
     private int dragIndex = -1;
     private OnNeedsText textAsker;
+    private OnEditText textEditor;
     private String chipName = "IC";
     private int chipPerSide = 3;
 
@@ -146,6 +151,10 @@ public class BoardView extends View {
         it.pts.add(new PointF(at.x, at.y));
         items.add(it);
         invalidate();
+    }
+
+    public void setTextEditor(OnEditText e) {
+        textEditor = e;
     }
 
     public void setTextAsker(OnNeedsText t) {
@@ -470,6 +479,19 @@ public class BoardView extends View {
                         }
                     } else if (selected != null) {
                         dragMode = 1;
+                        if (selected.kind == K_TEXT && selected.text != null && textEditor != null) {
+                            final Item target = selected;
+                            textEditor.edit(target.text, new TextSink() {
+                                @Override
+                                public void onText(String text) {
+                                    if (text != null && !text.trim().isEmpty()) {
+                                        snapshot();
+                                        target.text = text.trim();
+                                        invalidate();
+                                    }
+                                }
+                            });
+                        }
                     }
                     invalidate();
                 }
