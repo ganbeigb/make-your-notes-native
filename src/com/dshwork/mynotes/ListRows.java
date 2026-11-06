@@ -15,6 +15,11 @@ public class ListRows {
         public TextView tag;
         public TextView name;
         public TextView preview;
+        public TextView more;
+    }
+
+    private static int dp(Context c, float v) {
+        return Ui.dp(c, v);
     }
 
     public static NoteRow create(Context c) {
@@ -37,6 +42,11 @@ public class ListRows {
         row.preview = Ui.text(c, "", 12, Ui.INK2);
         row.preview.setPadding(0, Ui.dp(c, 4), 0, 0);
         row.card.addView(row.preview);
+
+        row.more = Ui.text(c, "", 11.5f, Ui.ACCENT);
+        row.more.setPadding(0, dp(c, 4), 0, 0);
+        row.more.setVisibility(View.GONE);
+        row.card.addView(row.more);
 
         row.card.setTag(row);
         return row;
