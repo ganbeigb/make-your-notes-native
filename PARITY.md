@@ -39,7 +39,7 @@
 | revert-item | 详情页「撤销 AI 修改」 | ✅ |
 | organize | 科目页「整理」 | ✅ |
 | open-criteria / save-criteria | 科目页「标准」 | ✅ |
-| fix-ext-names | 科目页「标题」（批量改写空泛标题，含拓展） | 🟡 |
+| fix-ext-names | 科目页「拓展题名」（只改拓展类型） | ✅ |
 | test-key | 设置「测试 Key」 | ✅ |
 | repair-drawings | 设置「修复配图」 | 🟡（清理失效引用，不重绘） |
 

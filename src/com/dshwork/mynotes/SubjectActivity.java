@@ -275,6 +275,15 @@ public class SubjectActivity extends BaseActivity {
         });
         tools.addView(foldAll);
 
+        TextView extTitles = Ui.chip(this, "拓展题名", false);
+        extTitles.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmExtTitles();
+            }
+        });
+        tools.addView(extTitles);
+
         TextView rule = Ui.chip(this, "标准", false);
         rule.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1032,7 +1041,29 @@ public class SubjectActivity extends BaseActivity {
                 .show();
     }
 
+    private void confirmExtTitles() {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("整理拓展标题")
+                .setMessage("只把「拓展」类型里空泛的标题改写成能看出内容的样子。")
+                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        runTitles(true);
+                    }
+                })
+                .setNegativeButton("取消", null)
+                .show();
+    }
+
     private void runTitles() {
+        runTitles(false);
+    }
+
+    private void runTitles(final boolean onlyExt) {
         final ProgressDialog dlg = new ProgressDialog(this);
         dlg.setTitle("正在生成标题");
         dlg.setMessage("准备中…");
@@ -1052,7 +1083,7 @@ public class SubjectActivity extends BaseActivity {
                             }
                         });
                     }
-                });
+                }, onlyExt);
                 ui.post(new Runnable() {
                     @Override
                     public void run() {
