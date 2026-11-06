@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /** 分类浏览：上方分类胶囊筛选，下方知识点列表。 */
-public class CategoryActivity extends Activity {
+public class CategoryActivity extends BaseActivity {
 
     private Db db;
     private Prefs prefs;
@@ -123,10 +123,6 @@ public class CategoryActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (Ui.themeChanged(this)) {
-            recreate();
-            return;
-        }
         reload();
     }
 

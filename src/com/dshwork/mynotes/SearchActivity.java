@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** 全局搜索：跨科目按标题 / 正文 / 公式查找。 */
-public class SearchActivity extends Activity {
+public class SearchActivity extends BaseActivity {
 
     private Db db;
     private List<String[]> hits = new ArrayList<>();

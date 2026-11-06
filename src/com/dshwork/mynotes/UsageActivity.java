@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.List;
 
 /** 用量统计：总览 + 按用途 + 按天。 */
-public class UsageActivity extends Activity {
+public class UsageActivity extends BaseActivity {
 
     private Db db;
 

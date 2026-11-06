@@ -19,7 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /** 知识点详情：编辑 + 公式实时预览。 */
-public class NoteActivity extends Activity {
+public class NoteActivity extends BaseActivity {
 
     private Db db;
     private Prefs prefs;

@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** 科目下的知识点：列表 + 导入课件。 */
-public class SubjectActivity extends Activity {
+public class SubjectActivity extends BaseActivity {
 
     private static final int REQ_PICK = 1001;
     private static final int REQ_SAVE = 1002;
@@ -385,10 +385,6 @@ public class SubjectActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (Ui.themeChanged(this)) {
-            recreate();
-            return;
-        }
         reload();
     }
 
@@ -500,9 +496,15 @@ private void openExportMenu() {
                 pendingName = safeName() + "-笔记.json";
                 pendingMime = "application/json";
             } else {
-                pendingBytes = Exporter.backup(db, this);
-                pendingName = safeName() + "-备份.zip";
-                pendingMime = "application/zip";
+                byte[] data = Exporter.backup(db, this);
+                java.io.File saved = Backups.save(this, safeName() + "-备份-" + Backups.stamp() + ".zip", data);
+                new AlertDialog.Builder(this)
+                        .setTitle("备份已保存")
+                        .setMessage("文件：\n" + saved.getName() + "\n\n位置：\n" + Backups.dirHint(this)
+                                + "\n\n恢复时在这里直接选，不用去翻文件管理器。")
+                        .setPositiveButton("好", null)
+                        .show();
+                return;
             }
         } catch (Exception e) {
             Toast.makeText(this, "生成失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
