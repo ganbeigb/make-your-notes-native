@@ -7,19 +7,18 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** 知识点卡片行的统一构建与绑定，避免每个列表各写一份。 */
+/** 知识点卡片：结构对照网页版 itemCard（kindex / 标题 / ƒ·图 / 重要度点 / 正文 / 展开 / 引用）。 */
 public class ListRows {
 
     public static class NoteRow {
         public LinearLayout card;
-        public TextView tag;
+        public TextView kindex;
         public TextView name;
+        public TextView badges;
+        public TextView imp;
         public TextView preview;
         public TextView more;
-    }
-
-    private static int dp(Context c, float v) {
-        return Ui.dp(c, v);
+        public TextView quote;
     }
 
     public static NoteRow create(Context c) {
@@ -32,21 +31,50 @@ public class ListRows {
         lp.bottomMargin = Ui.dp(c, 14);
         row.card.setLayoutParams(lp);
 
-        row.tag = Ui.text(c, "", 11, Ui.ACCENT);
-        row.card.addView(row.tag);
+        LinearLayout head = new LinearLayout(c);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(android.view.Gravity.CENTER_VERTICAL);
 
-        row.name = Ui.text(c, "", 16, Ui.INK);
+        row.kindex = Ui.text(c, "", 10.5f, Ui.ACCENT);
+        row.kindex.setTypeface(Typeface.DEFAULT_BOLD);
+        android.graphics.drawable.GradientDrawable kb = new android.graphics.drawable.GradientDrawable();
+        kb.setColor(Ui.ACCENT_SOFT);
+        kb.setCornerRadius(Ui.dp(c, 5));
+        row.kindex.setBackground(kb);
+        row.kindex.setPadding(Ui.dp(c, 6), Ui.dp(c, 1), Ui.dp(c, 6), Ui.dp(c, 1));
+        LinearLayout.LayoutParams klp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        klp.rightMargin = Ui.dp(c, 8);
+        head.addView(row.kindex, klp);
+
+        row.name = Ui.text(c, "", 15.5f, Ui.INK);
         row.name.setTypeface(Typeface.DEFAULT_BOLD);
-        row.card.addView(row.name);
+        head.addView(row.name, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        row.badges = Ui.text(c, "", 11, Ui.MUTED);
+        head.addView(row.badges);
+
+        row.imp = Ui.text(c, "", 9, Ui.MUTED);
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        ilp.leftMargin = Ui.dp(c, 8);
+        head.addView(row.imp, ilp);
+
+        row.card.addView(head);
 
         row.preview = Ui.text(c, "", 12.5f, Ui.INK2);
-        row.preview.setPadding(0, Ui.dp(c, 4), 0, 0);
+        row.preview.setPadding(0, Ui.dp(c, 6), 0, 0);
         row.card.addView(row.preview);
 
         row.more = Ui.text(c, "", 12f, Ui.ACCENT2);
-        row.more.setPadding(0, dp(c, 6), 0, 0);
+        row.more.setPadding(0, Ui.dp(c, 6), 0, 0);
         row.more.setVisibility(View.GONE);
         row.card.addView(row.more);
+
+        row.quote = Ui.text(c, "", 12f, Ui.MUTED);
+        row.quote.setPadding(0, Ui.dp(c, 6), 0, 0);
+        row.quote.setVisibility(View.GONE);
+        row.card.addView(row.quote);
 
         row.card.setTag(row);
         return row;
@@ -60,26 +88,39 @@ public class ListRows {
     }
 
     public static void bind(Context c, NoteRow row, String tagText, String name, String preview, int lines) {
-        bind(c, row, tagText, name, preview, lines, 0);
+        bind(c, row, tagText, name, preview, lines, 0, false, false, null);
     }
 
     public static void bind(Context c, NoteRow row, String tagText, String name, String preview, int lines, int importance) {
+        bind(c, row, tagText, name, preview, lines, importance, false, false, null);
+    }
+
+    /** 完整版：kindex 文本（P3 / 拓展）、重要度 1-5、是否有公式/画图、原文引用 */
+    public static void bind(Context c, NoteRow row, String indexLabel, String name, String preview, int lines,
+                            int importance, boolean hasFormula, boolean hasFigure, String quote) {
         android.graphics.drawable.GradientDrawable bg = Ui.card(c);
         bg.setCornerRadius(Ui.dp(c, 14));
         row.card.setBackground(bg);
-        row.tag.setText(tagText == null ? "" : tagText);
-        row.tag.setVisibility(tagText == null || tagText.isEmpty() ? View.GONE : View.VISIBLE);
-        android.graphics.drawable.GradientDrawable tagBg = new android.graphics.drawable.GradientDrawable();
-        tagBg.setColor(0xFFF0EBDF);
-        tagBg.setCornerRadius(Ui.dp(c, 5));
-        row.tag.setBackground(tagBg);
-        row.tag.setTextColor(0xFF7B7364);
-        row.tag.setTextSize(10.5f);
-        row.tag.setPadding(Ui.dp(c, 7), Ui.dp(c, 1), Ui.dp(c, 7), Ui.dp(c, 1));
-        String label = name == null ? "" : name;
-        if (importance >= 4) label = "★★ " + label;
-        else if (importance == 3) label = "★ " + label;
-        row.name.setText(label);
+
+        row.kindex.setText(indexLabel == null ? "" : indexLabel);
+        row.kindex.setVisibility(indexLabel == null || indexLabel.isEmpty() ? View.GONE : View.VISIBLE);
+
+        row.name.setText(name == null ? "" : name);
+
+        StringBuilder badge = new StringBuilder();
+        if (hasFormula) badge.append("ƒ");
+        if (hasFigure) badge.append(badge.length() > 0 ? " 图" : "图");
+        row.badges.setText(badge.toString());
+        row.badges.setVisibility(badge.length() == 0 ? View.GONE : View.VISIBLE);
+
+        if (importance > 0) {
+            StringBuilder dots = new StringBuilder();
+            for (int i = 0; i < 5; i++) dots.append(i < importance ? "●" : "○");
+            row.imp.setText(dots.toString());
+            row.imp.setVisibility(View.VISIBLE);
+        } else {
+            row.imp.setVisibility(View.GONE);
+        }
 
         String p = preview == null ? "" : preview.replace("\n", " ").trim();
         if (lines == 0) {
@@ -90,5 +131,12 @@ public class ListRows {
         }
         row.preview.setText(p);
         row.preview.setVisibility(p.isEmpty() ? View.GONE : View.VISIBLE);
+
+        if (quote != null && !quote.trim().isEmpty()) {
+            row.quote.setText("「" + quote.trim() + "」");
+            row.quote.setVisibility(View.VISIBLE);
+        } else {
+            row.quote.setVisibility(View.GONE);
+        }
     }
 }
