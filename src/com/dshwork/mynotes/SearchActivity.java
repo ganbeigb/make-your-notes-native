@@ -72,7 +72,7 @@ public class SearchActivity extends BaseActivity {
         list.setClipToPadding(false);
         root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
-        empty = Ui.text(this, "输入关键字开始搜索", 13, Ui.INK2);
+        empty = Ui.text(this, "输入关键字开始搜索", 13.5f, Ui.MUTED);
         empty.setGravity(Gravity.CENTER);
         root.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
@@ -136,6 +136,6 @@ public class SearchActivity extends BaseActivity {
         adapter.notifyDataSetChanged();
         boolean none = hits.isEmpty();
         empty.setVisibility(none ? View.VISIBLE : View.GONE);
-        empty.setText(q == null || q.trim().isEmpty() ? "输入关键字开始搜索" : "没有找到匹配的知识点");
+        empty.setText(q == null || q.trim().isEmpty() ? "输入关键字开始搜索" : "没有匹配的内容\n换个关键词试试");
     }
 }

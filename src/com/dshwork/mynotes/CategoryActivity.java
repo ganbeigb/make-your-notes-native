@@ -32,6 +32,9 @@ public class CategoryActivity extends BaseActivity {
     private BaseAdapter adapter;
     private LinearLayout chipRow;
     private TextView empty;
+    private TextView emptyTitle;
+    private TextView emptyHint;
+    private LinearLayout emptyBoxRef;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -96,9 +99,21 @@ public class CategoryActivity extends BaseActivity {
         list.setClipToPadding(false);
         root.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
-        empty = Ui.text(this, "这个分类下还没有知识点。", 14, Ui.INK2);
-        empty.setGravity(Gravity.CENTER);
-        root.addView(empty, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        emptyTitle = Ui.text(this, "还没有知识点", 14.5f, Ui.INK);
+        emptyTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        emptyTitle.setGravity(Gravity.CENTER);
+        emptyHint = Ui.text(this, "上传课件并完成识别后，这里会出现结构化的知识点卡片。", 12.5f, Ui.MUTED);
+        emptyHint.setGravity(Gravity.CENTER);
+        emptyHint.setPadding(0, Ui.dp(this, 6), 0, 0);
+
+        LinearLayout emptyBox = new LinearLayout(this);
+        emptyBox.setOrientation(LinearLayout.VERTICAL);
+        emptyBox.setGravity(Gravity.CENTER);
+        emptyBox.addView(emptyTitle);
+        emptyBox.addView(emptyHint);
+        emptyBox.setVisibility(View.GONE);
+        root.addView(emptyBox, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        emptyBoxRef = emptyBox;
 
         adapter = new BaseAdapter() {
             @Override
@@ -215,6 +230,9 @@ public class CategoryActivity extends BaseActivity {
             }
         }
         adapter.notifyDataSetChanged();
-        empty.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
+        if (emptyBoxRef != null) emptyBoxRef.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
+        if (!shown.isEmpty()) return;
+        if (emptyTitle != null) emptyTitle.setText("还没有知识点");
+        if (emptyHint != null) emptyHint.setText("上传课件并完成识别后，这里会出现结构化的知识点卡片。");
     }
 }
