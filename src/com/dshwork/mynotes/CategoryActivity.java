@@ -91,6 +91,36 @@ public class CategoryActivity extends BaseActivity {
             }
         });
         modes.addView(mapMode);
+
+        final android.widget.Spinner sortSpinnerInline = new android.widget.Spinner(this);
+        String[] sortLabels = {"最近创建", "按标题", "按重要度"};
+        final String[] sortKeys2 = {"recent", "title", "importance"};
+        android.widget.ArrayAdapter<String> sa = new android.widget.ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, sortLabels);
+        sortSpinnerInline.setAdapter(sa);
+        int cur = 0;
+        for (int k = 0; k < sortKeys2.length; k++) {
+            if (sortKeys2[k].equals(prefs.sort())) cur = k;
+        }
+        sortSpinnerInline.setSelection(cur);
+        sortSpinnerInline.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position < 0 || position >= sortKeys2.length) return;
+                if (sortKeys2[position].equals(prefs.sort())) return;
+                prefs.setSort(sortKeys2[position]);
+                reload();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(
+                Ui.dp(this, 124), ViewGroup.LayoutParams.WRAP_CONTENT);
+        slp.leftMargin = Ui.dp(this, 8);
+        modes.addView(sortSpinnerInline, slp);
+
         root.addView(modes);
 
         HorizontalScrollView scroll = new HorizontalScrollView(this);
