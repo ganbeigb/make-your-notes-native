@@ -59,6 +59,8 @@ public class SubjectActivity extends BaseActivity {
     private final java.util.Set<String> picked = new java.util.HashSet<>();
     private LinearLayout batchRow;
     private LinearLayout filterRow;
+    private android.widget.TextView[] filterViewsRef;
+    private String[] filterLabelsRef;
     private TextView selectCount;
     private volatile boolean importCancelled = false;
 
@@ -317,6 +319,8 @@ public class SubjectActivity extends BaseActivity {
                     }
                     buildRows();
                     adapter.notifyDataSetChanged();
+                    if (list != null) list.setSelection(0);
+                    updateFilterLabels(filterViews, filterLabels);
                 }
             });
             LinearLayout.LayoutParams flp2 = new LinearLayout.LayoutParams(
@@ -628,12 +632,26 @@ public class SubjectActivity extends BaseActivity {
         }
         buildRows();
         adapter.notifyDataSetChanged();
+        if (filterViewsRef != null && filterLabelsRef != null) updateFilterLabels(filterViewsRef, filterLabelsRef);
         boolean isEmpty = data.isEmpty();
         empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         list.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     /** 把「课件 → 其下知识点」摊平成行；没有课件的归到「未分组」 */
+    /** 给筛选胶囊带上数量：全部 / 知识点 / 拓展 */
+    private void updateFilterLabels(android.widget.TextView[] views, String[] labels) {
+        int points = 0, exts = 0;
+        for (Db.Note n : data) {
+            if ("extension".equals(n.kind)) exts++;
+            else points++;
+        }
+        int[] counts = {points + exts, points, exts};
+        for (int k = 0; k < views.length && k < labels.length; k++) {
+            views[k].setText(labels[k] + " " + counts[k]);
+        }
+    }
+
     private void buildRows() {
         rows.clear();
         java.util.List<Db.Note> visible = new ArrayList<>();
