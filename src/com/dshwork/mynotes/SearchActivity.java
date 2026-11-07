@@ -146,6 +146,7 @@ public class SearchActivity extends BaseActivity {
 
         input.addTextChangedListener(new TextWatcher() {
             private Runnable pending;
+            private Runnable searchPending;
 
             private void schedule(final String q) {
                 if (pending != null) input.removeCallbacks(pending);
@@ -171,7 +172,16 @@ public class SearchActivity extends BaseActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                doSearch(s.toString());
+                schedule(s.toString());
+                final String q = s.toString();
+                if (searchPending != null) input.removeCallbacks(searchPending);
+                searchPending = new Runnable() {
+                    @Override
+                    public void run() {
+                        doSearch(q);
+                    }
+                };
+                input.postDelayed(searchPending, 250);
             }
         });
 
