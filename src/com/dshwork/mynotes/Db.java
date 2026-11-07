@@ -806,6 +806,11 @@ public class Db extends SQLiteOpenHelper {
 
     /** 导入备份（按名称合并科目，重复跳过） */
     public int[] importBackup(org.json.JSONObject root) {
+        return importBackup(root, null);
+    }
+
+    /** imageMap：备份里 img/<文件名> → 本机绝对路径 */
+    public int[] importBackup(org.json.JSONObject root, java.util.Map<String, String> imageMap) {
         int subjCount = 0, catCount = 0, noteCount = 0;
         try {
             org.json.JSONArray subjects = root.optJSONArray("subjects");
@@ -941,6 +946,16 @@ public class Db extends SQLiteOpenHelper {
                         }
                     }
                     v.put("quote", n.optString("quote", ""));
+                    String fig = n.optString("figure", "");
+                    if (fig.startsWith("img/")) {
+                        String local = imageMap == null ? null : imageMap.get(fig);
+                        v.put("figure", local);
+                    }
+                    String sp = n.optString("slidePath", "");
+                    if (sp.startsWith("img/")) {
+                        String local2 = imageMap == null ? null : imageMap.get(sp);
+                        v.put("slide_path", local2);
+                    }
                     getWritableDatabase().insert("notes", null, v);
                     noteCount++;
                 }
