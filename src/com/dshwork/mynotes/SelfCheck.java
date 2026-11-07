@@ -251,6 +251,22 @@ public class SelfCheck {
             out.add(new Item("导图渲染", false, String.valueOf(e.getMessage())));
         }
 
+        // 6.95 配图可读：所有笔记里记录的图片路径必须真实存在
+        try {
+            int total = 0, missing = 0;
+            for (Db.Note n : db.notes(tempSubjectId)) {
+                for (String path : new String[]{n.figure, n.slidePath}) {
+                    if (path == null || path.isEmpty()) continue;
+                    total++;
+                    if (!new java.io.File(path).exists()) missing++;
+                }
+            }
+            out.add(new Item("配图可读", missing == 0,
+                    total == 0 ? "本页没有配图可查" : ("共 " + total + " 张，缺失 " + missing)));
+        } catch (Exception e) {
+            out.add(new Item("配图可读", false, String.valueOf(e.getMessage())));
+        }
+
         // 7. 文件目录可写
         try {
             File dir = new File(ctx.getFilesDir(), "selfcheck");

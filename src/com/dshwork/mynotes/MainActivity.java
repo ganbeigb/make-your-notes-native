@@ -603,6 +603,7 @@ public class MainActivity extends BaseActivity {
                             if (settings != null) new Prefs(MainActivity.this).restore(settings);
                             int usageAdded = db.importUsage(obj.optJSONArray("usage"));
                             int[] r = db.importBackup(obj, restoreImages);
+                    int healed = db.healImagePaths(imgDir);
                             msg = "恢复完成：新增 " + r[0] + " 科目、" + r[1] + " 分类、" + r[2] + " 知识点、"
                                     + usageAdded + " 条用量";
                         }

@@ -92,14 +92,7 @@ public class NoteActivity extends BaseActivity {
         klp.rightMargin = Ui.dp(this, 8);
         bar.addView(kindBadge, klp);
 
-        TextView saveBtn = Ui.chip(this, "已自动保存", true);
-        saveBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                save(true);
-            }
-        });
-        bar.addView(saveBtn);
+
         root.addView(bar);
 
         LinearLayout aiRow = new LinearLayout(this);
