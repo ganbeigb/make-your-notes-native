@@ -219,6 +219,38 @@ public class SelfCheck {
             out.add(new Item("配图渲染", false, String.valueOf(e.getMessage())));
         }
 
+        // 6.9 导图渲染：构造一个小树并导出 PNG
+        try {
+            MindMapView map = new MindMapView(ctx);
+            MindMapView.Node rootNode = new MindMapView.Node();
+            rootNode.kind = 0;
+            rootNode.label = "自检";
+            MindMapView.Node catNode = new MindMapView.Node();
+            catNode.kind = 1;
+            catNode.label = "分类";
+            MindMapView.Node leaf = new MindMapView.Node();
+            leaf.kind = 2;
+            leaf.id = "x";
+            leaf.label = "知识点";
+            catNode.children.add(leaf);
+            rootNode.children.add(catNode);
+            map.setTree(rootNode);
+            int spec = android.view.View.MeasureSpec.makeMeasureSpec(600, android.view.View.MeasureSpec.EXACTLY);
+            map.measure(spec, android.view.View.MeasureSpec.makeMeasureSpec(400, android.view.View.MeasureSpec.EXACTLY));
+            map.layout(0, 0, 600, 400);
+            android.graphics.Bitmap bmp = map.renderToBitmap();
+            int bytes = 0;
+            if (bmp != null) {
+                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, bos);
+                bytes = bos.size();
+                bmp.recycle();
+            }
+            out.add(new Item("导图渲染", bytes > 100, bmp == null ? "导图渲染返回空" : ("PNG " + bytes + " 字节")));
+        } catch (Exception e) {
+            out.add(new Item("导图渲染", false, String.valueOf(e.getMessage())));
+        }
+
         // 7. 文件目录可写
         try {
             File dir = new File(ctx.getFilesDir(), "selfcheck");
