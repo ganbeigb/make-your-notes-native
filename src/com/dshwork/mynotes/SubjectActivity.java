@@ -352,7 +352,7 @@ public class SubjectActivity extends BaseActivity {
             }
         });
         LinearLayout.LayoutParams sortLp = new LinearLayout.LayoutParams(
-                Ui.dp(this, 120), ViewGroup.LayoutParams.WRAP_CONTENT);
+                Ui.dp(this, 104), ViewGroup.LayoutParams.WRAP_CONTENT);
         sortLp.leftMargin = Ui.dp(this, 8);
         filterRow.addView(inlineSort, sortLp);
 
@@ -369,7 +369,10 @@ public class SubjectActivity extends BaseActivity {
         blp3.leftMargin = Ui.dp(this, 8);
         filterRow.addView(bulkChip, blp3);
 
-        root.addView(filterRow);
+        android.widget.HorizontalScrollView filterScroll = new android.widget.HorizontalScrollView(this);
+        filterScroll.setHorizontalScrollBarEnabled(false);
+        filterScroll.addView(filterRow);
+        root.addView(filterScroll);
 
         batchRow = new LinearLayout(this);
         batchRow.setOrientation(LinearLayout.HORIZONTAL);

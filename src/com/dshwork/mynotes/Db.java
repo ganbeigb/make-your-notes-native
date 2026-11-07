@@ -817,6 +817,45 @@ public class Db extends SQLiteOpenHelper {
     }
 
     /** 导入备份（按名称合并科目，重复跳过） */
+    /** 图片路径自愈：老备份/换机后绝对路径失效时，按文件名在本机 figures/ 里找回来 */
+    public int healImagePaths(java.io.File figuresDir) {
+        int fixed = 0;
+        if (figuresDir == null || !figuresDir.exists()) return 0;
+        Cursor c = getReadableDatabase().rawQuery("SELECT id, figure, slide_path FROM notes", null);
+        java.util.List<String[]> rows = new java.util.ArrayList<>();
+        try {
+            while (c.moveToNext()) rows.add(new String[]{c.getString(0), c.getString(1), c.getString(2)});
+        } finally {
+            c.close();
+        }
+        for (String[] r : rows) {
+            for (int k = 1; k <= 2; k++) {
+                String path = r[k];
+                if (path == null || path.isEmpty()) continue;
+                if (new java.io.File(path).exists()) continue;
+                String base = new java.io.File(path).getName();
+                java.io.File cand = new java.io.File(figuresDir, base);
+                if (!cand.exists()) cand = new java.io.File(figuresDir, "restore_" + base);
+                if (!cand.exists()) {
+                    if (k == 1) clearNoteImage(r[0], "figure");
+                    else clearNoteImage(r[0], "slide_path");
+                    continue;
+                }
+                ContentValues v = new ContentValues();
+                v.put(k == 1 ? "figure" : "slide_path", cand.getAbsolutePath());
+                getWritableDatabase().update("notes", v, "id = ?", new String[]{r[0]});
+                fixed++;
+            }
+        }
+        return fixed;
+    }
+
+    private void clearNoteImage(String noteId, String col) {
+        ContentValues v = new ContentValues();
+        v.putNull(col);
+        getWritableDatabase().update("notes", v, "id = ?", new String[]{noteId});
+    }
+
     public int[] importBackup(org.json.JSONObject root) {
         return importBackup(root, null);
     }
