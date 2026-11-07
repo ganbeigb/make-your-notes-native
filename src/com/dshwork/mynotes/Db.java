@@ -56,7 +56,7 @@ public class Db extends SQLiteOpenHelper {
     }
 
     private static final String FILE = "mynotes.db";
-    private static final int VERSION = 12;
+    private static final int VERSION = 13;
 
     public Db(Context ctx) {
         super(ctx, FILE, null, VERSION);
@@ -77,7 +77,7 @@ public class Db extends SQLiteOpenHelper {
                 "summary TEXT, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE slides (id TEXT PRIMARY KEY, subject_id TEXT NOT NULL, deck_id TEXT, " +
                 "idx INTEGER NOT NULL DEFAULT 0, title TEXT, image_path TEXT, digest TEXT, " +
-                "created_at INTEGER NOT NULL)");
+                "hash TEXT, created_at INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE page_digest (subject_id TEXT NOT NULL, page INTEGER NOT NULL, " +
                 "text TEXT, updated_at INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(subject_id, page))");
         db.execSQL("CREATE INDEX idx_notes_subject ON notes(subject_id)");
@@ -86,6 +86,9 @@ public class Db extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        if (oldVersion < 13) {
+            tryAdd(db, "slides", "hash", "TEXT");
+        }
         if (oldVersion < 12) {
             tryAdd(db, "slides", "hash", "TEXT");
         }
@@ -134,6 +137,15 @@ public class Db extends SQLiteOpenHelper {
             tryAdd(db, "notes", "source", "TEXT");
             tryAdd(db, "notes", "importance", "INTEGER NOT NULL DEFAULT 2");
         }
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        // 兜底自愈：hash 列是后加的，老库/异常库缺了就补上，否则查询直接崩
+        tryAdd(db, "slides", "hash", "TEXT");
+        tryAdd(db, "notes", "kind", "TEXT");
+        tryAdd(db, "subjects", "criteria", "TEXT");
     }
 
     private void tryAdd(SQLiteDatabase db, String table, String col, String type) {
