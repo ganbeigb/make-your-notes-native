@@ -390,13 +390,15 @@ public class MainActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != REQ_RESTORE || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         try {
+            java.io.File tmp = new java.io.File(getCacheDir(), "restore-picked.zip");
             java.io.InputStream in = getContentResolver().openInputStream(data.getData());
-            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-            byte[] buf = new byte[16384];
+            java.io.FileOutputStream fosTmp = new java.io.FileOutputStream(tmp);
+            byte[] buf = new byte[65536];
             int n;
-            while ((n = in.read(buf)) > 0) bos.write(buf, 0, n);
+            while ((n = in.read(buf)) > 0) fosTmp.write(buf, 0, n);
+            fosTmp.close();
             in.close();
-            startRestore(bos.toByteArray());
+            startRestore(tmp);
         } catch (Exception e) {
             Toast.makeText(this, "读取备份失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -500,8 +502,7 @@ public class MainActivity extends BaseActivity {
                     @Override
                     public void onClick(DialogInterface d2, int w2) {
                         try {
-                            byte[] data = readAll(f);
-                            startRestore(data);
+                            startRestore(f);
                         } catch (Exception e) {
                             Toast.makeText(MainActivity.this, "读取失败：" + e.getMessage(),
                                     Toast.LENGTH_LONG).show();
@@ -530,7 +531,7 @@ public class MainActivity extends BaseActivity {
     }
 
     /** 解析 zip 并合并进库（原生 / 网页版两种格式自动识别） */
-    private void startRestore(final byte[] data) {
+    private void startRestore(final java.io.File backupFile) {
         final String[] holder = new String[]{null};
         final boolean[] done = new boolean[]{false};
         final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
@@ -544,7 +545,7 @@ public class MainActivity extends BaseActivity {
                 try {
                     boolean isWeb = false;
                     java.util.zip.ZipInputStream probe = new java.util.zip.ZipInputStream(
-                            new java.io.ByteArrayInputStream(data));
+                            new java.io.BufferedInputStream(new java.io.FileInputStream(backupFile), 65536));
                     java.util.zip.ZipEntry pe;
                     while ((pe = probe.getNextEntry()) != null) {
                         if ("manifest.json".equals(pe.getName())) {
@@ -557,7 +558,8 @@ public class MainActivity extends BaseActivity {
 
                     if (isWeb) {
                         WebBackup.Result wr = WebBackup.importFromZip(MainActivity.this, db,
-                                new java.io.ByteArrayInputStream(data), new Prefs(MainActivity.this));
+                                new java.io.BufferedInputStream(new java.io.FileInputStream(backupFile), 65536),
+                                new Prefs(MainActivity.this));
                         msg = wr.error != null ? ("网页版备份导入失败：" + wr.error)
                                 : ("已从网页版备份导入：" + wr.subjects + " 科目、" + wr.decks + " 课件、" + wr.categories + " 分类、"
                                    + wr.notes + " 知识点、" + wr.images + " 张原图");
@@ -568,7 +570,7 @@ public class MainActivity extends BaseActivity {
                         if (!imgDir.exists()) imgDir.mkdirs();
 
                         java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
-                                new java.io.ByteArrayInputStream(data));
+                                new java.io.BufferedInputStream(new java.io.FileInputStream(backupFile), 65536));
                         java.util.zip.ZipEntry e;
                         byte[] buf = new byte[8192];
                         while ((e = zip.getNextEntry()) != null) {
