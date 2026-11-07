@@ -127,8 +127,8 @@ public class Exporter {
                     }
                 }
                 if (n.quote != null && !n.quote.trim().isEmpty()) {
-                    sb.append("<div class=\"tag\" style=\"border-left:3px solid #d8cfb8;padding-left:8px;margin-top:6px\">原文：")
-                            .append(esc(n.quote.trim())).append("</div>");
+                    sb.append("<blockquote style=\"margin:8px 0;padding:6px 10px;border-left:3px solid #d8cfb8;")
+                            .append("color:#4b463d;font-size:13px\">「").append(esc(n.quote.trim())).append("」</blockquote>");
                 }
                 if (n.figure != null && !n.figure.isEmpty()) {
                     String fig = pngBase64(n.figure);
