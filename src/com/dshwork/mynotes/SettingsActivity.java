@@ -120,10 +120,12 @@ public class SettingsActivity extends BaseActivity {
                 prefs.priceOut() > 0 ? String.valueOf(prefs.priceOut()) : "", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         strictBox = new android.widget.CheckBox(this);
+        Ui.styleCheckBox(strictBox);
         strictBox.setText("严格校对");
         strictBox.setTextSize(13);
         strictBox.setTextColor(Ui.INK);
         quoteBox = new android.widget.CheckBox(this);
+        Ui.styleCheckBox(quoteBox);
         quoteBox.setText("显示原文摘录");
         quoteBox.setTextSize(13);
         quoteBox.setTextColor(Ui.INK);
@@ -140,6 +142,7 @@ public class SettingsActivity extends BaseActivity {
         this.keepFormulaBox = keepFormulaBox;
 
         mockBox = new android.widget.CheckBox(this);
+        Ui.styleCheckBox(mockBox);
         mockBox.setText("演示模式");
         mockBox.setTextSize(13);
         mockBox.setTextColor(Ui.INK);
@@ -148,6 +151,7 @@ public class SettingsActivity extends BaseActivity {
         form.addView(Ui.settingRow(this, mockBox.getText().toString(), null, mockBox));
 
         autoOrgBox = new android.widget.CheckBox(this);
+        Ui.styleCheckBox(autoOrgBox);
         autoOrgBox.setText("导入后自动整理");
         autoOrgBox.setTextSize(13);
         autoOrgBox.setTextColor(Ui.INK);
@@ -397,7 +401,7 @@ public class SettingsActivity extends BaseActivity {
 
     private Spinner spinner(LinearLayout parent, String label, String[] values, int selected) {
         Spinner sp = new Spinner(this);
-        ArrayAdapter<String> ad = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, values);
+        ArrayAdapter<String> ad = Ui.spinnerAdapter(this, values);
         sp.setAdapter(ad);
         sp.setSelection(selected);
         sp.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT));

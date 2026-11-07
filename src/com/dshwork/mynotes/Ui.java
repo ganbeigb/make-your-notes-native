@@ -85,6 +85,38 @@ public class Ui {
         }
     }
 
+    /** 下拉框适配器：选中项与下拉项都用主题色文字（否则暗色下是系统黑字） */
+    public static android.widget.ArrayAdapter<String> spinnerAdapter(final Context c, String[] values) {
+        return new android.widget.ArrayAdapter<String>(c,
+                android.R.layout.simple_spinner_dropdown_item, values) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView tv = (TextView) super.getView(position, convertView, parent);
+                tv.setTextColor(INK);
+                tv.setTextSize(13f * scale);
+                return tv;
+            }
+
+            @Override
+            public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
+                tv.setTextColor(INK);
+                tv.setTextSize(13f * scale);
+                return tv;
+            }
+        };
+    }
+
+    /** 复选框：文字用主题色，勾选框也跟随强调色 */
+    public static android.widget.CheckBox styleCheckBox(android.widget.CheckBox cb) {
+        cb.setTextColor(INK);
+        try {
+            cb.setButtonTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        } catch (Exception ignored) {
+        }
+        return cb;
+    }
+
     /** 输入框统一配色：暗色下也是浅字，避免黑字压暗底 */
     public static android.widget.EditText styleInput(android.widget.EditText e) {
         e.setTextColor(INK);

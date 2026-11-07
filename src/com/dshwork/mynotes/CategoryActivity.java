@@ -99,8 +99,7 @@ public class CategoryActivity extends BaseActivity {
         final android.widget.Spinner sortSpinnerInline = new android.widget.Spinner(this);
         String[] sortLabels = {"最近创建", "按标题", "按重要度"};
         final String[] sortKeys2 = {"recent", "title", "importance"};
-        android.widget.ArrayAdapter<String> sa = new android.widget.ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, sortLabels);
+        android.widget.ArrayAdapter<String> sa = Ui.spinnerAdapter(this, sortLabels);
         sortSpinnerInline.setAdapter(sa);
         int cur = 0;
         for (int k = 0; k < sortKeys2.length; k++) {
