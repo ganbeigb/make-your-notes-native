@@ -56,18 +56,14 @@ public class Importer {
             return out;
         }
 
-        // 只用 DeepSeek 一家：识图模型需要用户自己在设置里指定
+        // 只用 DeepSeek 一家；识图模型留空时用文本模型试一次（部分中转账号同模型支持图片）
         String vProvider = prefs.provider();
-        String base = Prefs.baseUrl(vProvider);
+        String base = prefs.apiBase();
         String key = prefs.apiKey(vProvider);
-        String model = prefs.visionModel();
+        String visionModel = prefs.visionModel() == null ? "" : prefs.visionModel().trim();
+        if (visionModel.isEmpty()) visionModel = prefs.textModel();
+        String model = visionModel;
         String reasoning = prefs.reasoning();
-
-        if (prefs.visionModel() == null || prefs.visionModel().trim().isEmpty()) {
-            out.errors.add("还没有填「识图模型」：导入课件要读图片，请到设置里填一个你的 Key 能调用的图片模型名" +
-                    "（只做文字整理时不需要导入）。");
-            return out;
-        }
 
         Db.Deck deck;
         if (existingDeckId != null && !existingDeckId.isEmpty()) {
@@ -300,7 +296,7 @@ public class Importer {
         if (!f.exists()) throw new Exception("这一页的原图不在了");
         String provider = prefs.provider();
         String b64 = toBase64File(imagePath);
-        AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(provider), prefs.apiKey(provider),
+        AiClient.Reply reply = AiClient.chat(prefs.apiBase(), prefs.apiKey(provider),
                 prefs.visionModel(), Prompts.EXTRACT_SYSTEM,
                 "请识别这一页课件，输出 JSON。", b64, prefs.reasoning());
         return reply.content;

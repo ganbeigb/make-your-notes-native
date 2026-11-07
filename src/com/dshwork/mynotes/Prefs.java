@@ -32,6 +32,16 @@ public class Prefs {
         sp.edit().putString("apiKey_" + provider, v.trim()).apply();
     }
 
+    /** API 地址（默认 DeepSeek 官方；用中转/代理时改成对方地址） */
+    public String apiBase() {
+        String v = sp.getString("apiBase", "");
+        return v == null || v.trim().isEmpty() ? "https://api.deepseek.com" : v.trim();
+    }
+
+    public void setApiBase(String v) {
+        sp.edit().putString("apiBase", v == null ? "" : v.trim()).apply();
+    }
+
     public String visionModel() {
         return sp.getString("visionModel", defaultVision(provider()));
     }
@@ -234,6 +244,11 @@ public class Prefs {
 
     public static String baseUrl(String provider) {
         return "https://api.deepseek.com";
+    }
+
+    /** 实例版：带用户自定义地址（静态版保留给旧调用点） */
+    public String base() {
+        return apiBase();
     }
 
     public boolean ready() {
