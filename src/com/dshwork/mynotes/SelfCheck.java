@@ -151,6 +151,35 @@ public class SelfCheck {
             out.add(new Item("备份 zip", false, String.valueOf(e.getMessage())));
         }
 
+        // 6.5 恢复幂等：同一份备份再导入一次，不应产生重复知识点
+        try {
+            byte[] zip2 = Exporter.backup(db, ctx);
+            String json2 = null;
+            java.util.zip.ZipInputStream zs2 = new java.util.zip.ZipInputStream(
+                    new java.io.ByteArrayInputStream(zip2));
+            java.util.zip.ZipEntry ze2;
+            byte[] buf3 = new byte[8192];
+            while ((ze2 = zs2.getNextEntry()) != null) {
+                if (ze2.getName().endsWith("mynotes-backup.json")) {
+                    java.io.ByteArrayOutputStream bo2 = new java.io.ByteArrayOutputStream();
+                    int n3;
+                    while ((n3 = zs2.read(buf3)) > 0) bo2.write(buf3, 0, n3);
+                    json2 = new String(bo2.toByteArray(), "UTF-8");
+                    break;
+                }
+            }
+            zs2.close();
+            int before = db.notes(tempSubjectId).size();
+            int[] r2 = db.importBackup(new org.json.JSONObject(json2), null);
+            int after = db.notes(tempSubjectId).size();
+            boolean ok = after == before;
+            out.add(new Item("恢复幂等", ok,
+                    "再次导入新增 " + r2[2] + " 条，导入前后 " + before + " → " + after
+                            + (ok ? " 未重复" : " 出现重复")));
+        } catch (Exception e) {
+            out.add(new Item("恢复幂等", false, String.valueOf(e.getMessage())));
+        }
+
         // 7. 文件目录可写
         try {
             File dir = new File(ctx.getFilesDir(), "selfcheck");
