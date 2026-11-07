@@ -57,8 +57,7 @@ public class BoardActivity extends BaseActivity {
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
-        TextView undo = Ui.text(this, "撤销", 14, Ui.ACCENT);
-        undo.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView undo = Ui.iconButton(this, "↶");
         undo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -67,8 +66,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(undo);
 
-        TextView redo = Ui.text(this, "重做", 14, Ui.ACCENT);
-        redo.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView redo = Ui.iconButton(this, "↷");
         redo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -77,8 +75,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(redo);
 
-        TextView del = Ui.text(this, "删除", 14, 0xFFC0392B);
-        del.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView del = Ui.iconButton(this, "🗑");
         del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -89,8 +86,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(del);
 
-        TextView zoomOutBtn = Ui.text(this, "－", 17, Ui.ACCENT);
-        zoomOutBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView zoomOutBtn = Ui.iconButton(this, "−");
         zoomOutBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,8 +95,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(zoomOutBtn);
 
-        TextView zoomInBtn = Ui.text(this, "＋", 17, Ui.ACCENT);
-        zoomInBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView zoomInBtn = Ui.iconButton(this, "＋");
         zoomInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -109,8 +104,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(zoomInBtn);
 
-        TextView resetBtn = Ui.text(this, "复位", 13, Ui.ACCENT);
-        resetBtn.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        TextView resetBtn = Ui.iconButton(this, "⤢");
         resetBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,7 +113,7 @@ public class BoardActivity extends BaseActivity {
         });
         bar.addView(resetBtn);
 
-        TextView clear = Ui.text(this, "清空", 14, 0xFFC0392B);
+        TextView clear = Ui.iconButton(this, "✕");
         clear.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
         clear.setOnClickListener(new View.OnClickListener() {
             @Override
