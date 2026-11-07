@@ -559,7 +559,7 @@ public class MainActivity extends BaseActivity {
                     } else {
                         String json = null;
                         java.util.Map<String, String> restoreImages = new java.util.HashMap<>();
-                        java.io.File imgDir = new java.io.File(getFilesDir(), "restored");
+                        java.io.File imgDir = new java.io.File(getFilesDir(), "figures");
                         if (!imgDir.exists()) imgDir.mkdirs();
 
                         java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
@@ -569,7 +569,7 @@ public class MainActivity extends BaseActivity {
                         while ((e = zip.getNextEntry()) != null) {
                             if (e.getName().startsWith("img/")) {
                                 String name = e.getName().substring(4);
-                                java.io.File out = new java.io.File(imgDir, name);
+                                java.io.File out = new java.io.File(imgDir, "restore_" + name);
                                 java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
                                 byte[] ib = new byte[8192];
                                 int in2;
