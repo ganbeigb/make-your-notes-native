@@ -81,6 +81,10 @@ public class CategoryActivity extends BaseActivity {
         TextView listMode = Ui.chip(this, "列表", true);
         modes.addView(listMode);
         TextView mapMode = Ui.chip(this, "导图", false);
+        LinearLayout.LayoutParams lmp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lmp.rightMargin = Ui.dp(this, 6);
+        listMode.setLayoutParams(lmp);
         mapMode.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

@@ -371,6 +371,17 @@ public class NoteActivity extends BaseActivity {
             TextView label = Ui.text(this, "本页汇总（第 " + note.slidePage + " 页）", 11, Ui.INK2);
             box.addView(label);
             TextView text = Ui.text(this, digest.trim(), 13, Ui.INK);
+            TextView regen = Ui.chip(this, "重新生成", false);
+            regen.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    regenerateDigest(note);
+                }
+            });
+            LinearLayout.LayoutParams rglp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rglp.topMargin = Ui.dp(NoteActivity.this, 8);
+            box.addView(regen, rglp);
             text.setPadding(0, Ui.dp(this, 4), 0, 0);
             box.addView(text);
             form.addView(box, lp0);
@@ -608,6 +619,52 @@ public class NoteActivity extends BaseActivity {
                 .setView(sc)
                 .setPositiveButton("关闭", null)
                 .show();
+    }
+
+    /** 重新生成本页汇总（网页版 digest-slide） */
+    private void regenerateDigest(final Db.Note note) {
+        if (!prefs.ready()) {
+            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final android.app.ProgressDialog dlg = new android.app.ProgressDialog(this);
+        dlg.setMessage("正在生成本页汇总…");
+        dlg.setCancelable(false);
+        dlg.show();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String msg;
+                try {
+                    java.util.List<Db.Note> pageNotes = new java.util.ArrayList<>();
+                    for (Db.Note n : db.notes(note.subjectId)) {
+                        if (n.slidePage == note.slidePage) pageNotes.add(n);
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    for (Db.Note n : pageNotes) {
+                        sb.append("· ").append(n.name).append("：")
+                                .append(n.content == null ? "" : n.content).append("\n");
+                    }
+                    AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(prefs.provider()), prefs.apiKey(prefs.provider()),
+                            prefs.textModel(), Prompts.DIGEST_SYSTEM, sb.toString(), null, prefs.reasoning());
+                    db.logUsage(note.subjectId, "digest", reply.inTok, reply.outTok);
+                    String digest = reply.content.trim();
+                    db.setPageDigest(note.subjectId, note.slidePage, digest);
+                    msg = "已更新本页汇总";
+                } catch (Exception e) {
+                    msg = "生成失败：" + AiClient.friendly(e);
+                }
+                final String finalMsg = msg;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        dlg.dismiss();
+                        Toast.makeText(NoteActivity.this, finalMsg, Toast.LENGTH_LONG).show();
+                        recreate();
+                    }
+                });
+            }
+        }).start();
     }
 
     private void showFigureFull() {
