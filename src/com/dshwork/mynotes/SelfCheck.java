@@ -121,7 +121,32 @@ public class SelfCheck {
         // 6. 备份
         try {
             byte[] zip = Exporter.backup(db, ctx);
-            out.add(new Item("备份 zip", zip != null && zip.length > 100, "大小 " + (zip == null ? 0 : zip.length) + " 字节"));
+            int parsedNotes = -1;
+            boolean hasJson = false;
+            if (zip != null) {
+                java.util.zip.ZipInputStream zs = new java.util.zip.ZipInputStream(
+                        new java.io.ByteArrayInputStream(zip));
+                java.util.zip.ZipEntry ze;
+                byte[] buf2 = new byte[8192];
+                while ((ze = zs.getNextEntry()) != null) {
+                    if (ze.getName().endsWith("mynotes-backup.json")) {
+                        hasJson = true;
+                        java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                        int n2;
+                        while ((n2 = zs.read(buf2)) > 0) bo.write(buf2, 0, n2);
+                        org.json.JSONObject parsed = new org.json.JSONObject(new String(bo.toByteArray(), "UTF-8"));
+                        org.json.JSONArray ns = parsed.optJSONArray("notes");
+                        parsedNotes = ns == null ? 0 : ns.length();
+                        break;
+                    }
+                }
+                zs.close();
+            }
+            int localNotes = db.notes(tempSubjectId).size();
+            boolean backupOk = zip != null && zip.length > 100 && hasJson && parsedNotes == localNotes;
+            out.add(new Item("备份 zip", backupOk,
+                    "大小 " + (zip == null ? 0 : zip.length) + " 字节，清单知识点 " + parsedNotes
+                            + " 条，与本机 " + localNotes + " 条" + (backupOk ? " 一致" : " 不一致")));
         } catch (Exception e) {
             out.add(new Item("备份 zip", false, String.valueOf(e.getMessage())));
         }
