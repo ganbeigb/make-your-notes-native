@@ -80,6 +80,18 @@ public class NoteActivity extends BaseActivity {
         TextView title = Ui.text(this, headerTitle, 16, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        TextView kindBadge = Ui.text(this, "extension".equals(note.kind) ? "拓展" : "知识点", 10.5f,
+                "extension".equals(note.kind) ? Ui.GOLD : Ui.ACCENT);
+        kindBadge.setPadding(Ui.dp(this, 8), Ui.dp(this, 3), Ui.dp(this, 8), Ui.dp(this, 3));
+        android.graphics.drawable.GradientDrawable kb = new android.graphics.drawable.GradientDrawable();
+        kb.setCornerRadius(Ui.dp(this, 999));
+        kb.setColor("extension".equals(note.kind) ? 0xFFF8EFDF : Ui.ACCENT_SOFT);
+        kindBadge.setBackground(kb);
+        LinearLayout.LayoutParams klp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        klp.rightMargin = Ui.dp(this, 8);
+        bar.addView(kindBadge, klp);
+
         TextView saveBtn = Ui.chip(this, "已自动保存", true);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
