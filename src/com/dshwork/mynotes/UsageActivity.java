@@ -25,6 +25,7 @@ public class UsageActivity extends BaseActivity {
         super.onCreate(state);
         Ui.apply(this);
         db = new Db(this);
+        dayRange = new Prefs(this).usageRange();
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -73,6 +74,7 @@ public class UsageActivity extends BaseActivity {
                 @Override
                 public void onClick(View v) {
                     dayRange = days;
+                    new Prefs(UsageActivity.this).setUsageRange(days);
                     render();
                 }
             });

@@ -78,6 +78,15 @@ public class Prefs {
         sp.edit().remove("recentSearch").apply();
     }
 
+    /** 用量页时间范围（天，3650 = 全部） */
+    public int usageRange() {
+        return sp.getInt("usageRange", 30);
+    }
+
+    public void setUsageRange(int days) {
+        sp.edit().putInt("usageRange", days).apply();
+    }
+
     public boolean mock() {
         return sp.getBoolean("mock", false);
     }
