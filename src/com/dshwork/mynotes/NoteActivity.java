@@ -667,10 +667,28 @@ public class NoteActivity extends BaseActivity {
         }).start();
     }
 
+    /** 按目标宽度降采样解码，防止大图 OOM（详情页预览用） */
+    private android.graphics.Bitmap decodeSampled(String path, int targetPx) {
+        try {
+            android.graphics.BitmapFactory.Options probe = new android.graphics.BitmapFactory.Options();
+            probe.inJustDecodeBounds = true;
+            android.graphics.BitmapFactory.decodeFile(path, probe);
+            int sample = 1;
+            if (probe.outWidth > 0) {
+                while (probe.outWidth / (sample * 2) >= targetPx) sample *= 2;
+            }
+            android.graphics.BitmapFactory.Options opts = new android.graphics.BitmapFactory.Options();
+            opts.inSampleSize = sample;
+            return android.graphics.BitmapFactory.decodeFile(path, opts);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private void showFigureFull() {
         ImageView big = new ImageView(this);
         big.setAdjustViewBounds(true);
-        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.figure);
+        android.graphics.Bitmap bmp = decodeSampled(note.figure, 1200);
         if (bmp == null) {
             Toast.makeText(this, "配图文件找不到了", Toast.LENGTH_SHORT).show();
             return;
@@ -683,7 +701,7 @@ public class NoteActivity extends BaseActivity {
 
     private void showSlide() {
         if (note.slidePath == null) return;
-        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.slidePath);
+        android.graphics.Bitmap bmp = decodeSampled(note.slidePath, 1200);
         if (bmp == null) {
             Toast.makeText(this, "原图不存在了", Toast.LENGTH_SHORT).show();
             return;
@@ -872,7 +890,7 @@ public class NoteActivity extends BaseActivity {
             figureView.setVisibility(View.GONE);
             return;
         }
-        android.graphics.Bitmap bmp = BitmapFactory.decodeFile(note.figure);
+        android.graphics.Bitmap bmp = decodeSampled(note.figure, 1200);
         if (bmp == null) {
             figureView.setVisibility(View.GONE);
             return;
