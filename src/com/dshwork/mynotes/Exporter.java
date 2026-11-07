@@ -260,6 +260,19 @@ public class Exporter {
     }
 
     private static byte[] build(Db db, Context ctx, String onlySubjectId) throws Exception {
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        buildTo(bos, db, ctx, onlySubjectId);
+        return bos.toByteArray();
+    }
+
+    /** 直接把备份 zip 写进输出流（文件/SAF），避免几十 MB 常驻内存 */
+    public static void backupTo(java.io.OutputStream os, Db db, Context ctx, String onlySubjectId)
+            throws Exception {
+        buildTo(os, db, ctx, onlySubjectId);
+    }
+
+    private static void buildTo(java.io.OutputStream target, Db db, Context ctx, String onlySubjectId)
+            throws Exception {
         Prefs prefs = new Prefs(ctx);
         JSONObject root = new JSONObject();
         root.put("app", "MakeYourNotes-native");
@@ -341,8 +354,7 @@ public class Exporter {
         root.put("categories", categories);
         root.put("notes", notes);
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ZipOutputStream zip = new ZipOutputStream(bos);
+        ZipOutputStream zip = new ZipOutputStream(new java.io.BufferedOutputStream(target, 65536));
         zip.putNextEntry(new ZipEntry("mynotes-backup.json"));
         zip.write(root.toString(2).getBytes("UTF-8"));
         zip.closeEntry();
@@ -369,7 +381,6 @@ public class Exporter {
         zip.write(("Make Your Notes 备份\n导出时间: " + ymd() + "\n包含: subjects / categories / notes / settings / usage\n").getBytes("UTF-8"));
         zip.closeEntry();
         zip.close();
-        return bos.toByteArray();
     }
 
     /** 把本地图片读成 base64（配图用） */

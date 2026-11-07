@@ -40,6 +40,31 @@ public class Backups {
         return new SimpleDateFormat("yyyyMMdd-HHmm", Locale.CHINA).format(new Date());
     }
 
+    /** 往输出流里写备份内容的回调 */
+    public interface Sink {
+        void write(java.io.OutputStream os) throws Exception;
+    }
+
+    /** 流式写备份文件：先写 .part 再改名，避免中断留下半个文件 */
+    public static File stream(Context c, String name, Sink sink) throws Exception {
+        java.io.File dir = dir(c);
+        if (!dir.exists()) dir.mkdirs();
+        java.io.File tmp = new java.io.File(dir, name + ".part");
+        java.io.File out = new java.io.File(dir, name);
+        java.io.FileOutputStream fos = new java.io.FileOutputStream(tmp);
+        try {
+            sink.write(fos);
+            fos.flush();
+        } finally {
+            fos.close();
+        }
+        if (out.exists()) out.delete();
+        if (!tmp.renameTo(out)) {
+            throw new java.io.IOException("重命名备份文件失败");
+        }
+        return out;
+    }
+
     public static File save(Context c, String name, byte[] data) throws Exception {
         File f = new File(dir(c), name);
         FileOutputStream fos = new FileOutputStream(f);

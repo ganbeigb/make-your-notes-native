@@ -324,8 +324,13 @@ public class MainActivity extends BaseActivity {
                 String err = null;
                 java.io.File saved = null;
                 try {
-                    byte[] data = Exporter.backupAll(db, MainActivity.this);
-                    saved = Backups.save(MainActivity.this, "全部科目-备份-" + Backups.stamp() + ".zip", data);
+                    saved = Backups.stream(MainActivity.this, "全部科目-备份-" + Backups.stamp() + ".zip",
+                            new Backups.Sink() {
+                                @Override
+                                public void write(java.io.OutputStream os) throws Exception {
+                                    Exporter.backupTo(os, db, MainActivity.this, null);
+                                }
+                            });
                 } catch (Exception e) {
                     err = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
                 }
