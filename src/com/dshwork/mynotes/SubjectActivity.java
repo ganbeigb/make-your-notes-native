@@ -331,8 +331,7 @@ public class SubjectActivity extends BaseActivity {
         final android.widget.Spinner inlineSort = new android.widget.Spinner(this);
         String[] sortLabels = {"最近创建", "按标题", "按重要度"};
         final String[] sortKeys = {"recent", "title", "importance"};
-        android.widget.ArrayAdapter<String> sortAdapter = new android.widget.ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item, sortLabels);
+        android.widget.ArrayAdapter<String> sortAdapter = Ui.spinnerAdapter(this, sortLabels);
         inlineSort.setAdapter(sortAdapter);
         int current = 0;
         for (int k = 0; k < sortKeys.length; k++) {

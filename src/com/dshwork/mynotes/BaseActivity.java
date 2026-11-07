@@ -12,6 +12,9 @@ public class BaseActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle state) {
+        // 主题要在建视图之前定下来，否则下拉框/复选框/弹窗会沿用系统浅色主题的黑字
+        if (Ui.resolvedDark(this)) setTheme(R.style.AppTheme_Dark);
+        else setTheme(R.style.AppTheme_Light);
         super.onCreate(state);
         CrashLog.install(this);
     }

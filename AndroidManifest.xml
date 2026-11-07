@@ -1,35 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.dshwork.mynotes"
-    android:versionCode="155"
-    android:versionName="1.4.3">
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35" />
-
-    <application
-        android:label="@string/app_name"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher"
-        android:allowBackup="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
-
-        <activity android:name=".MainActivity" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-
-        <activity android:name=".SubjectActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".SettingsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".MindMapActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".BoardActivity" android:exported="false" android:configChanges="orientation|screenSize"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".UsageActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".CategoryActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".SearchActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".SelfCheckActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-        <activity android:name=".NoteActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
-    </application>
-</manifest>
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.dshwork.mynotes"
+    android:versionCode="156"
+    android:versionName="1.4.4">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:theme="@style/AppTheme_Light">
+
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".SubjectActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SettingsActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".MindMapActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".BoardActivity" android:exported="false" android:configChanges="orientation|screenSize"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".UsageActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".CategoryActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SearchActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".SelfCheckActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+        <activity android:name=".NoteActivity" android:exported="false"  android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>
