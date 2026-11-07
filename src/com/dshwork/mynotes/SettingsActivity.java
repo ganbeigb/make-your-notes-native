@@ -23,10 +23,10 @@ public class SettingsActivity extends BaseActivity {
 
     private Prefs prefs;
     private EditText keyInput;
-    private EditText zhipuKeyInput;
+
     private EditText visionInput;
     private EditText textInput;
-    private Spinner providerSpinner;
+
     private Spinner reasoningSpinner;
     private Spinner scaleSpinner;
     private Spinner linesSpinner;
@@ -40,7 +40,7 @@ public class SettingsActivity extends BaseActivity {
     private android.widget.CheckBox autoOrgBox;
     private android.widget.CheckBox strictBox;
 
-    private final String[] providers = {"deepseek", "zhipu"};
+
     private final String[] scales = {"小", "标准", "大", "特大"};
     private final float[] scaleValues = {0.9f, 1f, 1.15f, 1.3f};
     private final String[] lineOptions = {"不显示正文", "1 行", "2 行", "3 行", "4 行", "6 行", "不截断（显示全文）"};
@@ -93,10 +93,8 @@ public class SettingsActivity extends BaseActivity {
         form.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 30));
 
         form.addView(Ui.section(this, "模型与服务商"));
-        providerSpinner = spinner(form, "服务商", providers, indexOf(providers, prefs.provider()));
         keyInput = edit(form, "DeepSeek API Key", prefs.apiKey("deepseek"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        zhipuKeyInput = edit(form, "智谱 API Key（识图用，免费）", prefs.apiKey("zhipu"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        visionInput = edit(form, "识图模型", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
+        visionInput = edit(form, "识图模型（可选，需你的 Key 支持图片）", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
         textInput = edit(form, "文本模型", prefs.textModel(), InputType.TYPE_CLASS_TEXT);
         reasoningSpinner = spinner(form, "推理档位", reasonings, indexOf(reasonings, prefs.reasoning()));
 
@@ -254,10 +252,47 @@ public class SettingsActivity extends BaseActivity {
         form.addView(Ui.settingRow(this, strictBox.getText().toString(), null, strictBox));
 
         TextView hint = Ui.text(this,
-                "识图会自动用智谱（glm-4.6v-flash 免费），所以哪怕主服务商选 DeepSeek，也建议把智谱 Key 填上。" +
-                        "两个 Key 分开保存，互不覆盖。", 12, Ui.INK2);
+                "现在只使用 DeepSeek 的 API Key。导入课件要靠识图，请填一个你的 Key 能调用的图片模型名；"
+                        + "只做文字整理时留空即可。", 12, Ui.INK2);
         hint.setPadding(0, Ui.dp(this, 14), 0, 0);
         form.addView(hint);
+
+        TextView crashBtn = Ui.chip(this, "查看崩溃日志", false);
+        crashBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String log = CrashLog.read(SettingsActivity.this);
+                if (log.isEmpty()) {
+                    Toast.makeText(SettingsActivity.this, "没有崩溃记录", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                TextView tv = new TextView(SettingsActivity.this);
+                tv.setText(log);
+                tv.setTextSize(11f);
+                tv.setTextColor(Ui.INK);
+                tv.setTextIsSelectable(true);
+                tv.setPadding(Ui.dp(SettingsActivity.this, 12), Ui.dp(SettingsActivity.this, 8),
+                        Ui.dp(SettingsActivity.this, 12), Ui.dp(SettingsActivity.this, 8));
+                ScrollView sv = new ScrollView(SettingsActivity.this);
+                sv.addView(tv);
+                new AlertDialog.Builder(SettingsActivity.this)
+                        .setTitle("最近一次崩溃")
+                        .setView(sv)
+                        .setPositiveButton("清空", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface d, int w) {
+                                CrashLog.clear(SettingsActivity.this);
+                                Toast.makeText(SettingsActivity.this, "已清空", Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .setNegativeButton("关闭", null)
+                        .show();
+            }
+        });
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        clp.topMargin = Ui.dp(this, 12);
+        form.addView(crashBtn, clp);
 
         scroll.addView(form);
         root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
@@ -345,6 +380,7 @@ public class SettingsActivity extends BaseActivity {
 
     private EditText edit(LinearLayout parent, String label, String value, int type) {
         EditText e = new EditText(this);
+        Ui.styleInput(e);
         e.setText(value == null ? "" : value);
         e.setInputType(type);
         e.setTextSize(13.5f);
@@ -368,10 +404,9 @@ public class SettingsActivity extends BaseActivity {
     }
 
     private void saveSettings() {
-        String provider = providerSpinner.getSelectedItem().toString();
-        prefs.setProvider(provider);
+        prefs.setProvider("deepseek");
         prefs.setApiKey("deepseek", keyInput.getText().toString());
-        prefs.setApiKey("zhipu", zhipuKeyInput.getText().toString());
+
         prefs.setVisionModel(visionInput.getText().toString());
         prefs.setTextModel(textInput.getText().toString());
         prefs.setReasoning(reasoningSpinner.getSelectedItem().toString());

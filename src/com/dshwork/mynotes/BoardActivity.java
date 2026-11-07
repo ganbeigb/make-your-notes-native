@@ -394,6 +394,7 @@ public class BoardActivity extends BaseActivity {
             @Override
             public void edit(String current, final BoardView.TextSink sink) {
                 final EditText input = new EditText(BoardActivity.this);
+                Ui.styleInput(input);
                 input.setInputType(InputType.TYPE_CLASS_TEXT);
                 input.setText(current);
                 new AlertDialog.Builder(BoardActivity.this)
@@ -609,10 +610,12 @@ public class BoardActivity extends BaseActivity {
         box.setPadding(pad, Ui.dp(this, 8), pad, 0);
 
         final EditText name = new EditText(this);
+        Ui.styleInput(name);
         name.setHint("芯片名称，例如 NE555");
         box.addView(name);
 
         final EditText count = new EditText(this);
+        Ui.styleInput(count);
         count.setHint("每边引脚数（1-6）");
         count.setInputType(InputType.TYPE_CLASS_NUMBER);
         count.setText("3");
@@ -639,6 +642,7 @@ public class BoardActivity extends BaseActivity {
 
     private void askTextDialog(final BoardView.TextSink sink) {
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         new AlertDialog.Builder(this)
                 .setTitle("添加文字")

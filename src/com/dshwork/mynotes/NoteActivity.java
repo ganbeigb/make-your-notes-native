@@ -214,6 +214,7 @@ public class NoteActivity extends BaseActivity {
         draftRow.setOrientation(LinearLayout.HORIZONTAL);
         draftRow.setGravity(Gravity.CENTER_VERTICAL);
         final EditText draftInput = new EditText(this);
+        Ui.styleInput(draftInput);
         draftInput.setHint("例如：用两句话解释洛必达法则的适用条件");
         draftInput.setTextSize(13);
         draftInput.setBackground(Ui.card(this));
@@ -255,6 +256,7 @@ public class NoteActivity extends BaseActivity {
         editBlock.addView(editHint);
 
         final EditText editInput = new EditText(this);
+        Ui.styleInput(editInput);
         editInput.setHint("例如：改写成适合背诵的短句");
         editInput.setTextSize(13);
         editInput.setBackground(Ui.card(this));
@@ -568,6 +570,7 @@ public class NoteActivity extends BaseActivity {
         parent.addView(l);
 
         EditText e = new EditText(this);
+        Ui.styleInput(e);
         e.setText(value);
         e.setInputType(inputType);
         e.setMinLines(lines);
@@ -807,6 +810,7 @@ public class NoteActivity extends BaseActivity {
             return;
         }
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setHint("例如：用一句话解释基尔霍夫电流定律，并给公式");
         new AlertDialog.Builder(this)
                 .setTitle("AI 起草")

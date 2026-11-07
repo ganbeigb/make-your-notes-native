@@ -11,8 +11,9 @@ public class Prefs {
         sp = c.getSharedPreferences("mynotes", Context.MODE_PRIVATE);
     }
 
+    /** 只保留 DeepSeek 一家，旧版本存的 zhipu 也一律按 deepseek 处理 */
     public String provider() {
-        return sp.getString("provider", "deepseek");
+        return "deepseek";
     }
 
     public void setProvider(String v) {
@@ -223,17 +224,16 @@ public class Prefs {
     }
 
     public static String defaultVision(String provider) {
-        return "zhipu".equals(provider) ? "glm-4.6v-flash" : "glm-4.6v-flash";
+        // DeepSeek 目前没有公开的识图模型，留空让用户在设置里填自己可用的模型名
+        return "";
     }
 
     public static String defaultText(String provider) {
-        return "zhipu".equals(provider) ? "glm-4.7-flash" : "deepseek-chat";
+        return "deepseek-chat";
     }
 
     public static String baseUrl(String provider) {
-        return "zhipu".equals(provider)
-                ? "https://open.bigmodel.cn/api/paas/v4"
-                : "https://api.deepseek.com";
+        return "https://api.deepseek.com";
     }
 
     public boolean ready() {

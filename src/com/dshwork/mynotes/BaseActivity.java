@@ -13,6 +13,7 @@ public class BaseActivity extends Activity {
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
+        CrashLog.install(this);
     }
 
     @Override

@@ -345,7 +345,7 @@ public class SubjectActivity extends BaseActivity {
                 if (position < 0 || position >= sortKeys.length) return;
                 if (sortKeys[position].equals(prefs.sort())) return;
                 prefs.setSort(sortKeys[position]);
-                reload();
+                if (adapter != null && list != null) reload();
             }
 
             @Override
@@ -625,17 +625,28 @@ public class SubjectActivity extends BaseActivity {
     }
 
     private void reload() {
-        data = db.notesSorted(subjectId, prefs.sort());
+        if (db == null || prefs == null || subjectId == null) return;
+        try {
+            data = db.notesSorted(subjectId, prefs.sort());
+        } catch (Exception e) {
+            data = new ArrayList<>();
+        }
+        if (data == null) data = new ArrayList<>();
         if (statsView != null) {
             int[] st = db.subjectStats(subjectId);
             statsView.setText(st[0] + " 个课件 · " + st[1] + " 页 · " + st[2] + " 个知识点");
         }
         buildRows();
-        adapter.notifyDataSetChanged();
-        if (filterViewsRef != null && filterLabelsRef != null) updateFilterLabels(filterViewsRef, filterLabelsRef);
+        if (adapter != null) adapter.notifyDataSetChanged();
+        if (filterViewsRef != null && filterLabelsRef != null) {
+            try {
+                updateFilterLabels(filterViewsRef, filterLabelsRef);
+            } catch (Exception ignored) {
+            }
+        }
         boolean isEmpty = data.isEmpty();
-        empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
-        list.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        if (empty != null) empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+        if (list != null) list.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
     }
 
     /** 把「课件 → 其下知识点」摊平成行；没有课件的归到「未分组」 */
@@ -749,6 +760,7 @@ public class SubjectActivity extends BaseActivity {
                             appendToDeck(d);
                         } else if (which == 3) {
                             final EditText input = new EditText(SubjectActivity.this);
+                            Ui.styleInput(input);
                             input.setText(d.title);
                             new AlertDialog.Builder(SubjectActivity.this)
                                     .setTitle("重命名课件")
@@ -936,6 +948,7 @@ public class SubjectActivity extends BaseActivity {
                             }
                         } else if (which == 1) {
                             final EditText renameInput = new EditText(SubjectActivity.this);
+                            Ui.styleInput(renameInput);
                             renameInput.setText(s.title == null ? "" : s.title);
                             renameInput.setHint("这一页的标题");
                             new AlertDialog.Builder(SubjectActivity.this)
@@ -1076,6 +1089,7 @@ public class SubjectActivity extends BaseActivity {
 
     private void askCategoryForPicked() {
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setHint("分类路径，例如 力学/运动学");
         new AlertDialog.Builder(this)
                 .setTitle("把 " + picked.size() + " 条移到…")
@@ -1252,6 +1266,7 @@ public class SubjectActivity extends BaseActivity {
 
     private void editCriteria() {
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         input.setMinLines(4);
         input.setText(db.subjectCriteria(subjectId) == null ? "" : db.subjectCriteria(subjectId));

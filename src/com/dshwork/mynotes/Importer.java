@@ -56,16 +56,16 @@ public class Importer {
             return out;
         }
 
-        // 识图必须用支持图片的模型：优先智谱（免费），没有智谱 Key 才用当前服务商
-        boolean hasZhipuKey = prefs.apiKey("zhipu") != null && !prefs.apiKey("zhipu").isEmpty();
-        String vProvider = hasZhipuKey ? "zhipu" : prefs.provider();
+        // 只用 DeepSeek 一家：识图模型需要用户自己在设置里指定
+        String vProvider = prefs.provider();
         String base = Prefs.baseUrl(vProvider);
         String key = prefs.apiKey(vProvider);
         String model = prefs.visionModel();
         String reasoning = prefs.reasoning();
 
-        if (!hasZhipuKey && !"zhipu".equals(prefs.provider())) {
-            out.errors.add("识图需要视觉模型：请到设置里填「智谱 Key」（免费），或把服务商切成 zhipu");
+        if (prefs.visionModel() == null || prefs.visionModel().trim().isEmpty()) {
+            out.errors.add("还没有填「识图模型」：导入课件要读图片，请到设置里填一个你的 Key 能调用的图片模型名" +
+                    "（只做文字整理时不需要导入）。");
             return out;
         }
 
@@ -298,8 +298,7 @@ public class Importer {
     public static String extractFile(Prefs prefs, String imagePath) throws Exception {
         java.io.File f = new java.io.File(imagePath);
         if (!f.exists()) throw new Exception("这一页的原图不在了");
-        boolean hasZhipuKey = prefs.apiKey("zhipu") != null && !prefs.apiKey("zhipu").isEmpty();
-        String provider = hasZhipuKey ? "zhipu" : prefs.provider();
+        String provider = prefs.provider();
         String b64 = toBase64File(imagePath);
         AiClient.Reply reply = AiClient.chat(Prefs.baseUrl(provider), prefs.apiKey(provider),
                 prefs.visionModel(), Prompts.EXTRACT_SYSTEM,
