@@ -239,7 +239,15 @@ public class Ui {
             lp.leftMargin = dp(c, 12);
             row.addView(control, lp);
         }
-        return row;
+
+        android.widget.LinearLayout wrap = new android.widget.LinearLayout(c);
+        wrap.setOrientation(android.widget.LinearLayout.VERTICAL);
+        wrap.addView(row);
+        View div = new View(c);
+        div.setBackgroundColor(LINE);
+        wrap.addView(div, new android.widget.LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, dp(c, 1) / 2)));
+        return wrap;
     }
 
     /** 网页版 .empty：粗体标题 + 灰色说明 +（可选）文字按钮 */
