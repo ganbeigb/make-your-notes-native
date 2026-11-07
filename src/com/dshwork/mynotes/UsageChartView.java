@@ -111,6 +111,23 @@ public class UsageChartView extends View {
             c.drawCircle(x, y, Ui.dp(getContext(), 2.2f), dot);
         }
 
+        // 峰值那天加粗并标数值（对应网页版图表的高亮）
+        int peakIndex = 0;
+        for (int i = 1; i < values.size(); i++) {
+            if (values.get(i) > values.get(peakIndex)) peakIndex = i;
+        }
+        if (!values.isEmpty() && values.get(peakIndex) > 0) {
+            float px = padL + stepX * peakIndex;
+            float py = padT + h - (values.get(peakIndex) / max) * h;
+            Paint peakDot = new Paint(Paint.ANTI_ALIAS_FLAG);
+            peakDot.setColor(Ui.ACCENT);
+            c.drawCircle(px, py, Ui.dp(getContext(), 3.6f), peakDot);
+            Paint peakText = new Paint(text);
+            peakText.setColor(Ui.ACCENT);
+            peakText.setTextAlign(Paint.Align.CENTER);
+            c.drawText(fmt(values.get(peakIndex)), px, Math.max(padT + Ui.dp(getContext(), 9), py - Ui.dp(getContext(), 6)), peakText);
+        }
+
         int skip = Math.max(1, values.size() / 6);
         for (int i = 0; i < labels.size(); i += skip) {
             float x = padL + stepX * i;
