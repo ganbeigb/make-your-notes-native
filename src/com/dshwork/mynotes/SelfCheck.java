@@ -202,6 +202,23 @@ public class SelfCheck {
             out.add(new Item("恢复幂等", false, String.valueOf(e.getMessage())));
         }
 
+        // 6.8 配图渲染：画板能否导出成非空 PNG
+        try {
+            BoardView board = new BoardView(ctx);
+            android.graphics.Bitmap bmp = board.renderToBitmap();
+            int bytes = 0;
+            if (bmp != null) {
+                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, bos);
+                bytes = bos.size();
+                bmp.recycle();
+            }
+            out.add(new Item("配图渲染", bytes > 100,
+                    bmp == null ? "画板渲染返回空" : ("PNG " + bytes + " 字节")));
+        } catch (Exception e) {
+            out.add(new Item("配图渲染", false, String.valueOf(e.getMessage())));
+        }
+
         // 7. 文件目录可写
         try {
             File dir = new File(ctx.getFilesDir(), "selfcheck");
