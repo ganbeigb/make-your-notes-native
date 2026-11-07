@@ -1208,9 +1208,14 @@ public class SubjectActivity extends BaseActivity {
                         pendingName = safeName() + "-笔记.json";
                         pendingMime = "application/json";
                     } else {
-                        byte[] data = Exporter.backupSubject(db, SubjectActivity.this, subjectId);
-                        savedZip = Backups.save(SubjectActivity.this,
-                                safeName() + "-备份-" + Backups.stamp() + ".zip", data);
+                        savedZip = Backups.stream(SubjectActivity.this,
+                                safeName() + "-备份-" + Backups.stamp() + ".zip",
+                                new Backups.Sink() {
+                                    @Override
+                                    public void write(java.io.OutputStream os) throws Exception {
+                                        Exporter.backupTo(os, db, SubjectActivity.this, subjectId);
+                                    }
+                                });
                     }
                 } catch (Exception e) {
                     err = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
