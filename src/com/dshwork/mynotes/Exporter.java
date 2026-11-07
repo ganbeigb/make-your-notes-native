@@ -241,6 +241,14 @@ public class Exporter {
         return build(db, ctx, null);
     }
 
+    /** 备份里的图片引用：写 img/<文件名>，导出时把文件一起打包 */
+    private static String imgRef(String path) {
+        if (path == null || path.isEmpty()) return "";
+        java.io.File f = new java.io.File(path);
+        if (!f.exists()) return "";
+        return "img/" + f.getName();
+    }
+
     /* ---------------- 备份 zip ---------------- */
 
     public static byte[] backup(Db db, Context ctx) throws Exception {
@@ -315,9 +323,9 @@ public class Exporter {
                 no.put("tags", n.tags);
                 no.put("source", n.source);
                 no.put("quote", n.quote);
-                no.put("figure", n.figure);
+                no.put("figure", imgRef(n.figure));
                 no.put("slideId", n.slideId);
-                no.put("slidePath", n.slidePath);
+                no.put("slidePath", imgRef(n.slidePath));
                 no.put("slidePage", n.slidePage);
                 no.put("importance", n.importance);
                 no.put("createdAt", n.createdAt);
@@ -338,6 +346,25 @@ public class Exporter {
         zip.putNextEntry(new ZipEntry("mynotes-backup.json"));
         zip.write(root.toString(2).getBytes("UTF-8"));
         zip.closeEntry();
+        // 把被引用的配图与原图一起打包，换设备恢复后图片还在
+        java.util.Set<String> packed = new java.util.HashSet<>();
+        for (Db.Subject sub : subjectList) {
+            for (Db.Note n : db.notes(sub.id)) {
+                for (String path : new String[]{n.figure, n.slidePath}) {
+                    if (path == null || path.isEmpty()) continue;
+                    java.io.File f = new java.io.File(path);
+                    if (!f.exists() || !packed.add(f.getName())) continue;
+                    zip.putNextEntry(new ZipEntry("img/" + f.getName()));
+                    java.io.FileInputStream in = new java.io.FileInputStream(f);
+                    byte[] buf = new byte[16384];
+                    int n2;
+                    while ((n2 = in.read(buf)) > 0) zip.write(buf, 0, n2);
+                    in.close();
+                    zip.closeEntry();
+                }
+            }
+        }
+
         zip.putNextEntry(new ZipEntry("README.txt"));
         zip.write(("Make Your Notes 备份\n导出时间: " + ymd() + "\n包含: subjects / categories / notes / settings / usage\n").getBytes("UTF-8"));
         zip.closeEntry();

@@ -558,11 +558,26 @@ public class MainActivity extends BaseActivity {
                                    + wr.notes + " 知识点、" + wr.images + " 张原图");
                     } else {
                         String json = null;
+                        java.util.Map<String, String> restoreImages = new java.util.HashMap<>();
+                        java.io.File imgDir = new java.io.File(getFilesDir(), "restored");
+                        if (!imgDir.exists()) imgDir.mkdirs();
+
                         java.util.zip.ZipInputStream zip = new java.util.zip.ZipInputStream(
                                 new java.io.ByteArrayInputStream(data));
                         java.util.zip.ZipEntry e;
                         byte[] buf = new byte[8192];
                         while ((e = zip.getNextEntry()) != null) {
+                            if (e.getName().startsWith("img/")) {
+                                String name = e.getName().substring(4);
+                                java.io.File out = new java.io.File(imgDir, name);
+                                java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
+                                byte[] ib = new byte[8192];
+                                int in2;
+                                while ((in2 = zip.read(ib)) > 0) fos.write(ib, 0, in2);
+                                fos.close();
+                                restoreImages.put(e.getName(), out.getAbsolutePath());
+                                continue;
+                            }
                             if (e.getName().endsWith("mynotes-backup.json")) {
                                 java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
                                 int n;
@@ -579,7 +594,7 @@ public class MainActivity extends BaseActivity {
                             org.json.JSONObject settings = obj.optJSONObject("settings");
                             if (settings != null) new Prefs(MainActivity.this).restore(settings);
                             int usageAdded = db.importUsage(obj.optJSONArray("usage"));
-                            int[] r = db.importBackup(obj);
+                            int[] r = db.importBackup(obj, restoreImages);
                             msg = "恢复完成：新增 " + r[0] + " 科目、" + r[1] + " 分类、" + r[2] + " 知识点、"
                                     + usageAdded + " 条用量";
                         }
