@@ -163,6 +163,8 @@ public class Exporter {
         Map<String, List<Db.Note>> groups = groupByCategory(db, subjectId);
         StringBuilder sb = new StringBuilder();
         sb.append("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">");
+        sb.append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">");
+        sb.append("<style>@media print{body{margin:0;padding:0}}</style>");
         sb.append("<title>").append(esc(s == null ? "" : s.name)).append(" · 公式合集</title>");
         sb.append("<style>@page{size:A4;margin:16mm 14mm}");
         sb.append("body{max-width:820px;margin:0 auto;padding:24px 20px 60px;color:#28302b;");
