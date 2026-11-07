@@ -23,6 +23,7 @@ public class SettingsActivity extends BaseActivity {
 
     private Prefs prefs;
     private EditText keyInput;
+    private EditText baseInput;
 
     private EditText visionInput;
     private EditText textInput;
@@ -94,7 +95,8 @@ public class SettingsActivity extends BaseActivity {
 
         form.addView(Ui.section(this, "模型与服务商"));
         keyInput = edit(form, "DeepSeek API Key", prefs.apiKey("deepseek"), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        visionInput = edit(form, "识图模型（可选，需你的 Key 支持图片）", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
+        baseInput = edit(form, "API 地址（默认官方，用中转就填对方地址）", prefs.apiBase(), InputType.TYPE_CLASS_TEXT);
+        visionInput = edit(form, "识图模型（留空=用文本模型试）", prefs.visionModel(), InputType.TYPE_CLASS_TEXT);
         textInput = edit(form, "文本模型", prefs.textModel(), InputType.TYPE_CLASS_TEXT);
         reasoningSpinner = spinner(form, "推理档位", reasonings, indexOf(reasonings, prefs.reasoning()));
 
@@ -405,6 +407,7 @@ public class SettingsActivity extends BaseActivity {
 
     private void saveSettings() {
         prefs.setProvider("deepseek");
+        if (baseInput != null) prefs.setApiBase(baseInput.getText().toString());
         prefs.setApiKey("deepseek", keyInput.getText().toString());
 
         prefs.setVisionModel(visionInput.getText().toString());
