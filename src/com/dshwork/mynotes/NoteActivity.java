@@ -80,7 +80,7 @@ public class NoteActivity extends BaseActivity {
         TextView title = Ui.text(this, headerTitle, 16, Ui.INK);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-        TextView saveBtn = Ui.button(this, "保存");
+        TextView saveBtn = Ui.chip(this, "已自动保存", true);
         saveBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
