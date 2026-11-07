@@ -37,6 +37,7 @@ public class FormulaView extends View {
     private Box root;
     private int color = Ui.INK;
     private float spSize = 17f;
+    private float textScale = 1f;
 
     public FormulaView(Context c) {
         this(c, null);
@@ -46,8 +47,15 @@ public class FormulaView extends View {
         super(c, a);
         paint.setColor(Ui.INK);
         color = Ui.INK;
-        paint.setTextSize(spSize * c.getResources().getDisplayMetrics().scaledDensity);
+        paint.setTextSize(spSize * textScale * c.getResources().getDisplayMetrics().scaledDensity);
         paint.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+    }
+
+    /** 整体放大倍率（详情页弹窗放大用） */
+    public void setTextScale(float factor) {
+        textScale = factor;
+        paint.setTextSize(spSize * textScale * getResources().getDisplayMetrics().scaledDensity);
+        rebuild();
     }
 
     public void setColor(int c) {

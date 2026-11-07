@@ -310,6 +310,12 @@ public class NoteActivity extends BaseActivity {
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         plp.topMargin = Ui.dp(this, 6);
+        preview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                zoomFormula(formulaInput.getText().toString());
+            }
+        });
         form.addView(preview, plp);
 
         formulaInput.setOnFocusChangeListener(new View.OnFocusChangeListener() {
@@ -572,6 +578,23 @@ public class NoteActivity extends BaseActivity {
                         }
                     }
                 })
+                .show();
+    }
+
+    /** 点公式预览放大看（窄屏长公式） */
+    private void zoomFormula(String tex) {
+        if (tex == null || tex.trim().isEmpty()) return;
+        FormulaView big = new FormulaView(this);
+        big.setBackground(Ui.card(this));
+        big.setPadding(Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 16));
+        big.setTextScale(1.6f);
+        big.setTex(tex);
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.addView(big);
+        new AlertDialog.Builder(this)
+                .setTitle("公式预览")
+                .setView(sc)
+                .setPositiveButton("关闭", null)
                 .show();
     }
 
