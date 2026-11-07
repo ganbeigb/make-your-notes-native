@@ -221,6 +221,7 @@ public class MainActivity extends BaseActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         if (which == 0) {
                             final EditText input = new EditText(MainActivity.this);
+                            Ui.styleInput(input);
                             input.setText(s.name);
                             new AlertDialog.Builder(MainActivity.this)
                                     .setTitle("重命名科目")
@@ -631,6 +632,7 @@ public class MainActivity extends BaseActivity {
 
     private void askNewSubject() {
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setHint("例如：电路原理");
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         new AlertDialog.Builder(this)

@@ -60,17 +60,40 @@ public class Ui {
             BG = 0xFF121815;
             CARD = 0xFF1C2420;
             INK = 0xFFE6EEE8;
-            INK2 = 0xFF9BA8A0;
+            INK2 = 0xFFA9B7AE;
+            MUTED = 0xFF8C9A91;
             LINE = 0xFF2C3730;
+            LINE_STRONG = 0xFF3A463E;
             ACCENT = 0xFF6FBF95;
+            ACCENT2 = 0xFF86CFA9;
+            ACCENT_SOFT = 0xFF20302A;
+            GOLD = 0xFFD9AE63;
+            RED = 0xFFE08173;
         } else {
             BG = 0xFFFBF8F1;
             CARD = 0xFFFFFFFF;
             INK = 0xFF23302A;
             INK2 = 0xFF5A6A62;
+            MUTED = 0xFF8B8477;
             LINE = 0xFFE6DDC8;
+            LINE_STRONG = 0xFFD6CCB6;
             ACCENT = 0xFF2F5D4B;
+            ACCENT2 = 0xFF3D7A61;
+            ACCENT_SOFT = 0xFFE6EFE9;
+            GOLD = 0xFFA9762A;
+            RED = 0xFFA2453A;
         }
+    }
+
+    /** 输入框统一配色：暗色下也是浅字，避免黑字压暗底 */
+    public static android.widget.EditText styleInput(android.widget.EditText e) {
+        e.setTextColor(INK);
+        e.setHintTextColor(MUTED);
+        try {
+            e.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+        } catch (Exception ignored) {
+        }
+        return e;
     }
 
     public static void setScale(float s) {

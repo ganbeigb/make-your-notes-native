@@ -56,6 +56,7 @@ public class SearchActivity extends BaseActivity {
         root.addView(bar);
 
         final EditText input = new EditText(this);
+        Ui.styleInput(input);
         input.setHint("输入关键字，比如 电容、能量、E=mc");
         input.setTextSize(15);
         input.setTextColor(Ui.INK);
