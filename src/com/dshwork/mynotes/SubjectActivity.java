@@ -1424,6 +1424,29 @@ public class SubjectActivity extends BaseActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQ_SAVE) {
+            if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+            if (pendingBytes == null) {
+                Toast.makeText(this, "没有可写出的内容", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                java.io.OutputStream os = getContentResolver().openOutputStream(data.getData());
+                os.write(pendingBytes);
+                os.flush();
+                os.close();
+                String name = pendingName == null ? "文件" : pendingName;
+                Toast.makeText(this, "已保存：" + name + "（" + pendingBytes.length / 1024 + " KB）",
+                        Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                Toast.makeText(this, "写入失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            } finally {
+                pendingBytes = null;
+            }
+            return;
+        }
+
         if (requestCode != REQ_PICK || resultCode != RESULT_OK || data == null) return;
         final List<Uri> uris = new ArrayList<>();
         if (data.getClipData() != null) {
