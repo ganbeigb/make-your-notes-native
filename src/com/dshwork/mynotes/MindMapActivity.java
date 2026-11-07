@@ -52,9 +52,17 @@ public class MindMapActivity extends BaseActivity {
         });
         bar.addView(back);
 
+        LinearLayout titleBox = new LinearLayout(this);
+        titleBox.setOrientation(LinearLayout.VERTICAL);
         TextView title = Ui.text(this, (subjectName == null ? "导图" : subjectName) + " · 导图", 17, Ui.INK);
+        titleBox.addView(title);
+        int catCount = db.categories(subjectId).size();
+        int noteCount = db.notes(subjectId).size();
+        TextView sub = Ui.text(this, catCount + " 个分类 · " + noteCount + " 个知识点", 11.5f, Ui.MUTED);
+        sub.setPadding(0, Ui.dp(this, 1), 0, 0);
+        titleBox.addView(sub);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        bar.addView(title, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+        bar.addView(titleBox, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
 
         TextView zoomIn = Ui.text(this, "＋", 18, Ui.ACCENT);
         zoomIn.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
