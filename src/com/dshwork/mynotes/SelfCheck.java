@@ -118,6 +118,28 @@ public class SelfCheck {
             out.add(new Item("导出 Markdown/HTML", false, String.valueOf(e.getMessage())));
         }
 
+        // 5.5 导出写入：把 Markdown 真正写到磁盘再读回来
+        try {
+            String md = Exporter.markdown(db, tempSubjectId);
+            java.io.File mdFile = new java.io.File(ctx.getFilesDir(), "selfcheck-export.md");
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(mdFile);
+            fos.write(md.getBytes("UTF-8"));
+            fos.close();
+            byte[] back = new byte[(int) mdFile.length()];
+            java.io.FileInputStream fis = new java.io.FileInputStream(mdFile);
+            int total = 0;
+            int got;
+            while (total < back.length && (got = fis.read(back, total, back.length - total)) > 0) {
+                total += got;
+            }
+            fis.close();
+            boolean ok = total == md.getBytes("UTF-8").length && total > 0;
+            mdFile.delete();
+            out.add(new Item("导出写入", ok, "写入 " + total + " 字节并成功读回"));
+        } catch (Exception e) {
+            out.add(new Item("导出写入", false, String.valueOf(e.getMessage())));
+        }
+
         // 6. 备份
         try {
             byte[] zip = Exporter.backup(db, ctx);
