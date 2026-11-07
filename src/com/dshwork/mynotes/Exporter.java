@@ -72,8 +72,7 @@ public class Exporter {
                 if (n.figure != null && !n.figure.isEmpty()) {
                     sb.append("![配图](").append(new java.io.File(n.figure).getName()).append(")\n\n");
                 }
-                if (n.tags != null && !n.tags.trim().isEmpty()) {
-                    if ("extension".equals(n.kind)) {
+                if ("extension".equals(n.kind)) {
                     sb.append("> 类型：拓展（AI 补充，请核对）\n\n");
                 }
                 if (n.importance > 0) {
@@ -81,7 +80,8 @@ public class Exporter {
                     for (int k = 0; k < n.importance; k++) stars.append('*');
                     sb.append("重要度：").append(stars).append("\n\n");
                 }
-                sb.append("标签：").append(n.tags).append("\n\n");
+                if (n.tags != null && !n.tags.trim().isEmpty()) {
+                    sb.append("标签：").append(n.tags).append("\n\n");
                 }
             }
         }
