@@ -609,61 +609,6 @@ public class NoteActivity extends BaseActivity {
                 .show();
     }
 
-    /** 让 AI 按要求改写这条笔记 */
-    private void askAiEdit() {
-        if (!prefs.ready()) {
-            Toast.makeText(this, "先到设置里填 API Key", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), 0);
-
-        final EditText input = new EditText(this);
-        input.setHint("例如：改写成适合背诵的短句；补充适用条件；把公式改成标准形式");
-        input.setMinLines(2);
-        box.addView(input);
-
-        String[] suggests = {"更易背诵", "补充适用条件", "精简到两句", "加上易错点", "换成公式推导"};
-        LinearLayout sugRow = new LinearLayout(this);
-        sugRow.setOrientation(LinearLayout.HORIZONTAL);
-        sugRow.setPadding(0, Ui.dp(this, 6), 0, 0);
-        for (final String s : suggests) {
-            TextView chip = Ui.chip(this, s, false);
-            chip.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String old = input.getText().toString().trim();
-                    input.setText(old.isEmpty() ? s : old + "；" + s);
-                    input.setSelection(input.getText().length());
-                }
-            });
-            sugRow.addView(chip);
-        }
-        android.widget.HorizontalScrollView sugScroll = new android.widget.HorizontalScrollView(this);
-        sugScroll.setHorizontalScrollBarEnabled(false);
-        sugScroll.addView(sugRow);
-        box.addView(sugScroll);
-
-        final android.widget.CheckBox append = new android.widget.CheckBox(this);
-        append.setText("在原内容后面追加（不覆盖）");
-        append.setTextSize(13);
-        box.addView(append);
-
-        new AlertDialog.Builder(this)
-                .setTitle("让 AI 修改")
-                .setView(box)
-                .setPositiveButton("开始", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(final DialogInterface dialog, int which) {
-                        final String req = input.getText().toString().trim();
-                        if (req.isEmpty()) return;
-                        runAiEdit(req, append.isChecked());
-                    }
-                })
-                .setNegativeButton("取消", null)
-                .show();
-    }
 
     private void runAiEdit(final String req, final boolean appendMode) {
         save(false);
