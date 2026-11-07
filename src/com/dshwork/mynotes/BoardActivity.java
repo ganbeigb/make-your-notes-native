@@ -27,6 +27,7 @@ public class BoardActivity extends BaseActivity {
     private LinearLayout shapeRow;
     private LinearLayout symbolRow;
     private LinearLayout dirRow;
+    private TextView hintView;
     private android.widget.HorizontalScrollView symbolScroll;
 
     @Override
@@ -454,9 +455,11 @@ public class BoardActivity extends BaseActivity {
         root.addView(board, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
 
         // 底部提示
-        TextView hint = Ui.text(this, "画笔自由画；连线点起点再点终点自动走直角；双指缩放平移", 11.5f, Ui.INK2);
+        final TextView hint = Ui.text(this, "", 11.5f, Ui.MUTED);
         hint.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 8));
         root.addView(hint);
+        this.hintView = hint;
+        updateHint();
 
         setContentView(root);
         board.setTool(BoardView.T_PEN);
@@ -536,6 +539,35 @@ public class BoardActivity extends BaseActivity {
                 .setView(sc)
                 .setNegativeButton("关闭", null)
                 .show();
+    }
+
+    /** 按当前工具更新底部提示（对应网页版 updateHint） */
+    private void updateHint() {
+        if (hintView == null || board == null) return;
+        String s;
+        switch (board.getTool()) {
+            case BoardView.T_PEN:
+                s = "按住拖动自由画；双指缩放平移，粗细与颜色在上方样式行";
+                break;
+            case BoardView.T_TEXT:
+                s = "点画布空白处输入文字；已有的文字用「选择」工具点一下即可修改";
+                break;
+            case BoardView.T_SHAPE:
+                s = "选一种图形后在画布上拖出大小；选中后可旋转、放大缩小";
+                break;
+            case BoardView.T_SYMBOL:
+                s = "点「元件」挑一个符号，再到画布上点放；导线端点会自动吸到引脚";
+                break;
+            case BoardView.T_WIRE:
+                s = "点起点 → 点终点，自动走直角并绕开元件；上方可选出线方向";
+                break;
+            case BoardView.T_CHIP:
+                s = "先设名称与每边引脚数，再点画布放置；引脚可被导线吸附";
+                break;
+            default:
+                s = "点选元素可拖动、旋转、放大；空白处拖动可框选，组合后整组移动";
+        }
+        hintView.setText(s);
     }
 
     private void showBoardSettings() {
